@@ -11,6 +11,7 @@ Game.tools.getToolbar = function() {
     if (s.tools.rod) items.push({ emoji: '🎣', label: 'Canne', active: true });
     if (s.tools.watering) items.push({ emoji: '🚿', label: 'Arrosoir', active: true });
     if (s.tools.shovel) items.push({ emoji: '⛏️', label: 'Pelle', active: true, id: 'shovel' });
+    if (s.tools.net) items.push({ emoji: '🥅', label: 'Filet', active: true, id: 'net' });
     return items;
 };
 
@@ -18,6 +19,7 @@ Game.tools.hasAxe = function() { return Game.state.tools.axe; };
 Game.tools.hasRod = function() { return Game.state.tools.rod; };
 Game.tools.hasWatering = function() { return Game.state.tools.watering; };
 Game.tools.hasShovel = function() { return Game.state.tools.shovel; };
+Game.tools.hasNet = function() { return Game.state.tools.net; };
 
 Game.tools.toggleShovel = function() {
     if (!Game.state.tools.shovel) {

@@ -56,12 +56,20 @@ Game.CONFIG = {
         charlieHouse: { x: 1400, y: 1200 },
         garden:       { x: 1550, y: 1350 },
         fishShop:     { x: 650,  y: 1100 },
+        museum:       { x: 1300, y: 1500 },
+        forest:       { x: 1900, y: 450  },
         riverBaseX:   550
     },
 
     // Fish shop
     FISH_SHOP_SELL_INTERVAL: 30000,
-    FISH_SHOP_SELL_PRICE: 15
+    FISH_SHOP_SELL_PRICE: 15,
+
+    // Wasps
+    WASP_LIFESPAN: 20000,
+
+    // Village revenue (ms between payouts = 1 game day)
+    VILLAGE_REVENUE_INTERVAL: 60000 * 24
 };
 
 Game.HOUSE_STAGES = ["🏗️", "🧱", "🏠", "🏘️", "🏡"];
@@ -275,7 +283,11 @@ Game.RECIPES = {
     chair:  { emoji: '🪑', label: 'Chaise',  wood: 2, stone: 0 },
     table:  { emoji: '🪵', label: 'Table',   wood: 4, stone: 0 },
     bookshelf: { emoji: '📚', label: 'Biblio',  wood: 5, stone: 2 },
-    plant:  { emoji: '🪴', label: 'Plante',  wood: 0, stone: 3 }
+    plant:  { emoji: '🪴', label: 'Plante',  wood: 0, stone: 3 },
+    bed:    { emoji: '🛏️', label: 'Lit',     wood: 6, stone: 0 },
+    lamp:   { emoji: '💡', label: 'Lampe',   wood: 1, stone: 2 },
+    rug:    { emoji: '🟫', label: 'Tapis',   wood: 3, stone: 0 },
+    mirror: { emoji: '🪞', label: 'Miroir',  wood: 2, stone: 3 }
 };
 
 Game.COOKING_RECIPES = {
@@ -291,7 +303,8 @@ Game.TOOLS = {
     axe:      { emoji: '🪓', label: 'Hache',          price: 50,  desc: 'Plus de bois par arbre' },
     rod:      { emoji: '🎣', label: 'Canne à pêche',  price: 40,  desc: 'Pêche plus rapide' },
     watering: { emoji: '🚿', label: 'Arrosoir',       price: 30,  desc: 'Arrose le jardin' },
-    shovel:   { emoji: '⛏️', label: 'Pelle',           price: 35,  desc: 'Creuse et trace des chemins' }
+    shovel:   { emoji: '⛏️', label: 'Pelle',           price: 35,  desc: 'Creuse et trace des chemins' },
+    net:      { emoji: '🥅', label: 'Filet',           price: 45,  desc: 'Capture les papillons' }
 };
 
 Game.CROPS = {
@@ -310,8 +323,41 @@ Game.SHOP_ITEMS = [
     { type: 'seed', id: 'wheat',      price: 5  },
     { type: 'seed', id: 'strawberry', price: 8  },
     { type: 'material', id: 'materials', price: 20 },
-    { type: 'tool', id: 'shovel' }
+    { type: 'tool', id: 'shovel' },
+    { type: 'tool', id: 'net' }
 ];
+
+// ── Species data (fish & butterflies) ──
+Game.FISH_SPECIES = {
+    carp:     { name: 'Carpe',           emoji: '🐟', rarity: 'common',    value: 10, weight: 45 },
+    trout:    { name: 'Truite',          emoji: '🐟', rarity: 'common',    value: 12, weight: 35 },
+    clown:    { name: 'Poisson-clown',   emoji: '🐠', rarity: 'uncommon',  value: 20, weight: 25 },
+    puffer:   { name: 'Poisson-globe',   emoji: '🐡', rarity: 'uncommon',  value: 25, weight: 20 },
+    sword:    { name: 'Espadon',         emoji: '🐟', rarity: 'rare',      value: 45, weight: 10 },
+    shark:    { name: 'Requin-nain',     emoji: '🦈', rarity: 'legendary', value: 80, weight: 3 }
+};
+
+Game.BUTTERFLY_SPECIES = {
+    common:   { name: 'Papillon commun', emoji: '🦋', rarity: 'common',    value: 5,  weight: 40, season: ['spring','summer','autumn'] },
+    azure:    { name: 'Azuré',           emoji: '🦋', rarity: 'common',    value: 8,  weight: 30, season: ['spring','summer'], color: '#4fc3f7' },
+    monarch:  { name: 'Monarque',        emoji: '🦋', rarity: 'uncommon',  value: 18, weight: 20, season: ['summer','autumn'], color: '#ff8c00' },
+    morpho:   { name: 'Morpho bleu',     emoji: '🦋', rarity: 'rare',      value: 35, weight: 12, season: ['spring','summer'], color: '#2196f3' },
+    emperor:  { name: 'Empereur',        emoji: '🦋', rarity: 'rare',      value: 50, weight: 8,  season: ['spring'], color: '#7c4dff' },
+    ghost:    { name: 'Fantôme',         emoji: '🦋', rarity: 'legendary', value: 100,weight: 3,  season: ['autumn'], color: '#e0e0e0' },
+    lunar:    { name: 'Papillon lunaire',emoji: '🦋', rarity: 'legendary', value: 120,weight: 2,  season: ['spring','summer'], color: '#ce93d8', night: true }
+};
+
+Game.RARITY_COLORS = {
+    common: '#8bc34a', uncommon: '#29b6f6', rare: '#ab47bc', legendary: '#ffd600'
+};
+
+Game.VILLAGER_JOBS = {
+    'Lya 🐰':           { job: 'Artiste',       income: 5 },
+    'Melo 🐱':          { job: 'Pêcheur',       income: 8 },
+    'Jo 🐶':            { job: 'Constructeur',   income: 7 },
+    'Célestine 🦊':     { job: 'Alchimiste',    income: 10 },
+    'Ordralfabétix 🐡': { job: 'Poissonnier',   income: 12 }
+};
 
 Game.SOUNDS = {
     collect:  { freq: 880,  dur: 0.1, type: 'sine'     },

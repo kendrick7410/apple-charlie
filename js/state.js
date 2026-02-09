@@ -7,13 +7,13 @@ Game.state = {
     activeHouse: null,
     charlie: { x: 1000, y: 1100, visualX: 1000, visualY: 1100, facing: 'down', walking: false },
     interiorCharlie: { x: 280, y: 500 },
-    inventory: { apples: 0, bread: 0, fish: 0, flowers: 0, money: 0, materials: 0, wood: 0, stone: 0 },
+    inventory: { apples: 0, bread: 0, fish: 0, flowers: 0, money: 0, materials: 0, wood: 0, stone: 0, butterflies: 0 },
     cookedItems: {},  // { applePie: 2, sushi: 1, ... }
     seeds: { carrot: 0, pumpkin: 0, wheat: 0, strawberry: 0 },
     houseLevel: 0,
     isBaking: false,
     isFishing: false,
-    tools: { axe: false, rod: false, watering: false, shovel: false },
+    tools: { axe: false, rod: false, watering: false, shovel: false, net: false },
     shovelMode: false,
     xp: 0,
     level: 1,
@@ -27,6 +27,10 @@ Game.state = {
     questCompleted: {},  // { 'Lya 🐰': [true, false, ...] }
     villagers: [],
     fishShop: { stock: 0, revenue: 0 },
+    specimens: { fish: {}, butterflies: {} },
+    museum: { fish: {}, butterflies: {} },
+    villageRevenue: 0,
+    timeSpeed: 1,
     placedFlowers: [],   // [{x,y,emoji}]
     placedPaths: [],     // [{x,y}]
     houseFurniture: {},  // per-house id
@@ -82,6 +86,10 @@ Game.saveGame = function() {
         questProgress: Object.assign({}, s.questProgress),
         questCompleted: JSON.parse(JSON.stringify(s.questCompleted)),
         fishShop: { stock: s.fishShop.stock, revenue: s.fishShop.revenue },
+        specimens: JSON.parse(JSON.stringify(s.specimens)),
+        museum: JSON.parse(JSON.stringify(s.museum)),
+        villageRevenue: s.villageRevenue,
+        timeSpeed: s.timeSpeed,
         placedFlowers: s.placedFlowers.slice(),
         placedPaths: s.placedPaths.slice(),
         houseFurniture: JSON.parse(JSON.stringify(s.houseFurniture)),
@@ -117,6 +125,10 @@ Game.loadGame = function() {
         if (data.questProgress) Object.assign(s.questProgress, data.questProgress);
         if (data.questCompleted) s.questCompleted = data.questCompleted;
         if (data.fishShop) { s.fishShop.stock = data.fishShop.stock || 0; s.fishShop.revenue = data.fishShop.revenue || 0; }
+        if (data.specimens) s.specimens = data.specimens;
+        if (data.museum) s.museum = data.museum;
+        if (data.villageRevenue !== undefined) s.villageRevenue = data.villageRevenue;
+        if (data.timeSpeed !== undefined) s.timeSpeed = data.timeSpeed;
         if (data.placedFlowers) s.placedFlowers = data.placedFlowers;
         if (data.placedPaths) s.placedPaths = data.placedPaths;
         if (data.houseFurniture) s.houseFurniture = data.houseFurniture;
