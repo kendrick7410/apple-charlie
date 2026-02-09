@@ -83,6 +83,7 @@ Game.quests.complete = function(villagerName) {
 };
 
 // Notify the player when a new wave of quests unlocks
+Game.quests._waveNotified = {};
 Game.quests._checkNewUnlocks = function(totalDone) {
     for (var name in Game.VILLAGER_DATA) {
         var qi = Game.state.questProgress[name] || 0;
@@ -90,9 +91,9 @@ Game.quests._checkNewUnlocks = function(totalDone) {
         if (qi < data.quests.length) {
             var quest = data.quests[qi];
             if (quest.unlock && totalDone >= quest.unlock.totalQuests && Game.state.level >= quest.unlock.level) {
-                // This is the first time we see a wave-2 quest becoming available
-                if (!Game.quests._wave2Notified) {
-                    Game.quests._wave2Notified = true;
+                var waveKey = quest.unlock.totalQuests + '_' + quest.unlock.level;
+                if (!Game.quests._waveNotified[waveKey]) {
+                    Game.quests._waveNotified[waveKey] = true;
                     Game.ui.notify("Nouvelles quêtes débloquées ! 🌟", 'info');
                     Game.particles.confetti();
                 }
