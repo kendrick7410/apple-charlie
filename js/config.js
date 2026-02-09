@@ -110,7 +110,16 @@ Game.VILLAGER_DATA = {
                       "Melo m'a demandé un portrait... il bouge trop ! 😅",
                       "Les couchers de soleil ici sont magnifiques, tu trouves pas ?",
                       "Un jour j'ouvrirai une galerie d'art dans le village ! 🎨",
-                      "Jo dit que mes peintures sentent la fleur. C'est un compliment non ?"
+                      "Jo dit que mes peintures sentent la fleur. C'est un compliment non ?",
+                      "J'adore mélanger les couleurs de l'automne sur ma palette. 🍁",
+                      "Tu crois qu'un jour on pourrait avoir un musée ici ?",
+                      "La lumière du matin est parfaite pour peindre les montagnes au loin.",
+                      "Célestine m'a donné des pigments magiques... les couleurs bougent toutes seules ! ✨",
+                      "Quand il pleut, je peins la pluie. Quand il neige, je peins la neige. 🎨",
+                      "J'ai rêvé que mes tableaux prenaient vie. C'était beau et un peu effrayant !",
+                      "Le printemps me donne envie de tout peindre en rose et en vert.",
+                      "Jo m'a construit un chevalet en bois. Il est super solide ! 🪵",
+                      "Melo dort parfois sur mes toiles fraîches... il a des taches de peinture partout ! 🐱"
                   ],
                   quests: [
                       { desc: "Rapporte-moi 5 fleurs 🌻", need: { flowers: 5 }, reward: { money: 30, xp: 40 }, done: "Merci ! C'est magnifique !" },
@@ -133,7 +142,16 @@ Game.VILLAGER_DATA = {
                       "Célestine dit que les chats voient les esprits. Moi je vois que du poisson.",
                       "Mon arbre à chat sera le plus grand du monde, tu verras !",
                       "La nuit, j'observe les étoiles depuis mon toit. C'est paisible. ✨",
-                      "Jo veut qu'on joue à la balle. C'est un truc de chien ça, non ?"
+                      "Jo veut qu'on joue à la balle. C'est un truc de chien ça, non ?",
+                      "Le bruit de la rivière me donne sommeil... zzz... 💤",
+                      "Tu savais que les chats dorment 16 heures par jour ? Je suis en retard !",
+                      "L'hiver c'est bien. On peut dormir encore plus longtemps. ❄️",
+                      "J'ai essayé de pêcher cette nuit. Le poisson brille sous la lune ! 🌙",
+                      "Lya dit que je suis photogénique. Normal, je suis un chat. 😼",
+                      "Mon rêve ? Une montagne de poisson et un hamac au soleil.",
+                      "Quand il fait chaud, je fais la sieste sous le grand arbre près de la fontaine.",
+                      "J'ai appris à Célestine comment ronronner. Elle n'y arrive pas du tout. 😂",
+                      "Le poisson grillé c'est bien, mais le poisson cru c'est de l'art. 🐟"
                   ],
                   quests: [
                       { desc: "Attrape-moi 3 poissons 🐟", need: { fish: 3 }, reward: { money: 40, xp: 50 }, done: "Miam, du poisson !" },
@@ -156,7 +174,16 @@ Game.VILLAGER_DATA = {
                       "Lya m'a peint ! Je suis beau dessus, hein ?",
                       "Tu crois qu'on pourrait construire un phare dans le village ?",
                       "La forêt est pleine de bons arbres pour construire. Allons-y !",
-                      "Célestine m'a lu mon avenir. Il y a beaucoup de bâtons dedans. 🪵"
+                      "Célestine m'a lu mon avenir. Il y a beaucoup de bâtons dedans. 🪵",
+                      "J'ai couru tout autour du village ce matin. Trois fois ! 🏃",
+                      "Tu sens cette odeur ? C'est le bois fraîchement coupé. J'adore !",
+                      "Mon rêve c'est de construire une tour assez haute pour voir la mer. 🗼",
+                      "Melo dit que je cours trop. Moi je dis qu'il dort trop ! 😄",
+                      "J'ai trouvé un os ancien près de la rivière. Il porte chance, non ? 🦴",
+                      "L'aventure c'est ma passion ! Explorons la forêt ensemble un jour !",
+                      "En hiver, la neige rend les constructions plus compliquées mais plus belles. ❄️",
+                      "Lya m'a appris à dessiner des plans. Mes maisons seront encore mieux !",
+                      "Le sport c'est la vie ! Course, natation, construction... tout compte ! 💪"
                   ],
                   quests: [
                       { desc: "J'ai besoin de 8 bois 🪵", need: { wood: 8 }, reward: { money: 25, xp: 35 }, done: "Génial, je vais construire !" },
@@ -179,7 +206,16 @@ Game.VILLAGER_DATA = {
                       "Mes potions demandent des ingrédients rares. La nature est généreuse.",
                       "Melo pense que je suis mystérieuse. C'est parce qu'il ne lit pas ! 📖",
                       "Chaque saison a sa propre magie. L'automne est ma préférée. 🍂",
-                      "Le village grandit grâce à toi, Charlie. Les esprits sont contents. 🦊"
+                      "Le village grandit grâce à toi, Charlie. Les esprits sont contents. 🦊",
+                      "Les étoiles m'ont dit que quelque chose de beau arrivera bientôt... 🌟",
+                      "Ma dernière potion a transformé une pierre en cristal. Enfin presque.",
+                      "Les esprits de la forêt dansent quand personne ne regarde. Je les ai vus ! 👻",
+                      "Au printemps, la magie est partout. On la sent dans le vent. 🌸",
+                      "Jo m'a demandé un sort pour courir plus vite. La magie ne marche pas comme ça ! 😅",
+                      "La pleine lune est idéale pour préparer mes potions les plus puissantes. 🌕",
+                      "Chaque fleur du village contient une petite étincelle de magie.",
+                      "La sagesse vient avec le temps. Et avec beaucoup de thé. ☕",
+                      "Lya peint la magie sans le savoir. Ses tableaux brillent la nuit. 🎨"
                   ],
                   quests: [
                       // ── Vague 1 : disponible dès le début ──

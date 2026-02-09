@@ -11,8 +11,8 @@ Game.world.init = function() {
     Game.world.createRiver(Game.CONFIG.LOCATIONS.riverBaseX, 0, Game.CONFIG.WORLD_H);
 
     // Bridges (wider, better positioned to span river)
-    Game.world.createBridge(Game.CONFIG.LOCATIONS.riverBaseX - 20, 950, 200, 70);
-    Game.world.createBridge(Game.CONFIG.LOCATIONS.riverBaseX - 20, 1800, 200, 70);
+    Game.world.createBridge(Game.CONFIG.LOCATIONS.riverBaseX - 40, 940, 260, 90);
+    Game.world.createBridge(Game.CONFIG.LOCATIONS.riverBaseX - 40, 1790, 260, 90);
 
     // Paths
     Game.world.createPath(700, 700, 600, 600);
@@ -84,7 +84,8 @@ Game.world.createBridge = function(x, y, w, h) {
     b.style.top = y + 'px';
     b.style.width = w + 'px';
     b.style.height = h + 'px';
-    b.style.backgroundImage = "repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 12px)";
+    // Plank lines (opaque, no transparent gaps)
+    b.style.backgroundImage = "repeating-linear-gradient(90deg, #a67c52, #a67c52 18px, #8b6544 18px, #8b6544 20px)";
     document.getElementById('game-world').appendChild(b);
 };
 

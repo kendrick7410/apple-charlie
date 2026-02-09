@@ -125,14 +125,14 @@ body {
 
 .bridge {
     position: absolute;
-    background: linear-gradient(180deg, #c4956a 0%, #a67c52 40%, #8b6544 100%);
-    z-index: 3;
+    background: #a67c52;
+    z-index: 5;
     border: 5px solid #6d4c2e;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.15);
     background-image:
-        repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(0,0,0,0.15) 18px, rgba(0,0,0,0.15) 20px),
-        repeating-linear-gradient(0deg, transparent, transparent 8px, rgba(0,0,0,0.08) 8px, rgba(0,0,0,0.08) 10px);
+        repeating-linear-gradient(90deg, #a67c52, #a67c52 18px, #8b6544 18px, #8b6544 20px),
+        repeating-linear-gradient(0deg, #a67c52, #a67c52 8px, #9b7248 8px, #9b7248 10px);
 }
 
 .bridge::before,
