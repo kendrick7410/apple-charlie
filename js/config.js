@@ -113,7 +113,10 @@ Game.VILLAGER_DATA = {
                       { desc: "Apporte 5 pommes et 3 pains 🍎🍞", need: { apples: 5, bread: 3 }, reward: { money: 80, xp: 70 }, done: "Un vrai festin artistique !", unlock: { totalQuests: 3, level: 2 } },
                       // ── Vague 3 : débloquée après 6 quêtes + niveau 4 ──
                       { desc: "Peins avec 12 fleurs et 4 pommes 🎨", need: { flowers: 12, apples: 4 }, reward: { money: 100, xp: 85 }, done: "Mon chef-d'œuvre est terminé !", unlock: { totalQuests: 6, level: 4 } },
-                      { desc: "Prépare un banquet : 6 pains et 8 pommes 🍎🍞", need: { bread: 6, apples: 8 }, reward: { money: 120, xp: 95 }, done: "Le plus beau banquet du village !", unlock: { totalQuests: 6, level: 4 } }
+                      { desc: "Prépare un banquet : 6 pains et 8 pommes 🍎🍞", need: { bread: 6, apples: 8 }, reward: { money: 120, xp: 95 }, done: "Le plus beau banquet du village !", unlock: { totalQuests: 6, level: 4 } },
+                      // ── Vague 4 : débloquée après 10 quêtes + niveau 6 ──
+                      { desc: "Exposition : 20 fleurs et 10 pommes 🎨🌸", need: { flowers: 20, apples: 10 }, reward: { money: 150, xp: 110 }, done: "L'exposition est un succès !", unlock: { totalQuests: 10, level: 6 } },
+                      { desc: "Fresque géante : 8 pains, 6 pommes, 15 fleurs 🖼️", need: { bread: 8, apples: 6, flowers: 15 }, reward: { money: 180, xp: 130 }, done: "Ma plus belle œuvre !", unlock: { totalQuests: 10, level: 6 } }
                   ]},
     'Melo 🐱': { emoji: '🐱', home: { x: 1100, y: 1400 }, greetings: ["Miaou !", "Tu as du poisson ?", "Il fait beau !"],
                   quests: [
@@ -125,7 +128,10 @@ Game.VILLAGER_DATA = {
                       { desc: "Ramène 8 bois et 4 pierres 🪵🧱", need: { wood: 8, stone: 4 }, reward: { money: 70, xp: 65 }, done: "Mon arbre à chat sera immense !", unlock: { totalQuests: 3, level: 2 } },
                       // ── Vague 3 ──
                       { desc: "Rapporte 10 poissons et 8 pierres 🐟🧱", need: { fish: 10, stone: 8 }, reward: { money: 95, xp: 80 }, done: "Un palace pour chat !", unlock: { totalQuests: 6, level: 4 } },
-                      { desc: "Trouve 15 bois et 10 pierres 🪵🧱", need: { wood: 15, stone: 10 }, reward: { money: 115, xp: 90 }, done: "Miaou ! C'est parfait !", unlock: { totalQuests: 6, level: 4 } }
+                      { desc: "Trouve 15 bois et 10 pierres 🪵🧱", need: { wood: 15, stone: 10 }, reward: { money: 115, xp: 90 }, done: "Miaou ! C'est parfait !", unlock: { totalQuests: 6, level: 4 } },
+                      // ── Vague 4 ──
+                      { desc: "Buffet de luxe : 15 poissons et 10 pommes 🐟🍎", need: { fish: 15, apples: 10 }, reward: { money: 145, xp: 105 }, done: "Le buffet royal du chat !", unlock: { totalQuests: 10, level: 6 } },
+                      { desc: "Tour à chat : 25 bois et 15 pierres 🪵🧱", need: { wood: 25, stone: 15 }, reward: { money: 170, xp: 125 }, done: "Miaou ! La plus haute tour !", unlock: { totalQuests: 10, level: 6 } }
                   ]},
     'Jo 🐶':   { emoji: '🐶', home: { x: 1500, y: 900  }, greetings: ["Woof !", "T'as du bois ?", "C'est grand dehors !"],
                   quests: [
@@ -137,7 +143,10 @@ Game.VILLAGER_DATA = {
                       { desc: "Rapporte 5 poissons et 6 pierres 🐟🧱", need: { fish: 5, stone: 6 }, reward: { money: 85, xp: 75 }, done: "Merci Charlie, t'es le meilleur !", unlock: { totalQuests: 3, level: 2 } },
                       // ── Vague 3 ──
                       { desc: "Construis avec 20 bois et 12 pierres 🪵🧱", need: { wood: 20, stone: 12 }, reward: { money: 110, xp: 90 }, done: "Mon palais prend forme !", unlock: { totalQuests: 6, level: 4 } },
-                      { desc: "Festin royal : 8 poissons et 6 pommes 🐟🍎", need: { fish: 8, apples: 6 }, reward: { money: 105, xp: 85 }, done: "Woof ! Le meilleur repas !", unlock: { totalQuests: 6, level: 4 } }
+                      { desc: "Festin royal : 8 poissons et 6 pommes 🐟🍎", need: { fish: 8, apples: 6 }, reward: { money: 105, xp: 85 }, done: "Woof ! Le meilleur repas !", unlock: { totalQuests: 6, level: 4 } },
+                      // ── Vague 4 ──
+                      { desc: "Château : 30 bois et 20 pierres 🏰", need: { wood: 30, stone: 20 }, reward: { money: 160, xp: 120 }, done: "Mon château est magnifique !", unlock: { totalQuests: 10, level: 6 } },
+                      { desc: "Grande fête : 12 poissons, 8 pommes, 5 pains 🎉", need: { fish: 12, apples: 8, bread: 5 }, reward: { money: 175, xp: 130 }, done: "Woof ! Quelle fête incroyable !", unlock: { totalQuests: 10, level: 6 } }
                   ]},
     'Célestine 🦊': { emoji: '🦊', home: { x: 700, y: 1500 }, greetings: ["Bonjour voyageur !", "Les étoiles parlent...", "Tu sens cette magie ?"],
                   quests: [
@@ -150,7 +159,10 @@ Game.VILLAGER_DATA = {
                       { desc: "Apporte 6 pommes et 4 pains enchantés 🍎🍞", need: { apples: 6, bread: 4 }, reward: { money: 75, xp: 65 }, done: "La magie opère !", unlock: { totalQuests: 3, level: 2 } },
                       // ── Vague 3 ──
                       { desc: "Rassemble 15 fleurs et 8 poissons 🌸🐟", need: { flowers: 15, fish: 8 }, reward: { money: 120, xp: 95 }, done: "Le grand sortilège est prêt !", unlock: { totalQuests: 6, level: 4 } },
-                      { desc: "Réunis 10 pierres, 10 bois et 5 pommes ✨", need: { stone: 10, wood: 10, apples: 5 }, reward: { money: 130, xp: 100 }, done: "Tu es un vrai mage, Charlie !", unlock: { totalQuests: 6, level: 4 } }
+                      { desc: "Réunis 10 pierres, 10 bois et 5 pommes ✨", need: { stone: 10, wood: 10, apples: 5 }, reward: { money: 130, xp: 100 }, done: "Tu es un vrai mage, Charlie !", unlock: { totalQuests: 6, level: 4 } },
+                      // ── Vague 4 ──
+                      { desc: "Invocation : 20 fleurs, 12 poissons, 10 pierres 🔮", need: { flowers: 20, fish: 12, stone: 10 }, reward: { money: 165, xp: 120 }, done: "Les esprits s'éveillent !", unlock: { totalQuests: 10, level: 6 } },
+                      { desc: "Artefact ancien : 15 bois, 15 pierres, 8 pains ✨", need: { wood: 15, stone: 15, bread: 8 }, reward: { money: 185, xp: 135 }, done: "L'artefact brille ! Merci Charlie !", unlock: { totalQuests: 10, level: 6 } }
                   ]}
 };
 
