@@ -3,600 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Charlie - Horizon Nouveau</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Le Village de Charlie</title>
     <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --grass: #8cd47e;
-            --path: #f3e5ab;
-            --ui-bg: #fffdf2;
-            --ui-accent: #ff9d5c;
-            --water: #70c1ff;
-            --river-color: #5ba3ff;
-            --bridge-color: #a67c52;
-            --floor: #e2c08d;
-        }
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: var(--grass);
-            font-family: 'Varela Round', sans-serif;
-            touch-action: none;
-            user-select: none;
-            transition: background-color 2s;
-        }
-        .night-mode {
-            filter: brightness(0.7) sepia(0.2) hue-rotate(200deg);
-        }
-        #viewport {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            position: relative;
-        }
-        #game-world {
-            position: absolute;
-            width: 3000px;
-            height: 3000px;
-            background: var(--grass);
-            background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px);
-            background-size: 60px 60px;
-            transition: transform 0.3s ease-out;
-        }
-        #interior-view {
-            position: absolute;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 5000;
-        }
-        .room {
-            width: 600px;
-            height: 600px;
-            background: var(--floor);
-            border: 15px solid #8b5e3c;
-            position: relative;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            background-image: repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(0,0,0,0.05) 40px, rgba(0,0,0,0.05) 42px);
-        }
-        .path { position: absolute; background: var(--path); border-radius: 40px; z-index: 1; }
-        .river-segment { position: absolute; background: var(--river-color); z-index: 2; border-radius: 50px; }
-        .bridge { position: absolute; background: var(--bridge-color); z-index: 3; border: 4px solid #855e3a; border-radius: 5px; }
-        .entity {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-        .charlie-sprite { font-size: 3rem; filter: drop-shadow(0 4px 2px rgba(0,0,0,0.1)); z-index: 100; }
-        .villager-sprite { font-size: 2.5rem; z-index: 50; }
-        .speech-bubble {
-            position: absolute; bottom: 110%; background: white; padding: 4px 10px; border-radius: 12px;
-            font-size: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); white-space: nowrap; display: none; z-index: 200;
-        }
-        .fountain {
-            width: 120px; height: 120px; background: var(--water); border: 8px solid #ddd; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .fountain::after { content: "⛲"; font-size: 3rem; animation: water-float 2s infinite ease-in-out; }
-        @keyframes water-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-
-        .ui-card { background: var(--ui-bg); border: 4px solid #e8e2c8; border-radius: 24px; box-shadow: 0 8px 0 rgba(0,0,0,0.05); }
-        .btn-animal { background: var(--ui-accent); color: white; border-radius: 999px; padding: 8px 20px; font-weight: bold; box-shadow: 0 4px 0 #d97d3e; }
-        .btn-craft { background: #8d6e63; font-size: 0.7rem; padding: 4px 10px; margin: 2px; }
-        .building-label { font-size: 10px; background: white; padding: 2px 8px; border-radius: 10px; margin-top: 5px; font-weight: bold; }
-        .house-exterior { font-size: 5rem; cursor: pointer; }
-        .house-door { width: 40px; height: 10px; background: #5d4037; position: absolute; bottom: 0; border-radius: 5px 5px 0 0; }
-        .particle { position: fixed; pointer-events: none; z-index: 2000; animation: particle-up 1s ease-out forwards; }
-        @keyframes particle-up { to { transform: translateY(-50px); opacity: 0; } }
-
-        #interior-charlie { position: absolute; font-size: 3rem; z-index: 100; transition: none; }
-        .furniture { position: absolute; font-size: 3rem; }
-        .exit-mat {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 80px; height: 40px; background: #ffeb3b; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 3px dashed #fbc02d;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body onclick="window.focus()">
+<body onclick="if(Game&&Game.audio)Game.audio.resume()">
+
+<!-- Time Overlay -->
+<div id="time-overlay"></div>
 
 <div id="viewport">
-    <div id="game-world">
-        <!-- World View -->
-    </div>
+    <div id="game-world"></div>
 
     <!-- Interior View -->
     <div id="interior-view">
         <div class="room" id="current-room">
             <div id="interior-charlie">🤠</div>
             <div class="exit-mat">🌟</div>
-            <!-- Furniture injected here -->
         </div>
 
         <!-- Interior Crafting Panel -->
-        <div class="fixed bottom-10 flex flex-col items-center gap-2">
-            <div class="ui-card p-3 flex gap-2">
-                <button onclick="craft('🪑', 2, 0)" class="btn-animal btn-craft">🪑 Chaise (2🪵)</button>
-                <button onclick="craft('table', 4, 0)" class="btn-animal btn-craft">🪵 Table (4🪵)</button>
-                <button onclick="craft('📚', 5, 2)" class="btn-animal btn-craft">📚 Biblio (5🪵, 2🧱)</button>
-                <button onclick="craft('🪴', 0, 3)" class="btn-animal btn-craft">🪴 Plante (3🧱)</button>
+        <div style="position:fixed;bottom:10px;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:5500;">
+            <div class="ui-card" style="padding:10px;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
+                <button onclick="Game.crafting.craftFurniture('chair')" class="btn-animal btn-craft">🪑 Chaise (2🪵)</button>
+                <button onclick="Game.crafting.craftFurniture('table')" class="btn-animal btn-craft">🪵 Table (4🪵)</button>
+                <button onclick="Game.crafting.craftFurniture('bookshelf')" class="btn-animal btn-craft">📚 Biblio (5🪵,2🧱)</button>
+                <button onclick="Game.crafting.craftFurniture('plant')" class="btn-animal btn-craft">🪴 Plante (3🧱)</button>
             </div>
-            <div class="text-white bg-black/50 px-4 py-1 rounded-full text-xs">
+            <div style="color:white;background:rgba(0,0,0,0.5);padding:4px 16px;border-radius:999px;font-size:0.7rem;">
                 Marche sur le tapis 🌟 pour sortir
             </div>
         </div>
     </div>
 </div>
 
-<!-- Main UI -->
-<div class="fixed top-5 left-5 z-[1000] flex flex-col gap-3">
-    <div class="ui-card p-4 min-w-[220px]">
-        <div class="text-orange-600 font-bold text-lg mb-1 flex justify-between items-center">
-            <span>🤠 Charlie</span>
-            <button onclick="toggleNight()" class="text-sm bg-blue-100 p-1 rounded">🌙</button>
-        </div>
-        <!-- Inventory Grid -->
-        <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-            <span>🍎 Pommes:</span> <span id="apple-count" class="font-bold text-red-500 text-right">0</span>
-            <span>🪵 Bois:</span> <span id="wood-count" class="font-bold text-amber-900 text-right">0</span>
-            <span>🧱 Pierre:</span> <span id="stone-count" class="font-bold text-gray-500 text-right">0</span>
-            <span>🍞 Pains:</span> <span id="bread-count" class="font-bold text-amber-700 text-right">0</span>
-            <span>🐟 Poissons:</span> <span id="fish-count" class="font-bold text-blue-600 text-right">0</span>
-            <span>🌻 Fleurs:</span> <span id="flower-count" class="font-bold text-pink-500 text-right">0</span>
-        </div>
-        <div class="flex justify-between text-sm border-t mt-1 pt-1"><span>💰 Clochettes:</span> <span id="money-count" class="font-bold text-yellow-600">0</span></div>
-        <div class="flex justify-between text-sm"><span>🔨 Matériaux Maison:</span> <span id="material-count" class="font-bold text-blue-500">0</span></div>
+<!-- ═══════════ Main HUD ═══════════ -->
 
-        <button id="plant-btn" onclick="plantFlower()" class="btn-animal w-full mt-3 text-xs bg-pink-400 hidden">Planter une fleur 🌷</button>
+<!-- Top-left: Status -->
+<div style="position:fixed;top:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:8px;max-width:240px;">
+    <!-- Charlie Info -->
+    <div class="ui-card" style="padding:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="color:#e65100;font-weight:bold;font-size:1rem;">🤠 Charlie</span>
+            <span id="level-display" style="color:#ff9d5c;font-weight:bold;font-size:0.8rem;">Nv. 1</span>
+        </div>
+
+        <!-- XP Bar -->
+        <div class="xp-bar">
+            <div class="xp-bar-fill" id="xp-bar-fill"></div>
+        </div>
+        <div id="xp-text" style="font-size:0.6rem;color:#8b6914;text-align:right;">0/100 XP</div>
+
+        <!-- Inventory Grid -->
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1px 8px;font-size:0.7rem;margin-top:4px;">
+            <span>🍎 Pommes:</span> <span id="apple-count" style="font-weight:bold;color:#e53935;text-align:right;">0</span>
+            <span>🪵 Bois:</span>   <span id="wood-count" style="font-weight:bold;color:#795548;text-align:right;">0</span>
+            <span>🧱 Pierre:</span> <span id="stone-count" style="font-weight:bold;color:#757575;text-align:right;">0</span>
+            <span>🍞 Pains:</span>  <span id="bread-count" style="font-weight:bold;color:#bf8c3e;text-align:right;">0</span>
+            <span>🐟 Poissons:</span> <span id="fish-count" style="font-weight:bold;color:#1e88e5;text-align:right;">0</span>
+            <span>🌻 Fleurs:</span> <span id="flower-count" style="font-weight:bold;color:#e91e63;text-align:right;">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;border-top:1px solid #e8e2c8;margin-top:3px;padding-top:3px;">
+            <span>💰 Clochettes:</span> <span id="money-count" style="font-weight:bold;color:#f9a825;">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;">
+            <span>🔨 Matériaux:</span> <span id="material-count" style="font-weight:bold;color:#42a5f5;">0</span>
+        </div>
+
+        <!-- Cooked Items -->
+        <div id="cooked-items" style="font-size:0.7rem;margin-top:2px;"></div>
+        <!-- Seeds -->
+        <div id="seeds-display" style="font-size:0.7rem;margin-top:2px;"></div>
+
+        <!-- Tools -->
+        <div id="toolbar" style="display:flex;gap:4px;margin-top:4px;"></div>
+
+        <!-- Plant button -->
+        <button id="plant-btn" onclick="Game.entities.plantFlower()" class="btn-animal hidden" style="width:100%;margin-top:6px;font-size:0.7rem;background:#e91e63;box-shadow:0 3px 0 #c2185b;">Planter une fleur 🌷</button>
+
+        <!-- Save buttons -->
+        <div class="save-btns" style="margin-top:6px;">
+            <button onclick="Game.saveGame();Game.ui.notify('Sauvegardé ! 💾')">💾 Sauver</button>
+            <button onclick="Game.audio.toggleMute();this.textContent=Game.audio.isMuted()?'🔇 Son':'🔊 Son'">🔊 Son</button>
+        </div>
+    </div>
+
+    <!-- Clock & Season -->
+    <div class="ui-card" style="padding:8px;">
+        <div class="info-bar">
+            <span class="info-badge" id="clock-display">08:00</span>
+            <span class="info-badge" id="phase-display">Jour ☀️</span>
+            <span class="info-badge" id="season-display">Printemps 🌱</span>
+            <span class="info-badge" id="weather-display">⛅ Dégagé</span>
+        </div>
+    </div>
+
+    <!-- Quest Tracker -->
+    <div class="ui-card" style="padding:8px;">
+        <div style="font-size:0.7rem;font-weight:bold;color:#e65100;margin-bottom:2px;">📋 Quêtes</div>
+        <div id="quest-tracker"></div>
     </div>
 </div>
 
-<!-- Contextual Action Panels -->
-<div id="action-fountain" class="fixed bottom-10 right-10 z-[1000] hidden flex flex-col gap-3">
-    <button onclick="sellAll()" class="btn-animal bg-blue-400">Tout vendre à la Fontaine ⛲</button>
-</div>
-<div id="action-bakery" class="fixed bottom-10 right-10 z-[1000] hidden flex flex-col gap-3">
-    <button id="bake-btn" onclick="bakeBread()" class="btn-animal bg-amber-600">Cuire du Pain 🍞</button>
-</div>
-<div id="action-shop" class="fixed bottom-10 right-10 z-[1000] hidden flex flex-col gap-3">
-    <button onclick="buyMaterials()" class="btn-animal bg-orange-500">Acheter Matériaux (20💰)</button>
-</div>
-<div id="action-river" class="fixed bottom-10 right-10 z-[1000] hidden flex flex-col gap-3">
-    <button id="fish-btn" onclick="startFishing()" class="btn-animal bg-cyan-600">Pêcher 🎣</button>
+<!-- ═══════════ Action Panels (bottom-right) ═══════════ -->
+
+<div id="action-fountain" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
+    <button onclick="Game.inventory.sellAll()" class="btn-animal" style="background:#42a5f5;box-shadow:0 4px 0 #1e88e5;">Tout vendre ⛲</button>
 </div>
 
-<!-- Joystick -->
-<div id="joystick" class="fixed bottom-10 left-10 grid grid-cols-3 gap-2 z-[1000]">
-    <div></div><button class="btn-animal w-12 h-12 flex items-center justify-center" onclick="moveBy(0, -60)">↑</button><div></div>
-    <button class="btn-animal w-12 h-12 flex items-center justify-center" onclick="moveBy(-60, 0)">←</button>
-    <button class="btn-animal w-12 h-12 flex items-center justify-center" onclick="moveBy(0, 60)">↓</button>
-    <button class="btn-animal w-12 h-12 flex items-center justify-center" onclick="moveBy(60, 0)">→</button>
+<div id="action-bakery" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
+    <button id="bake-btn" onclick="Game.inventory.bakeBread()" class="btn-animal" style="background:#bf8c3e;box-shadow:0 4px 0 #a67c2e;">Cuire du Pain 🍞</button>
+    <!-- Cooking recipes -->
+    <div class="ui-card" style="padding:8px;max-width:200px;" id="cooking-panel">
+        <div style="font-size:0.7rem;font-weight:bold;color:#e65100;margin-bottom:4px;">🍳 Cuisine</div>
+        <div id="cooking-recipes"></div>
+    </div>
 </div>
+
+<div id="action-shop" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
+    <div class="ui-card" style="padding:10px;max-width:220px;">
+        <div style="font-size:0.8rem;font-weight:bold;color:#e65100;margin-bottom:6px;">🏪 Magasin</div>
+        <div id="shop-items"></div>
+    </div>
+</div>
+
+<div id="action-river" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
+    <button id="fish-btn" onclick="Game.inventory.startFishing()" class="btn-animal" style="background:#00acc1;box-shadow:0 4px 0 #00838f;">Pêcher 🎣</button>
+</div>
+
+<!-- ═══════════ Joystick (bottom-left) ═══════════ -->
+
+<div id="joystick" style="position:fixed;bottom:20px;left:20px;z-index:1000;">
+    <div></div>
+    <button class="btn-animal">↑</button>
+    <div></div>
+    <button class="btn-animal">←</button>
+    <button class="btn-animal">↓</button>
+    <button class="btn-animal">→</button>
+</div>
+
+<!-- ═══════════ Scripts ═══════════ -->
+<script src="js/config.js"></script>
+<script src="js/state.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/xp.js"></script>
+<script src="js/time.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/player.js"></script>
+<script src="js/world.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/buildings.js"></script>
+<script src="js/villagers.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/crafting.js"></script>
+<script src="js/quests.js"></script>
+<script src="js/tools.js"></script>
+<script src="js/farming.js"></script>
+<script src="js/minimap.js"></script>
+<script src="js/creatures.js"></script>
+<script src="js/titlescreen.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ui.js"></script>
 
 <script>
-    // Game State
-    const state = {
-        currentView: 'world',
-        activeHouse: null,
-        charlie: { x: 1000, y: 1100 },
-        interiorCharlie: { x: 280, y: 500 },
-        inventory: { apples: 0, bread: 0, fish: 0, flowers: 0, money: 0, materials: 0, wood: 0, stone: 0 },
-        houseLevel: 0,
-        isBaking: false, isFishing: false, isNight: false,
-        villagers: [],
-        locations: {
-            fountain: { x: 1000, y: 1000 },
-            bakery: { x: 800, y: 800 },
-            shop: { x: 1200, y: 800 },
-            charlieHouse: { x: 1400, y: 1200 },
-            riverBaseX: 550
-        },
-        houses: [
-            { id: 'lya', name: 'Lya 🐰', x: 850, y: 1200, emoji: '🏘️', furniture: [['🛏️', 50, 50], ['🎨', 450, 100], ['🧶', 250, 250]] },
-            { id: 'melo', name: 'Melo 🐱', x: 1100, y: 1400, emoji: '🏠', furniture: [['🛋️', 400, 50], ['📺', 450, 50], ['🍜', 100, 300]] },
-            { id: 'jo', name: 'Jo 🐶', x: 1500, y: 900, emoji: '🏘️', furniture: [['🎸', 50, 400], ['🍕', 300, 300], ['🏆', 50, 50]] },
-            { id: 'charlie', name: 'Charlie 🤠', x: 1400, y: 1200, emoji: '🏗️', furniture: [] }
-        ]
-    };
+// ── Main bootstrap ──
+(function(){
+"use strict";
 
-    const houseStages = ["🏗️", "🧱", "🏠", "🏘️", "🏡"];
-    const flowerTypes = ["🌸", "🌻", "🌷", "🌹"];
-    const greetings = ["Salut Charlie !", "Tu as du bois ?", "Il fait beau !", "C'est grand dehors !"];
+// Start the game (called after title screen)
+Game.startGame = function() {
+    // Initialize all systems
+    Game.audio.init();
+    Game.time.init();
+    Game.weather.init();
+    Game.particles.init();
 
-    // Initialize Game
-    function init() {
-        const world = document.getElementById('game-world');
+    // Build world
+    Game.world.init();
+    Game.player.init();
+    Game.entities.init();
+    Game.villagers.init();
+    Game.creatures.init();
+    Game.minimap.init();
 
-        // World generation
-        createNaturalRiver(state.locations.riverBaseX, 0, 3000);
-        createBridge(state.locations.riverBaseX + 10, 950, 140, 80);
-        createBridge(state.locations.riverBaseX + 10, 1800, 140, 80);
+    // Init UI
+    Game.ui.init();
+    Game.engine.init();
 
-        createPath(700, 700, 600, 600);
-        createPath(400, 970, 1800, 60);
-        createPath(970, 400, 60, 2000);
+    // Build cooking recipes UI
+    buildCookingUI();
 
-        createBuilding(state.locations.fountain.x, state.locations.fountain.y, "", "", "fountain-anchor", "fountain");
-        createBuilding(state.locations.bakery.x, state.locations.bakery.y, "🍞", "Boulangerie", "bakery-anchor");
-        createBuilding(state.locations.shop.x, state.locations.shop.y, "🏪", "Magasin Brico", "shop-anchor");
+    // Start loops
+    Game.engine.start();
+    Game.audio.startAmbient();
+    Game.startAutoSave();
+};
 
-        // NPC Houses
-        state.houses.forEach(h => {
-            if (h.id === 'charlie') return;
-            const div = document.createElement('div');
-            div.className = 'entity house-exterior';
-            div.style.left = h.x + 'px'; div.style.top = h.y + 'px';
-            div.innerHTML = `<div>${h.emoji}</div><div class="building-label">Chez ${h.name}</div><div class="house-door"></div>`;
-            world.appendChild(div);
-            spawnVillager(h.name, h.x + 80, h.y + 100);
-        });
-
-        // Charlie's Terrain
-        const site = document.createElement('div');
-        site.id = 'house-site';
-        site.className = 'entity house-exterior';
-        site.style.left = state.locations.charlieHouse.x + 'px';
-        site.style.top = state.locations.charlieHouse.y + 'px';
-        site.style.fontSize = '5rem';
-        site.innerHTML = '🏗️<div class="building-label">Maison de Charlie</div><div class="house-door"></div>';
-        world.appendChild(site);
-
-        // Nature generation
-        for(let i=0; i<20; i++) spawnTree();
-        for(let i=0; i<40; i++) spawnFlowerRandomly();
-        for(let i=0; i<15; i++) spawnStone();
-
-        // Spawn Charlie
-        const charlie = document.createElement('div');
-        charlie.id = 'player';
-        charlie.className = 'entity charlie-sprite';
-        charlie.innerHTML = '🤠';
-        world.appendChild(charlie);
-
-        updatePlayerPos();
-        updateUI();
-
-        setInterval(updateVillagers, 3000);
-
-        // Click to move
-        document.getElementById('viewport').addEventListener('mousedown', (e) => {
-            if (state.currentView !== 'world') return;
-            const rect = world.getBoundingClientRect();
-            state.charlie.x = (e.clientX - rect.left) - 25;
-            state.charlie.y = (e.clientY - rect.top) - 25;
-            updatePlayerPos();
-        });
-
-        // Keyboard controls
-        window.addEventListener('keydown', (e) => {
-            const s = 60;
-            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].indexOf(e.key) > -1) e.preventDefault();
-            if (state.currentView === 'world') {
-                if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'w') state.charlie.y -= s;
-                if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') state.charlie.y += s;
-                if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'a') state.charlie.x -= s;
-                if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') state.charlie.x += s;
-                updatePlayerPos();
-            } else {
-                if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'w') state.interiorCharlie.y -= s;
-                if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') state.interiorCharlie.y += s;
-                if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'q' || e.key.toLowerCase() === 'a') state.interiorCharlie.x -= s;
-                if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') state.interiorCharlie.x += s;
-                updateInteriorPos();
-            }
-        });
-    }
-
-    // --- Helpers ---
-
-    function createNaturalRiver(baseX, startY, totalHeight) {
-        for (let y = 0; y < totalHeight; y += 80) {
-            const seg = document.createElement('div');
-            seg.className = 'river-segment';
-            seg.style.left = (baseX + Math.sin(y / 250) * 80) + 'px';
-            seg.style.top = y + 'px';
-            seg.style.width = '150px'; seg.style.height = '100px';
-            document.getElementById('game-world').appendChild(seg);
+function buildCookingUI() {
+    var el = document.getElementById('cooking-recipes');
+    if (!el) return;
+    var html = '';
+    for (var id in Game.COOKING_RECIPES) {
+        var r = Game.COOKING_RECIPES[id];
+        var needStr = '';
+        for (var item in r.need) {
+            var icons = { apples: '🍎', fish: '🐟', flowers: '🌻', bread: '🍞' };
+            needStr += (icons[item] || item) + r.need[item] + ' ';
         }
+        html += '<button class="cook-btn" onclick="Game.crafting.cook(\'' + id + '\')">' +
+            r.emoji + ' ' + r.label + ' (' + needStr.trim() + ') Nv.' + r.level + '</button>';
     }
+    el.innerHTML = html;
+}
 
-    function createBridge(x, y, w, h) {
-        const b = document.createElement('div');
-        b.className = 'bridge';
-        b.style.left = x + 'px'; b.style.top = y + 'px';
-        b.style.width = w + 'px'; b.style.height = h + 'px';
-        b.style.backgroundImage = "repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 12px)";
-        document.getElementById('game-world').appendChild(b);
-    }
+// On page load → show title screen
+window.onload = function() {
+    Game.titlescreen.show();
+};
 
-    function spawnVillager(name, x, y) {
-        const v = document.createElement('div');
-        v.className = 'entity villager-sprite';
-        v.style.left = x + 'px'; v.style.top = y + 'px';
-        v.innerHTML = `<span>🚶</span><div class="building-label">${name}</div><div class="speech-bubble"></div>`;
-        document.getElementById('game-world').appendChild(v);
-        state.villagers.push({ el: v, x, y, name });
-    }
-
-    function updateVillagers() {
-        state.villagers.forEach(v => {
-            v.x += (Math.random() - 0.5) * 120; v.y += (Math.random() - 0.5) * 120;
-            v.x = Math.max(700, Math.min(1600, v.x)); v.y = Math.max(700, Math.min(1600, v.y));
-            v.el.style.left = v.x + 'px'; v.el.style.top = v.y + 'px';
-            if(Math.random() > 0.8) {
-                const bubble = v.el.querySelector('.speech-bubble');
-                if (bubble) {
-                    bubble.innerText = greetings[Math.floor(Math.random() * greetings.length)];
-                    bubble.style.display = 'block'; setTimeout(() => bubble.style.display = 'none', 2000);
-                }
-            }
-        });
-    }
-
-    function spawnTree() {
-        const x = 200 + Math.random() * 2600; const y = 200 + Math.random() * 2600;
-        if (Math.hypot(x-1000, y-1000) < 400 || (x > 450 && x < 750)) return spawnTree();
-        const tree = document.createElement('div');
-        tree.className = 'entity tree'; tree.style.left = x + 'px'; tree.style.top = y + 'px';
-        tree.style.fontSize = '3.5rem'; tree.innerHTML = '🌳';
-        tree.dataset.hasApple = "true"; document.getElementById('game-world').appendChild(tree);
-    }
-
-    function spawnStone() {
-        const x = 200 + Math.random() * 2600; const y = 200 + Math.random() * 2600;
-        if (Math.hypot(x-1000, y-1000) < 400 || (x > 450 && x < 750)) return spawnStone();
-        const stone = document.createElement('div');
-        stone.className = 'entity stone clickable'; stone.style.left = x + 'px'; stone.style.top = y + 'px';
-        stone.style.fontSize = '1.5rem'; stone.innerHTML = '🪨';
-        document.getElementById('game-world').appendChild(stone);
-    }
-
-    function spawnFlowerRandomly() {
-        const x = 100 + Math.random() * 2800; const y = 100 + Math.random() * 2800;
-        if (x > 450 && x < 750) return spawnFlowerRandomly();
-        const f = document.createElement('div');
-        f.className = 'entity flower clickable'; f.style.left = x + 'px'; f.style.top = y + 'px';
-        f.style.fontSize = '1.5rem'; f.innerHTML = flowerTypes[Math.floor(Math.random() * flowerTypes.length)];
-        document.getElementById('game-world').appendChild(f);
-    }
-
-    function updatePlayerPos() {
-        state.charlie.x = Math.max(0, Math.min(2950, state.charlie.x));
-        state.charlie.y = Math.max(0, Math.min(2950, state.charlie.y));
-        const p = document.getElementById('player');
-        if (p) { p.style.left = state.charlie.x + 'px'; p.style.top = state.charlie.y + 'px'; }
-        updateCamera(); checkInteractions();
-    }
-
-    function updateCamera() {
-        const tx = -(state.charlie.x - window.innerWidth/2);
-        const ty = -(state.charlie.y - window.innerHeight/2);
-        const world = document.getElementById('game-world');
-        if (world) world.style.transform = `translate(${tx}px, ${ty}px)`;
-    }
-
-    function checkInteractions() {
-        const cx = state.charlie.x; const cy = state.charlie.y;
-
-        // Panels visibility
-        const fountainEl = document.getElementById('action-fountain');
-        if (fountainEl) fountainEl.style.display = Math.hypot(cx - state.locations.fountain.x, cy - state.locations.fountain.y) < 120 ? 'flex' : 'none';
-
-        const bakeryEl = document.getElementById('action-bakery');
-        if (bakeryEl) bakeryEl.style.display = Math.hypot(cx - state.locations.bakery.x, cy - state.locations.bakery.y) < 100 ? 'flex' : 'none';
-
-        const shopEl = document.getElementById('action-shop');
-        if (shopEl) shopEl.style.display = Math.hypot(cx - state.locations.shop.x, cy - state.locations.shop.y) < 100 ? 'flex' : 'none';
-
-        const isNearRiver = cx > 450 && cx < 750;
-        const isNearBridge = (cy > 930 && cy < 1050) || (cy > 1780 && cy < 1900);
-        const riverEl = document.getElementById('action-river');
-        if (riverEl) riverEl.style.display = (isNearRiver && !isNearBridge) ? 'flex' : 'none';
-
-        // Charlie's House Building/Entry
-        if (Math.hypot(cx - state.locations.charlieHouse.x, cy - state.locations.charlieHouse.y) < 100) {
-            if (state.houseLevel < 4) { if(state.inventory.materials > 0) buildHouse(); }
-            else enterHouse(state.houses.find(h => h.id === 'charlie'));
-        }
-
-        // Entering NPC Houses
-        state.houses.forEach(h => { if (h.id !== 'charlie' && Math.hypot(cx - h.x, cy - (h.y + 50)) < 60) enterHouse(h); });
-
-        // Collect Stones
-        document.querySelectorAll('.stone').forEach(s => {
-            if (Math.hypot(cx - parseInt(s.style.left), cy - parseInt(s.style.top)) < 40) {
-                state.inventory.stone++; s.remove(); updateUI(); notify("+1 Pierre 🧱");
-                setTimeout(spawnStone, 20000);
-            }
-        });
-
-        // Collect Flowers
-        document.querySelectorAll('.flower').forEach(flower => {
-            if (Math.hypot(cx - parseInt(flower.style.left), cy - parseInt(flower.style.top)) < 40) {
-                state.inventory.flowers++; flower.remove(); updateUI();
-                spawnParticle("🌻", parseInt(flower.style.left), parseInt(flower.style.top));
-                setTimeout(spawnFlowerRandomly, 15000);
-            }
-        });
-
-        // Collect Apples/Wood
-        document.querySelectorAll('.tree').forEach(tree => {
-            if (Math.hypot(cx - parseInt(tree.style.left), cy - parseInt(tree.style.top)) < 50 && tree.dataset.hasApple === "true") harvest(tree);
-        });
-    }
-
-    function harvest(tree) {
-        tree.dataset.hasApple = "false"; tree.innerHTML = "🌲";
-        state.inventory.apples++; state.inventory.wood += 2;
-        updateUI(); notify("+1 Pomme 🍎, +2 Bois 🪵");
-        setTimeout(() => { tree.dataset.hasApple = "true"; tree.innerHTML = "🌳"; }, 8000);
-    }
-
-    function enterHouse(house) {
-        state.currentView = 'interior'; state.activeHouse = house;
-        state.interiorCharlie = { x: 280, y: 450 };
-        const room = document.getElementById('current-room');
-        room.querySelectorAll('.furniture').forEach(f => f.remove());
-        house.furniture.forEach(f => {
-            const div = document.createElement('div'); div.className = 'furniture';
-            div.innerText = f[0]; div.style.left = f[1] + 'px'; div.style.top = f[2] + 'px';
-            room.appendChild(div);
-        });
-        document.getElementById('interior-view').style.display = 'flex';
-        updateInteriorPos(); notify("Bienvenue chez " + house.name);
-    }
-
-    function exitHouse() {
-        state.currentView = 'world'; document.getElementById('interior-view').style.display = 'none';
-        state.charlie.y += 80; updatePlayerPos();
-    }
-
-    function craft(item, woodReq, stoneReq) {
-        if (state.inventory.wood >= woodReq && state.inventory.stone >= stoneReq) {
-            state.inventory.wood -= woodReq; state.inventory.stone -= stoneReq;
-            const emoji = (item === 'table') ? '🪵' : item;
-            const fx = state.interiorCharlie.x; const fy = state.interiorCharlie.y - 40;
-            state.activeHouse.furniture.push([emoji, fx, fy]);
-
-            const div = document.createElement('div'); div.className = 'furniture';
-            div.innerText = emoji; div.style.left = fx + 'px'; div.style.top = fy + 'px';
-            document.getElementById('current-room').appendChild(div);
-            updateUI(); notify("Fabriqué ! ✨");
-        } else notify("Pas assez de matériaux !");
-    }
-
-    function updateInteriorPos() {
-        state.interiorCharlie.x = Math.max(20, Math.min(540, state.interiorCharlie.x));
-        state.interiorCharlie.y = Math.max(20, Math.min(540, state.interiorCharlie.y));
-        const ic = document.getElementById('interior-charlie');
-        if (ic) {
-            ic.style.left = state.interiorCharlie.x + 'px'; ic.style.top = state.interiorCharlie.y + 'px';
-        }
-        if (state.interiorCharlie.y > 480 && state.interiorCharlie.x > 250 && state.interiorCharlie.x < 350) exitHouse();
-    }
-
-    function buildHouse() {
-        state.inventory.materials--; state.houseLevel++;
-        const hLabel = state.houseLevel < 4 ? 'Maison de Charlie' : 'Chez Charlie';
-        const hEmoji = houseStages[state.houseLevel];
-        const site = document.getElementById('house-site');
-        if (site) {
-            site.innerHTML = `${hEmoji}<div class="building-label">${hLabel}</div><div class="house-door"></div>`;
-        }
-        updateUI(); notify("🔨 Construction...");
-    }
-
-    function sellAll() {
-        let total = (state.inventory.apples * 5) + (state.inventory.bread * 15) + (state.inventory.fish * 10) + (state.inventory.flowers * 2);
-        if (total > 0) {
-            state.inventory.money += total;
-            state.inventory.apples = 0; state.inventory.bread = 0; state.inventory.fish = 0; state.inventory.flowers = 0;
-            updateUI(); notify(`Vendu ! +${total}💰`);
-        } else notify("Rien à vendre !");
-    }
-
-    function buyMaterials() {
-        if (state.inventory.money >= 20) {
-            state.inventory.money -= 20; state.inventory.materials++;
-            updateUI(); notify("Matériaux reçus ! 🧱");
-        } else notify("Il te faut 20💰");
-    }
-
-    function startFishing() {
-        if (state.isFishing) return; state.isFishing = true;
-        const btn = document.getElementById('fish-btn');
-        if (btn) btn.innerText = "Attente... 🌊";
-        setTimeout(() => {
-            state.inventory.fish++; state.isFishing = false;
-            if (btn) btn.innerText = "Pêcher 🎣";
-            updateUI(); notify("Poisson attrapé ! 🐟");
-        }, 2500);
-    }
-
-    function bakeBread() {
-        if (state.isBaking) return; state.isBaking = true;
-        const btn = document.getElementById('bake-btn');
-        if (btn) btn.innerText = "Cuisson... 🔥";
-        setTimeout(() => {
-            state.inventory.bread++; state.isBaking = false;
-            if (btn) btn.innerText = "Cuire du Pain 🍞";
-            updateUI(); notify("Pain frais ! 🍞");
-        }, 3000);
-    }
-
-    function createBuilding(x, y, emoji, label, id = "", extraClass = "") {
-        const b = document.createElement('div'); b.className = 'entity ' + extraClass; if(id) b.id = id;
-        b.style.left = x + 'px'; b.style.top = y + 'px'; b.style.fontSize = '4.5rem';
-        b.innerHTML = `<div>${emoji}</div><div class="building-label">${label}</div>`;
-        document.getElementById('game-world').appendChild(b);
-    }
-
-    function createPath(x, y, w, h) {
-        const p = document.createElement('div'); p.className = 'path';
-        p.style.left = x + 'px'; p.style.top = y + 'px'; p.style.width = w + 'px'; p.style.height = h + 'px';
-        document.getElementById('game-world').appendChild(p);
-    }
-
-    function toggleNight() { state.isNight = !state.isNight; document.body.classList.toggle('night-mode'); }
-
-    function updateUI() {
-        const appleCount = document.getElementById('apple-count');
-        const woodCount = document.getElementById('wood-count');
-        const stoneCount = document.getElementById('stone-count');
-        const breadCount = document.getElementById('bread-count');
-        const fishCount = document.getElementById('fish-count');
-        const flowerCount = document.getElementById('flower-count');
-        const moneyCount = document.getElementById('money-count');
-        const materialCount = document.getElementById('material-count');
-
-        if (appleCount) appleCount.innerText = state.inventory.apples;
-        if (woodCount) woodCount.innerText = state.inventory.wood;
-        if (stoneCount) stoneCount.innerText = state.inventory.stone;
-        if (breadCount) breadCount.innerText = state.inventory.bread;
-        if (fishCount) fishCount.innerText = state.inventory.fish;
-        if (flowerCount) flowerCount.innerText = state.inventory.flowers;
-        if (moneyCount) moneyCount.innerText = state.inventory.money;
-        if (materialCount) materialCount.innerText = state.inventory.materials;
-
-        const pBtn = document.getElementById('plant-btn');
-        if (pBtn) {
-            if (state.inventory.flowers > 0) { pBtn.classList.remove('hidden'); pBtn.innerText = `Planter (${state.inventory.flowers}) 🌷`; }
-            else pBtn.classList.add('hidden');
-        }
-    }
-
-    function notify(msg) {
-        const n = document.createElement('div');
-        n.className = 'fixed top-1/2 left-1/2 -translate-x-1/2 bg-white px-6 py-3 rounded-full shadow-xl z-[9000] border-4 border-orange-200 font-bold';
-        n.innerText = msg; document.body.appendChild(n);
-        setTimeout(() => { if (n) { n.style.opacity = '0'; n.style.transition = 'opacity 0.5s'; } }, 1000);
-        setTimeout(() => { if (n) n.remove(); }, 1500);
-    }
-
-    function spawnParticle(emoji, x, y) {
-        const p = document.createElement('div'); p.className = 'particle'; p.innerText = emoji;
-        p.style.left = x + 'px'; p.style.top = y + 'px';
-        const world = document.getElementById('game-world');
-        if (world) world.appendChild(p);
-        setTimeout(() => p.remove(), 1000);
-    }
-
-    function moveBy(dx, dy) {
-        if (state.currentView === 'world') {
-            state.charlie.x += dx; state.charlie.y += dy; updatePlayerPos();
-        } else {
-            state.interiorCharlie.x += dx; state.interiorCharlie.y += dy; updateInteriorPos();
-        }
-    }
-
-    window.onload = init;
+})();
 </script>
 
 </body>

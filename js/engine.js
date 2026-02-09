@@ -1,0 +1,129 @@
+// ── engine.js ── Boucle de jeu (requestAnimationFrame) + inputs ──
+(function(){
+"use strict";
+
+var lastTime = 0;
+var fishJumpTimer = 0;
+
+Game.engine = {};
+
+Game.engine.init = function() {
+    // Input handlers
+    window.addEventListener('keydown', function(e) {
+        if (Game.state.currentView === 'title') return;
+        var key = e.key;
+        if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].indexOf(key) > -1) e.preventDefault();
+        Game.state.keysDown[key] = true;
+        Game.state.keysDown[key.toLowerCase()] = true;
+    });
+
+    window.addEventListener('keyup', function(e) {
+        var key = e.key;
+        delete Game.state.keysDown[key];
+        delete Game.state.keysDown[key.toLowerCase()];
+    });
+
+    // Click to move (world)
+    document.getElementById('viewport').addEventListener('mousedown', function(e) {
+        if (Game.state.currentView !== 'world') return;
+        if (e.target.closest('button, .ui-card, #action-fountain, #action-bakery, #action-shop, #action-river, .building-label, .villager-sprite, .garden-cell')) return;
+        Game.audio.resume();
+        Game.player.handleClick(e);
+    });
+
+    // Touch joystick support
+    Game.engine.initJoystick();
+};
+
+Game.engine.initJoystick = function() {
+    var btns = document.querySelectorAll('#joystick button');
+    var dirs = [
+        { dx: 0, dy: -1 }, // up
+        { dx: -1, dy: 0 }, // left
+        { dx: 0, dy: 1 },  // down
+        { dx: 1, dy: 0 }   // right
+    ];
+    var intervals = [];
+
+    btns.forEach(function(btn, i) {
+        var dir = dirs[i];
+
+        function startMove() {
+            Game.audio.resume();
+            if (Game.state.currentView === 'world') {
+                // Direct position update for joystick
+                Game.state.charlie.x += dir.dx * Game.CONFIG.TILE;
+                Game.state.charlie.y += dir.dy * Game.CONFIG.TILE;
+            } else if (Game.state.currentView === 'interior') {
+                Game.state.interiorCharlie.x += dir.dx * Game.CONFIG.TILE;
+                Game.state.interiorCharlie.y += dir.dy * Game.CONFIG.TILE;
+                Game.state.interiorCharlie.x = Math.max(20, Math.min(540, Game.state.interiorCharlie.x));
+                Game.state.interiorCharlie.y = Math.max(20, Math.min(540, Game.state.interiorCharlie.y));
+                var ic = document.getElementById('interior-charlie');
+                if (ic) {
+                    ic.style.left = Game.state.interiorCharlie.x + 'px';
+                    ic.style.top = Game.state.interiorCharlie.y + 'px';
+                }
+                if (Game.state.interiorCharlie.y > 480 && Game.state.interiorCharlie.x > 230 && Game.state.interiorCharlie.x < 370) {
+                    Game.buildings.exitHouse();
+                }
+            }
+        }
+
+        btn.onmousedown = btn.ontouchstart = function(e) {
+            e.preventDefault();
+            startMove();
+        };
+    });
+};
+
+Game.engine.loop = function(now) {
+    requestAnimationFrame(Game.engine.loop);
+
+    if (Game.state.currentView === 'title' || Game.state.paused) return;
+
+    var dt = now - lastTime;
+    if (dt > 100) dt = 16; // Cap delta
+    lastTime = now;
+
+    // Update systems
+    Game.time.update(now);
+    Game.player.update(dt, now);
+    Game.player.updateInterior(dt);
+    Game.villagers.update(dt);
+    Game.farming.update(dt);
+    Game.creatures.update(dt);
+    Game.particles.update(now);
+    Game.weather.update(dt);
+
+    // Periodic updates
+    fishJumpTimer += dt;
+    if (fishJumpTimer > 8000) {
+        fishJumpTimer = 0;
+        if (Math.random() > 0.5) Game.creatures.spawnJumpingFish();
+    }
+
+    // Update minimap every few frames
+    if (Math.floor(now / 500) !== Math.floor((now - dt) / 500)) {
+        Game.minimap.update();
+        Game.ui.updateClock();
+        Game.quests.updateQuestTracker();
+    }
+
+    // Time overlay
+    Game.engine.updateTimeOverlay();
+};
+
+Game.engine.updateTimeOverlay = function() {
+    var overlay = document.getElementById('time-overlay');
+    if (overlay) {
+        overlay.style.background = Game.time.getOverlayColor();
+    }
+};
+
+Game.engine.start = function() {
+    lastTime = performance.now();
+    requestAnimationFrame(Game.engine.loop);
+};
+
+})();
