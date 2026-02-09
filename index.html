@@ -132,6 +132,17 @@
     <button id="fish-btn" onclick="Game.inventory.startFishing()" class="btn-animal" style="background:#00acc1;box-shadow:0 4px 0 #00838f;">Pêcher 🎣</button>
 </div>
 
+<div id="action-fishShop" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
+    <div class="ui-card" style="padding:10px;max-width:240px;">
+        <div style="font-size:0.8rem;font-weight:bold;color:#1e88e5;margin-bottom:6px;">🐟 Poissonnerie d'Ordralfabétix</div>
+        <div style="font-size:0.7rem;margin-bottom:6px;">
+            Stock : <span id="fishShop-stock">0</span> 🐟 | Revenus : <span id="fishShop-revenue">0</span> 💰
+        </div>
+        <button onclick="Game.inventory.depositFish()" class="btn-animal" style="background:#00acc1;box-shadow:0 4px 0 #00838f;width:100%;margin-bottom:4px;">Déposer mes poissons 🐟</button>
+        <button onclick="Game.inventory.collectFishRevenue()" class="btn-animal" style="background:#f9a825;box-shadow:0 4px 0 #f57f17;width:100%;">Collecter les revenus 💰</button>
+    </div>
+</div>
+
 <!-- ═══════════ Joystick (bottom-left) ═══════════ -->
 
 <div id="joystick" style="position:fixed;bottom:20px;left:20px;z-index:1000;">

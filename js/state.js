@@ -26,6 +26,7 @@ Game.state = {
     questProgress: {},   // { 'Lya 🐰': 0, ... }  index of current quest
     questCompleted: {},  // { 'Lya 🐰': [true, false, ...] }
     villagers: [],
+    fishShop: { stock: 0, revenue: 0 },
     placedFlowers: [],   // [{x,y,emoji}]
     placedPaths: [],     // [{x,y}]
     houseFurniture: {},  // per-house id
@@ -80,6 +81,7 @@ Game.saveGame = function() {
         gardenPlots: JSON.parse(JSON.stringify(s.gardenPlots)),
         questProgress: Object.assign({}, s.questProgress),
         questCompleted: JSON.parse(JSON.stringify(s.questCompleted)),
+        fishShop: { stock: s.fishShop.stock, revenue: s.fishShop.revenue },
         placedFlowers: s.placedFlowers.slice(),
         placedPaths: s.placedPaths.slice(),
         houseFurniture: JSON.parse(JSON.stringify(s.houseFurniture)),
@@ -114,6 +116,7 @@ Game.loadGame = function() {
         if (data.gardenPlots) s.gardenPlots = data.gardenPlots;
         if (data.questProgress) Object.assign(s.questProgress, data.questProgress);
         if (data.questCompleted) s.questCompleted = data.questCompleted;
+        if (data.fishShop) { s.fishShop.stock = data.fishShop.stock || 0; s.fishShop.revenue = data.fishShop.revenue || 0; }
         if (data.placedFlowers) s.placedFlowers = data.placedFlowers;
         if (data.placedPaths) s.placedPaths = data.placedPaths;
         if (data.houseFurniture) s.houseFurniture = data.houseFurniture;

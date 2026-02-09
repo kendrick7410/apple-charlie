@@ -59,7 +59,7 @@ Game.villagers.update = function(dt) {
             // Wander
             v.x += (Math.random() - 0.5) * 100;
             v.y += (Math.random() - 0.5) * 100;
-            v.x = Math.max(700, Math.min(1700, v.x));
+            v.x = Math.max(550, Math.min(1700, v.x));
             v.y = Math.max(700, Math.min(1700, v.y));
         }
 

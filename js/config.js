@@ -55,8 +55,13 @@ Game.CONFIG = {
         shop:         { x: 1200, y: 800  },
         charlieHouse: { x: 1400, y: 1200 },
         garden:       { x: 1550, y: 1350 },
+        fishShop:     { x: 650,  y: 1100 },
         riverBaseX:   550
-    }
+    },
+
+    // Fish shop
+    FISH_SHOP_SELL_INTERVAL: 30000,
+    FISH_SHOP_SELL_PRICE: 15
 };
 
 Game.HOUSE_STAGES = ["🏗️", "🧱", "🏠", "🏘️", "🏡"];
@@ -231,6 +236,38 @@ Game.VILLAGER_DATA = {
                       // ── Vague 4 ──
                       { desc: "Invocation : 20 fleurs, 12 poissons, 10 pierres 🔮", need: { flowers: 20, fish: 12, stone: 10 }, reward: { money: 165, xp: 120 }, done: "Les esprits s'éveillent !", unlock: { totalQuests: 10, level: 6 } },
                       { desc: "Artefact ancien : 15 bois, 15 pierres, 8 pains ✨", need: { wood: 15, stone: 15, bread: 8 }, reward: { money: 185, xp: 135 }, done: "L'artefact brille ! Merci Charlie !", unlock: { totalQuests: 10, level: 6 } }
+                  ]},
+    'Ordralfabétix 🐡': { emoji: '🐡', home: { x: 650, y: 1100 }, greetings: ["Mes poissons sont les plus frais !", "Goûte-moi ça !", "Le poisson du jour ! 🐟"],
+                  dialogues: [
+                      "Mes poissons sont pêchés du jour ! Pas comme ceux d'à côté ! 🐟",
+                      "Tu veux du poisson ? J'ai tout ce qu'il faut !",
+                      "Les villageois adorent mon poisson. Normal, il est FRAIS !",
+                      "Melo est mon meilleur client. Ce chat a du goût ! 🐱",
+                      "Dépose tes poissons ici, je m'occupe de tout vendre !",
+                      "Le secret d'un bon poisson ? La fraîcheur, par Toutatis ! ⚡",
+                      "Jo m'a commandé du poisson grillé. Mais moi je vends du CRU !",
+                      "Lya a peint ma boutique. Depuis, les clients affluent ! 🎨",
+                      "Célestine dit que mes poissons ont une aura magique. Je dis juste qu'ils sont frais.",
+                      "15 clochettes le poisson, c'est donné ! Ailleurs c'est 10 à la fontaine...",
+                      "Un jour j'ouvrirai une deuxième boutique de l'autre côté de la rivière !",
+                      "La pluie c'est bon pour la pêche, mais mauvais pour l'étalage... 🌧️",
+                      "En hiver les poissons se cachent, mais ma boutique reste ouverte !",
+                      "Mon rêve ? Que tout le village sente bon le poisson frais ! 🐟",
+                      "Apporte-moi du poisson et je te ferai gagner des clochettes !"
+                  ],
+                  quests: [
+                      { desc: "Apporte 5 poissons pour mon étal 🐟", need: { fish: 5 }, reward: { money: 50, xp: 40 }, done: "Super ! L'étal est plein !" },
+                      { desc: "Il me faut 3 pains pour mes sandwiches 🍞", need: { bread: 3 }, reward: { money: 40, xp: 35 }, done: "Sandwich poisson-pain, un délice !" },
+                      { desc: "Ramène 8 poissons, grosse commande ! 🐟", need: { fish: 8 }, reward: { money: 70, xp: 55 }, done: "Commande livrée, merci !" },
+                      // ── Vague 2 ──
+                      { desc: "12 poissons pour le banquet du village 🐟", need: { fish: 12 }, reward: { money: 100, xp: 75 }, done: "Le banquet sera mémorable !", unlock: { totalQuests: 3, level: 2 } },
+                      { desc: "Apporte 5 pommes et 6 poissons 🍎🐟", need: { apples: 5, fish: 6 }, reward: { money: 90, xp: 70 }, done: "Poisson aux pommes, original !", unlock: { totalQuests: 3, level: 2 } },
+                      // ── Vague 3 ──
+                      { desc: "Grande pêche : 18 poissons 🐟🐟", need: { fish: 18 }, reward: { money: 140, xp: 100 }, done: "Ma boutique déborde !", unlock: { totalQuests: 6, level: 4 } },
+                      { desc: "Festin marin : 10 poissons et 5 pains 🐟🍞", need: { fish: 10, bread: 5 }, reward: { money: 130, xp: 95 }, done: "Un festin digne de Toutatis !", unlock: { totalQuests: 6, level: 4 } },
+                      // ── Vague 4 ──
+                      { desc: "Réserve royale : 25 poissons 🐟👑", need: { fish: 25 }, reward: { money: 180, xp: 130 }, done: "La plus grande réserve du village !", unlock: { totalQuests: 10, level: 6 } },
+                      { desc: "Buffet océan : 15 poissons, 8 pains, 5 pommes 🌊", need: { fish: 15, bread: 8, apples: 5 }, reward: { money: 200, xp: 140 }, done: "Par Toutatis, quel buffet !", unlock: { totalQuests: 10, level: 6 } }
                   ]}
 };
 

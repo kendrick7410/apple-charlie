@@ -21,6 +21,10 @@ Game.buildings.checkProximity = function() {
     var shopPanel = document.getElementById('action-shop');
     if (shopPanel) shopPanel.style.display = Math.hypot(cx - loc.shop.x, cy - loc.shop.y) < 100 ? 'flex' : 'none';
 
+    // Fish Shop
+    var fishShopPanel = document.getElementById('action-fishShop');
+    if (fishShopPanel) fishShopPanel.style.display = Math.hypot(cx - loc.fishShop.x, cy - loc.fishShop.y) < 100 ? 'flex' : 'none';
+
     // River fishing
     var isNearRiver = cx > 450 && cx < 750;
     var isNearBridge = (cy > 930 && cy < 1050) || (cy > 1780 && cy < 1900);

@@ -60,6 +60,12 @@ Game.ui.update = function() {
         seedsEl.innerHTML = shtml || '';
     }
 
+    // Fish shop counters
+    var fishShopStock = document.getElementById('fishShop-stock');
+    var fishShopRevenue = document.getElementById('fishShop-revenue');
+    if (fishShopStock) fishShopStock.textContent = s.fishShop ? s.fishShop.stock : 0;
+    if (fishShopRevenue) fishShopRevenue.textContent = s.fishShop ? s.fishShop.revenue : 0;
+
     // Tools display
     Game.ui.updateToolbar();
 
@@ -86,11 +92,25 @@ Game.ui.updateToolbar = function() {
     var bar = document.getElementById('toolbar');
     if (!bar) return;
     var tools = Game.tools.getToolbar();
-    var html = '';
+    bar.innerHTML = '';
+    var toolMessages = {
+        '🪓': "Hache active ! Double le bois récolté (4 au lieu de 2)",
+        '🎣': "Canne active ! Pêche 2x plus rapide",
+        '🚿': "Arrosoir ! Clique sur une culture pour l'arroser",
+        '⛏️': "Pelle ! Utilise le bouton Pelle ON/OFF pour tracer des chemins"
+    };
     tools.forEach(function(t) {
-        html += '<div class="tool-icon" title="' + t.label + '">' + t.emoji + '</div>';
+        var div = document.createElement('div');
+        div.className = 'tool-icon';
+        div.title = t.label;
+        div.textContent = t.emoji;
+        div.style.cursor = 'pointer';
+        div.onclick = function() {
+            var msg = toolMessages[t.emoji] || (t.label + " équipé !");
+            Game.ui.notify(msg, 'info');
+        };
+        bar.appendChild(div);
     });
-    bar.innerHTML = html;
 };
 
 Game.ui.updateShop = function() {

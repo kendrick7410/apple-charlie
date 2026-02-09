@@ -31,6 +31,9 @@ Game.world.init = function() {
     // Shop
     Game.world.createBuilding(Game.CONFIG.LOCATIONS.shop.x, Game.CONFIG.LOCATIONS.shop.y, "🏪", "Magasin", "shop-anchor");
 
+    // Fish Shop (Poissonnerie)
+    Game.world.createBuilding(Game.CONFIG.LOCATIONS.fishShop.x, Game.CONFIG.LOCATIONS.fishShop.y, "🐟", "Poissonnerie", "fishShop-anchor");
+
     // NPC houses
     Game.HOUSES.forEach(function(h) {
         if (h.id === 'charlie') return;

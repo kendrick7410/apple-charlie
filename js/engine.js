@@ -4,6 +4,7 @@
 
 var lastTime = 0;
 var fishJumpTimer = 0;
+var fishShopTimer = 0;
 
 Game.engine = {};
 
@@ -26,7 +27,7 @@ Game.engine.init = function() {
     // Click to move (world)
     document.getElementById('viewport').addEventListener('mousedown', function(e) {
         if (Game.state.currentView !== 'world') return;
-        if (e.target.closest('button, .ui-card, #action-fountain, #action-bakery, #action-shop, #action-river, .building-label, .villager-sprite, .garden-cell')) return;
+        if (e.target.closest('button, .ui-card, #action-fountain, #action-bakery, #action-shop, #action-river, #action-fishShop, .building-label, .villager-sprite, .garden-cell')) return;
         Game.audio.resume();
         Game.player.handleClick(e);
     });
@@ -95,6 +96,17 @@ Game.engine.loop = function(now) {
     Game.creatures.update(dt);
     Game.particles.update(now);
     Game.weather.update(dt);
+
+    // Fish shop passive selling
+    fishShopTimer += dt;
+    if (fishShopTimer >= Game.CONFIG.FISH_SHOP_SELL_INTERVAL) {
+        fishShopTimer = 0;
+        if (Game.state.fishShop.stock > 0) {
+            Game.state.fishShop.stock--;
+            Game.state.fishShop.revenue += Game.CONFIG.FISH_SHOP_SELL_PRICE;
+            Game.ui.update();
+        }
+    }
 
     // Periodic updates
     fishJumpTimer += dt;

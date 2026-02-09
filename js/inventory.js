@@ -115,6 +115,37 @@ Game.inventory.startFishing = function() {
     }, fishTime);
 };
 
+Game.inventory.depositFish = function() {
+    var s = Game.state;
+    if (s.inventory.fish <= 0) {
+        Game.ui.notify("Tu n'as pas de poisson à déposer !");
+        return;
+    }
+    var amount = s.inventory.fish;
+    s.fishShop.stock += amount;
+    s.inventory.fish = 0;
+    Game.audio.play('collect');
+    Game.particles.spawn('🐟', window.innerWidth - 100, window.innerHeight - 150, { count: 3, spread: 40 });
+    Game.ui.update();
+    Game.ui.notify("Déposé " + amount + " poisson" + (amount > 1 ? "s" : "") + " ! 🐟");
+};
+
+Game.inventory.collectFishRevenue = function() {
+    var s = Game.state;
+    if (s.fishShop.revenue <= 0) {
+        Game.ui.notify("Pas encore de revenus à collecter !");
+        return;
+    }
+    var amount = s.fishShop.revenue;
+    s.inventory.money += amount;
+    s.fishShop.revenue = 0;
+    Game.audio.playCoin();
+    Game.particles.spawn('💰', window.innerWidth - 100, window.innerHeight - 150, { count: 5, spread: 60, vy: -80 });
+    Game.xp.add(Math.floor(amount / 10));
+    Game.ui.update();
+    Game.ui.notify("Collecté " + amount + "💰 de la poissonnerie !");
+};
+
 Game.inventory.bakeBread = function() {
     var s = Game.state;
     if (s.isBaking) return;
