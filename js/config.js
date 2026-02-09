@@ -104,6 +104,14 @@ Game.HOUSES = [
 
 Game.VILLAGER_DATA = {
     'Lya 🐰':  { emoji: '🐰', home: { x: 850,  y: 1200 }, greetings: ["Salut Charlie !", "Tu as des fleurs ?", "J'adore peindre !"],
+                  dialogues: [
+                      "Tu savais que les fleurs poussent mieux au printemps ? 🌸",
+                      "J'ai commencé une peinture du village, elle est presque finie !",
+                      "Melo m'a demandé un portrait... il bouge trop ! 😅",
+                      "Les couchers de soleil ici sont magnifiques, tu trouves pas ?",
+                      "Un jour j'ouvrirai une galerie d'art dans le village ! 🎨",
+                      "Jo dit que mes peintures sentent la fleur. C'est un compliment non ?"
+                  ],
                   quests: [
                       { desc: "Rapporte-moi 5 fleurs 🌻", need: { flowers: 5 }, reward: { money: 30, xp: 40 }, done: "Merci ! C'est magnifique !" },
                       { desc: "J'ai besoin de 3 pommes 🍎", need: { apples: 3 }, reward: { money: 20, xp: 30 }, done: "Délicieux !" },
@@ -119,6 +127,14 @@ Game.VILLAGER_DATA = {
                       { desc: "Fresque géante : 8 pains, 6 pommes, 15 fleurs 🖼️", need: { bread: 8, apples: 6, flowers: 15 }, reward: { money: 180, xp: 130 }, done: "Ma plus belle œuvre !", unlock: { totalQuests: 10, level: 6 } }
                   ]},
     'Melo 🐱': { emoji: '🐱', home: { x: 1100, y: 1400 }, greetings: ["Miaou !", "Tu as du poisson ?", "Il fait beau !"],
+                  dialogues: [
+                      "Tu sais ce qui est mieux que le poisson ? PLUS de poisson ! 🐟",
+                      "J'ai fait une sieste de 3 heures... c'était trop court.",
+                      "Célestine dit que les chats voient les esprits. Moi je vois que du poisson.",
+                      "Mon arbre à chat sera le plus grand du monde, tu verras !",
+                      "La nuit, j'observe les étoiles depuis mon toit. C'est paisible. ✨",
+                      "Jo veut qu'on joue à la balle. C'est un truc de chien ça, non ?"
+                  ],
                   quests: [
                       { desc: "Attrape-moi 3 poissons 🐟", need: { fish: 3 }, reward: { money: 40, xp: 50 }, done: "Miam, du poisson !" },
                       { desc: "Il me faut 10 bois 🪵", need: { wood: 10 }, reward: { money: 35, xp: 40 }, done: "Parfait pour mon arbre à chat !" },
@@ -134,6 +150,14 @@ Game.VILLAGER_DATA = {
                       { desc: "Tour à chat : 25 bois et 15 pierres 🪵🧱", need: { wood: 25, stone: 15 }, reward: { money: 170, xp: 125 }, done: "Miaou ! La plus haute tour !", unlock: { totalQuests: 10, level: 6 } }
                   ]},
     'Jo 🐶':   { emoji: '🐶', home: { x: 1500, y: 900  }, greetings: ["Woof !", "T'as du bois ?", "C'est grand dehors !"],
+                  dialogues: [
+                      "Un jour je construirai un pont géant pour traverser la rivière ! 🌉",
+                      "J'ai enterré un os quelque part... mais où ? 🦴",
+                      "Lya m'a peint ! Je suis beau dessus, hein ?",
+                      "Tu crois qu'on pourrait construire un phare dans le village ?",
+                      "La forêt est pleine de bons arbres pour construire. Allons-y !",
+                      "Célestine m'a lu mon avenir. Il y a beaucoup de bâtons dedans. 🪵"
+                  ],
                   quests: [
                       { desc: "J'ai besoin de 8 bois 🪵", need: { wood: 8 }, reward: { money: 25, xp: 35 }, done: "Génial, je vais construire !" },
                       { desc: "Trouve-moi 4 pierres 🧱", need: { stone: 4 }, reward: { money: 30, xp: 40 }, done: "Solide comme un roc !" },
@@ -149,6 +173,14 @@ Game.VILLAGER_DATA = {
                       { desc: "Grande fête : 12 poissons, 8 pommes, 5 pains 🎉", need: { fish: 12, apples: 8, bread: 5 }, reward: { money: 175, xp: 130 }, done: "Woof ! Quelle fête incroyable !", unlock: { totalQuests: 10, level: 6 } }
                   ]},
     'Célestine 🦊': { emoji: '🦊', home: { x: 700, y: 1500 }, greetings: ["Bonjour voyageur !", "Les étoiles parlent...", "Tu sens cette magie ?"],
+                  dialogues: [
+                      "La rivière murmure des secrets à qui sait écouter... 🌊",
+                      "J'ai vu une étoile filante hier. J'ai fait un vœu pour le village. ✨",
+                      "Mes potions demandent des ingrédients rares. La nature est généreuse.",
+                      "Melo pense que je suis mystérieuse. C'est parce qu'il ne lit pas ! 📖",
+                      "Chaque saison a sa propre magie. L'automne est ma préférée. 🍂",
+                      "Le village grandit grâce à toi, Charlie. Les esprits sont contents. 🦊"
+                  ],
                   quests: [
                       // ── Vague 1 : disponible dès le début ──
                       { desc: "Apporte-moi 4 fleurs magiques 🌸", need: { flowers: 4 }, reward: { money: 35, xp: 45 }, done: "Je sens leur énergie !" },
@@ -185,7 +217,8 @@ Game.COOKING_RECIPES = {
 Game.TOOLS = {
     axe:      { emoji: '🪓', label: 'Hache',          price: 50,  desc: 'Plus de bois par arbre' },
     rod:      { emoji: '🎣', label: 'Canne à pêche',  price: 40,  desc: 'Pêche plus rapide' },
-    watering: { emoji: '🚿', label: 'Arrosoir',       price: 30,  desc: 'Arrose le jardin' }
+    watering: { emoji: '🚿', label: 'Arrosoir',       price: 30,  desc: 'Arrose le jardin' },
+    shovel:   { emoji: '⛏️', label: 'Pelle',           price: 35,  desc: 'Creuse et trace des chemins' }
 };
 
 Game.CROPS = {
@@ -203,7 +236,8 @@ Game.SHOP_ITEMS = [
     { type: 'seed', id: 'pumpkin',    price: 10 },
     { type: 'seed', id: 'wheat',      price: 5  },
     { type: 'seed', id: 'strawberry', price: 8  },
-    { type: 'material', id: 'materials', price: 20 }
+    { type: 'material', id: 'materials', price: 20 },
+    { type: 'tool', id: 'shovel' }
 ];
 
 Game.SOUNDS = {

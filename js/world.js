@@ -10,9 +10,9 @@ Game.world.init = function() {
     // River
     Game.world.createRiver(Game.CONFIG.LOCATIONS.riverBaseX, 0, Game.CONFIG.WORLD_H);
 
-    // Bridges
-    Game.world.createBridge(Game.CONFIG.LOCATIONS.riverBaseX + 10, 950, 140, 80);
-    Game.world.createBridge(Game.CONFIG.LOCATIONS.riverBaseX + 10, 1800, 140, 80);
+    // Bridges (wider, better positioned to span river)
+    Game.world.createBridge(Game.CONFIG.LOCATIONS.riverBaseX - 20, 950, 200, 70);
+    Game.world.createBridge(Game.CONFIG.LOCATIONS.riverBaseX - 20, 1800, 200, 70);
 
     // Paths
     Game.world.createPath(700, 700, 600, 600);
@@ -56,6 +56,9 @@ Game.world.init = function() {
 
     // Garden area
     Game.world.createGardenArea();
+
+    // Render player-placed paths from save
+    Game.tools.renderAllPaths();
 
     // Apply season colors
     document.documentElement.style.setProperty('--grass', Game.SEASON_GRASS[Game.state.season]);

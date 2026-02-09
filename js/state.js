@@ -13,7 +13,8 @@ Game.state = {
     houseLevel: 0,
     isBaking: false,
     isFishing: false,
-    tools: { axe: false, rod: false, watering: false },
+    tools: { axe: false, rod: false, watering: false, shovel: false },
+    shovelMode: false,
     xp: 0,
     level: 1,
     gameHour: 8,
@@ -26,6 +27,7 @@ Game.state = {
     questCompleted: {},  // { 'Lya 🐰': [true, false, ...] }
     villagers: [],
     placedFlowers: [],   // [{x,y,emoji}]
+    placedPaths: [],     // [{x,y}]
     houseFurniture: {},  // per-house id
     totalTimePlayed: 0,
     keysDown: {},
@@ -79,6 +81,7 @@ Game.saveGame = function() {
         questProgress: Object.assign({}, s.questProgress),
         questCompleted: JSON.parse(JSON.stringify(s.questCompleted)),
         placedFlowers: s.placedFlowers.slice(),
+        placedPaths: s.placedPaths.slice(),
         houseFurniture: JSON.parse(JSON.stringify(s.houseFurniture)),
         totalTimePlayed: s.totalTimePlayed
     };
@@ -112,6 +115,7 @@ Game.loadGame = function() {
         if (data.questProgress) Object.assign(s.questProgress, data.questProgress);
         if (data.questCompleted) s.questCompleted = data.questCompleted;
         if (data.placedFlowers) s.placedFlowers = data.placedFlowers;
+        if (data.placedPaths) s.placedPaths = data.placedPaths;
         if (data.houseFurniture) s.houseFurniture = data.houseFurniture;
         if (data.totalTimePlayed) s.totalTimePlayed = data.totalTimePlayed;
         s.currentView = 'world';

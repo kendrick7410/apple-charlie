@@ -111,13 +111,22 @@ Game.player.teleport = function(x, y) {
     Game.player.updateCamera();
 };
 
-// Click-to-move
+// Click-to-move or shovel
 Game.player.handleClick = function(e) {
     if (Game.state.currentView !== 'world') return;
     var world = document.getElementById('game-world');
     var rect = world.getBoundingClientRect();
-    Game.state.charlie.x = e.clientX - rect.left;
-    Game.state.charlie.y = e.clientY - rect.top;
+    var worldX = e.clientX - rect.left;
+    var worldY = e.clientY - rect.top;
+
+    // If shovel mode, place path instead of moving
+    if (Game.state.shovelMode && Game.state.tools.shovel) {
+        Game.tools.placePath(worldX, worldY);
+        return;
+    }
+
+    Game.state.charlie.x = worldX;
+    Game.state.charlie.y = worldY;
 };
 
 // Interior movement
