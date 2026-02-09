@@ -19,6 +19,9 @@ Game.time.update = function(now) {
 
     Game.state.totalTimePlayed += dt;
 
+    // Apply time speed multiplier
+    dt *= (Game.state.timeSpeed || 1);
+
     // Advance game clock
     var msPerMin = Game.CONFIG.REAL_MS_PER_GAME_HOUR / 60;
     var gameMinsElapsed = dt / msPerMin;
@@ -81,6 +84,20 @@ Game.time.onSeasonChange = function(season) {
 
 Game.time.getSeasonLabel = function() {
     return Game.SEASON_LABELS[Game.state.season];
+};
+
+Game.time.setSpeed = function(speed) {
+    Game.state.timeSpeed = speed;
+    Game.ui.notify("Vitesse x" + speed);
+    var el = document.getElementById('speed-display');
+    if (el) el.textContent = 'x' + speed;
+};
+
+Game.time.togglePause = function() {
+    Game.state.paused = !Game.state.paused;
+    Game.ui.notify(Game.state.paused ? "Pause ⏸️" : "Reprise ▶️");
+    var el = document.getElementById('pause-btn');
+    if (el) el.textContent = Game.state.paused ? '▶️' : '⏸️';
 };
 
 })();

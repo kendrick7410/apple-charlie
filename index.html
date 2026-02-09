@@ -29,6 +29,9 @@
                 <button onclick="Game.crafting.craftFurniture('table')" class="btn-animal btn-craft">🪵 Table (4🪵)</button>
                 <button onclick="Game.crafting.craftFurniture('bookshelf')" class="btn-animal btn-craft">📚 Biblio (5🪵,2🧱)</button>
                 <button onclick="Game.crafting.craftFurniture('plant')" class="btn-animal btn-craft">🪴 Plante (3🧱)</button>
+                <button onclick="Game.crafting.craftFurniture('bed')" class="btn-animal btn-craft">🛏️ Lit (6🪵)</button>
+                <button onclick="Game.crafting.craftFurniture('lamp')" class="btn-animal btn-craft">💡 Lampe (1🪵,2🧱)</button>
+                <button onclick="Game.crafting.craftFurniture('mirror')" class="btn-animal btn-craft">🪞 Miroir (2🪵,3🧱)</button>
             </div>
             <div style="color:white;background:rgba(0,0,0,0.5);padding:4px 16px;border-radius:999px;font-size:0.7rem;">
                 Marche sur le tapis 🌟 pour sortir
@@ -62,6 +65,7 @@
             <span>🍞 Pains:</span>  <span id="bread-count" style="font-weight:bold;color:#bf8c3e;text-align:right;">0</span>
             <span>🐟 Poissons:</span> <span id="fish-count" style="font-weight:bold;color:#1e88e5;text-align:right;">0</span>
             <span>🌻 Fleurs:</span> <span id="flower-count" style="font-weight:bold;color:#e91e63;text-align:right;">0</span>
+            <span>🦋 Papillons:</span> <span id="butterfly-count" style="font-weight:bold;color:#7c4dff;text-align:right;">0</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:0.75rem;border-top:1px solid #e8e2c8;margin-top:3px;padding-top:3px;">
             <span>💰 Clochettes:</span> <span id="money-count" style="font-weight:bold;color:#f9a825;">0</span>
@@ -110,6 +114,7 @@
 
 <div id="action-fountain" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
     <button onclick="Game.inventory.sellAll()" class="btn-animal" style="background:#42a5f5;box-shadow:0 4px 0 #1e88e5;">Tout vendre ⛲</button>
+    <button onclick="Game.inventory.collectVillageRevenue()" class="btn-animal" style="background:#66bb6a;box-shadow:0 4px 0 #43a047;">Revenus village : <span id="village-revenue">0</span>💰</button>
 </div>
 
 <div id="action-bakery" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
@@ -140,6 +145,27 @@
         </div>
         <button onclick="Game.inventory.depositFish()" class="btn-animal" style="background:#00acc1;box-shadow:0 4px 0 #00838f;width:100%;margin-bottom:4px;">Déposer mes poissons 🐟</button>
         <button onclick="Game.inventory.collectFishRevenue()" class="btn-animal" style="background:#f9a825;box-shadow:0 4px 0 #f57f17;width:100%;">Collecter les revenus 💰</button>
+    </div>
+</div>
+
+<div id="action-museum" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
+    <div class="ui-card" style="padding:10px;max-width:280px;max-height:60vh;overflow-y:auto;">
+        <div style="font-size:0.8rem;font-weight:bold;color:#7c4dff;margin-bottom:4px;">🏛️ Musée — <span id="museum-count">0/13</span></div>
+        <div style="font-size:0.7rem;font-weight:bold;color:#1e88e5;margin-bottom:2px;">Poissons</div>
+        <div id="museum-fish" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;"></div>
+        <div style="font-size:0.7rem;font-weight:bold;color:#7c4dff;margin-bottom:2px;">Papillons</div>
+        <div id="museum-butterflies" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+    </div>
+</div>
+
+<!-- ═══════════ Time Controls (top-right) ═══════════ -->
+<div style="position:fixed;top:10px;right:10px;z-index:1000;">
+    <div class="ui-card" style="padding:6px 10px;display:flex;gap:4px;align-items:center;font-size:0.65rem;">
+        <button id="pause-btn" onclick="Game.time.togglePause()" style="background:#e8e2c8;border:1px solid #d4c9a8;border-radius:6px;padding:2px 6px;cursor:pointer;font-size:0.7rem;">⏸️</button>
+        <button onclick="Game.time.setSpeed(1)" style="background:#e8e2c8;border:1px solid #d4c9a8;border-radius:6px;padding:2px 6px;cursor:pointer;">x1</button>
+        <button onclick="Game.time.setSpeed(2)" style="background:#e8e2c8;border:1px solid #d4c9a8;border-radius:6px;padding:2px 6px;cursor:pointer;">x2</button>
+        <button onclick="Game.time.setSpeed(4)" style="background:#e8e2c8;border:1px solid #d4c9a8;border-radius:6px;padding:2px 6px;cursor:pointer;">x4</button>
+        <span id="speed-display" style="color:#8b6914;font-weight:bold;">x1</span>
     </div>
 </div>
 

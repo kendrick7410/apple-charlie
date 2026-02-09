@@ -5,6 +5,7 @@
 var lastTime = 0;
 var fishJumpTimer = 0;
 var fishShopTimer = 0;
+var villageRevenueTimer = 0;
 
 Game.engine = {};
 
@@ -27,7 +28,7 @@ Game.engine.init = function() {
     // Click to move (world)
     document.getElementById('viewport').addEventListener('mousedown', function(e) {
         if (Game.state.currentView !== 'world') return;
-        if (e.target.closest('button, .ui-card, #action-fountain, #action-bakery, #action-shop, #action-river, #action-fishShop, .building-label, .villager-sprite, .garden-cell')) return;
+        if (e.target.closest('button, .ui-card, #action-fountain, #action-bakery, #action-shop, #action-river, #action-fishShop, #action-museum, .building-label, .villager-sprite, .garden-cell')) return;
         Game.audio.resume();
         Game.player.handleClick(e);
     });
@@ -105,6 +106,19 @@ Game.engine.loop = function(now) {
             Game.state.fishShop.stock--;
             Game.state.fishShop.revenue += Game.CONFIG.FISH_SHOP_SELL_PRICE;
             Game.ui.update();
+        }
+    }
+
+    // Village revenue
+    villageRevenueTimer += dt;
+    if (villageRevenueTimer >= 60000) { // every real minute = 1 game day of revenue
+        villageRevenueTimer = 0;
+        var totalIncome = 0;
+        for (var vn in Game.VILLAGER_JOBS) {
+            totalIncome += Game.VILLAGER_JOBS[vn].income;
+        }
+        if (totalIncome > 0) {
+            Game.state.villageRevenue += totalIncome;
         }
     }
 
