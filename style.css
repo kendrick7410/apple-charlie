@@ -232,12 +232,15 @@ body {
 
 .building-label {
     font-size: 10px;
-    background: white;
+    background: rgba(255,255,255,0.8);
     padding: 2px 8px;
     border-radius: 10px;
     margin-top: 5px;
     font-weight: bold;
     white-space: nowrap;
+    color: #5d4037;
+    text-shadow: 0 0 3px rgba(255,255,255,0.9);
+    backdrop-filter: blur(2px);
 }
 
 .house-exterior {
@@ -479,6 +482,69 @@ body {
 /* ── Creature ── */
 .creature {
     transition: none !important;
+    pointer-events: none;
+}
+
+/* ── Museum items ── */
+.museum-item {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 2px solid #e8e2c8;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    background: rgba(255,255,255,0.5);
+    cursor: default;
+    gap: 0;
+}
+
+.museum-item small {
+    font-size: 0.45rem;
+    line-height: 1;
+    color: #5d4037;
+}
+
+.museum-item.donated {
+    background: rgba(200,255,200,0.6);
+    border-width: 3px;
+}
+
+.museum-item.available {
+    cursor: pointer;
+    background: rgba(255,255,200,0.6);
+    animation: museum-pulse 1.5s infinite;
+}
+
+@keyframes museum-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.4); }
+    50% { box-shadow: 0 0 8px 2px rgba(255,215,0,0.6); }
+}
+
+.museum-item.empty {
+    color: #ccc;
+    font-size: 1rem;
+    background: rgba(0,0,0,0.05);
+}
+
+/* ── Forest ground ── */
+.forest-ground {
+    background: radial-gradient(ellipse at center, rgba(60,120,40,0.3) 0%, rgba(60,120,40,0.1) 60%, transparent 80%);
+}
+
+/* ── Hills (relief) ── */
+.hill {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 40% 35%, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.04) 50%, transparent 75%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ── Wasp ── */
+.wasp {
     pointer-events: none;
 }
 

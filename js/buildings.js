@@ -25,6 +25,14 @@ Game.buildings.checkProximity = function() {
     var fishShopPanel = document.getElementById('action-fishShop');
     if (fishShopPanel) fishShopPanel.style.display = Math.hypot(cx - loc.fishShop.x, cy - loc.fishShop.y) < 100 ? 'flex' : 'none';
 
+    // Museum
+    var museumPanel = document.getElementById('action-museum');
+    if (museumPanel) {
+        var nearMuseum = Math.hypot(cx - loc.museum.x, cy - loc.museum.y) < 100;
+        museumPanel.style.display = nearMuseum ? 'flex' : 'none';
+        if (nearMuseum) Game.ui.updateMuseum();
+    }
+
     // River fishing
     var isNearRiver = cx > 450 && cx < 750;
     var isNearBridge = (cy > 930 && cy < 1050) || (cy > 1780 && cy < 1900);
@@ -60,14 +68,17 @@ Game.buildings.enterHouse = function(house) {
     var old = room.querySelectorAll('.furniture');
     for (var i = 0; i < old.length; i++) old[i].remove();
 
-    // Load furniture from state
+    // Load furniture from state (draggable)
     var furnitureList = s.houseFurniture[house.id] || house.furniture;
-    furnitureList.forEach(function(f) {
+    furnitureList.forEach(function(f, idx) {
         var div = document.createElement('div');
         div.className = 'furniture';
         div.textContent = f[0];
         div.style.left = f[1] + 'px';
         div.style.top = f[2] + 'px';
+        div.style.cursor = 'grab';
+        div.dataset.fIdx = idx;
+        Game.buildings.makeDraggable(div, house.id, idx);
         room.appendChild(div);
     });
 
@@ -96,6 +107,45 @@ Game.buildings.exitHouse = function() {
     s.charlie.visualY += 80;
     s.activeHouse = null;
     Game.player.updateCamera();
+};
+
+Game.buildings.makeDraggable = function(el, houseId, fIdx) {
+    var dragging = false;
+    var offsetX, offsetY;
+    el.addEventListener('mousedown', function(e) {
+        e.stopPropagation();
+        dragging = true;
+        el.style.cursor = 'grabbing';
+        var room = document.getElementById('current-room');
+        var rect = room.getBoundingClientRect();
+        offsetX = e.clientX - rect.left - parseInt(el.style.left);
+        offsetY = e.clientY - rect.top - parseInt(el.style.top);
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var room = document.getElementById('current-room');
+        var rect = room.getBoundingClientRect();
+        var nx = e.clientX - rect.left - offsetX;
+        var ny = e.clientY - rect.top - offsetY;
+        // Snap to 20px grid
+        nx = Math.round(nx / 20) * 20;
+        ny = Math.round(ny / 20) * 20;
+        nx = Math.max(0, Math.min(540, nx));
+        ny = Math.max(0, Math.min(540, ny));
+        el.style.left = nx + 'px';
+        el.style.top = ny + 'px';
+    });
+    document.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        el.style.cursor = 'grab';
+        // Save position
+        var s = Game.state;
+        if (s.houseFurniture[houseId] && s.houseFurniture[houseId][fIdx]) {
+            s.houseFurniture[houseId][fIdx][1] = parseInt(el.style.left);
+            s.houseFurniture[houseId][fIdx][2] = parseInt(el.style.top);
+        }
+    });
 };
 
 Game.buildings.buildHouse = function() {

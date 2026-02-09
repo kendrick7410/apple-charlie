@@ -57,6 +57,15 @@ Game.world.init = function() {
     site.innerHTML = houseEmoji + '<div class="building-label">Maison de Charlie</div><div class="house-door"></div>';
     world.appendChild(site);
 
+    // Museum
+    Game.world.createBuilding(Game.CONFIG.LOCATIONS.museum.x, Game.CONFIG.LOCATIONS.museum.y, "🏛️", "Musée", "museum-anchor");
+
+    // Mini-forest
+    Game.world.createForest();
+
+    // Hills (relief)
+    Game.world.createHills();
+
     // Garden area
     Game.world.createGardenArea();
 
@@ -140,6 +149,65 @@ Game.world.createGardenArea = function() {
     }
     container.appendChild(grid);
     document.getElementById('game-world').appendChild(container);
+};
+
+Game.world.createForest = function() {
+    var world = document.getElementById('game-world');
+    var loc = Game.CONFIG.LOCATIONS.forest;
+    var season = Game.state.season;
+
+    // Forest ground
+    var ground = document.createElement('div');
+    ground.className = 'forest-ground';
+    ground.style.cssText = 'position:absolute;border-radius:50%;pointer-events:none;z-index:0;';
+    ground.style.left = (loc.x - 200) + 'px';
+    ground.style.top = (loc.y - 200) + 'px';
+    ground.style.width = '400px';
+    ground.style.height = '400px';
+    world.appendChild(ground);
+
+    // Label
+    var label = document.createElement('div');
+    label.className = 'entity';
+    label.style.left = loc.x + 'px';
+    label.style.top = (loc.y - 180) + 'px';
+    label.innerHTML = '<div class="building-label">🌳 Mini-forêt</div>';
+    world.appendChild(label);
+
+    // Dense tree cluster
+    for (var i = 0; i < 18; i++) {
+        var angle = Math.random() * Math.PI * 2;
+        var dist = Math.random() * 180;
+        var tx = loc.x + Math.cos(angle) * dist;
+        var ty = loc.y + Math.sin(angle) * dist;
+        var tree = document.createElement('div');
+        tree.className = 'entity tree forest-tree';
+        tree.style.left = tx + 'px';
+        tree.style.top = ty + 'px';
+        tree.style.fontSize = (3 + Math.random() * 2) + 'rem';
+        tree.innerHTML = Game.SEASON_TREE[season];
+        tree.dataset.hasApple = (season !== 'winter') ? 'true' : 'false';
+        world.appendChild(tree);
+    }
+};
+
+Game.world.createHills = function() {
+    var world = document.getElementById('game-world');
+    var hills = [
+        { x: 1800, y: 700, size: 320 },
+        { x: 350,  y: 1900, size: 260 },
+        { x: 2300, y: 1500, size: 220 },
+        { x: 2100, y: 300,  size: 200 }
+    ];
+    hills.forEach(function(h) {
+        var div = document.createElement('div');
+        div.className = 'hill';
+        div.style.left = (h.x - h.size / 2) + 'px';
+        div.style.top = (h.y - h.size / 2) + 'px';
+        div.style.width = h.size + 'px';
+        div.style.height = h.size + 'px';
+        world.appendChild(div);
+    });
 };
 
 Game.world.updateHouseSite = function() {
