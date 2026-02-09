@@ -97,6 +97,12 @@ Game.villagers.interact = function(name) {
         return;
     }
 
+    // Check if next quest is locked behind unlock conditions
+    if (!Game.quests.isQuestUnlocked(name, qi)) {
+        Game.villagers.showBubble(v, "J'aurai bientôt du travail pour toi... 🔒");
+        return;
+    }
+
     var quest = data.quests[qi];
 
     // Check if quest can be completed

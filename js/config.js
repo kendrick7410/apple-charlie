@@ -106,19 +106,28 @@ Game.VILLAGER_DATA = {
                   quests: [
                       { desc: "Rapporte-moi 5 fleurs 🌻", need: { flowers: 5 }, reward: { money: 30, xp: 40 }, done: "Merci ! C'est magnifique !" },
                       { desc: "J'ai besoin de 3 pommes 🍎", need: { apples: 3 }, reward: { money: 20, xp: 30 }, done: "Délicieux !" },
-                      { desc: "Peux-tu m'apporter 2 pains ? 🍞", need: { bread: 2 }, reward: { money: 50, xp: 60 }, done: "Miam, merci Charlie !" }
+                      { desc: "Peux-tu m'apporter 2 pains ? 🍞", need: { bread: 2 }, reward: { money: 50, xp: 60 }, done: "Miam, merci Charlie !" },
+                      // ── Vague 2 : débloquée après 3 quêtes + niveau 2 ──
+                      { desc: "Crée-moi un bouquet de 8 fleurs 🌸", need: { flowers: 8 }, reward: { money: 55, xp: 50 }, done: "Magnifique bouquet !", unlock: { totalQuests: 3, level: 2 } },
+                      { desc: "Apporte 5 pommes et 3 pains 🍎🍞", need: { apples: 5, bread: 3 }, reward: { money: 80, xp: 70 }, done: "Un vrai festin artistique !", unlock: { totalQuests: 3, level: 2 } }
                   ]},
     'Melo 🐱': { emoji: '🐱', home: { x: 1100, y: 1400 }, greetings: ["Miaou !", "Tu as du poisson ?", "Il fait beau !"],
                   quests: [
                       { desc: "Attrape-moi 3 poissons 🐟", need: { fish: 3 }, reward: { money: 40, xp: 50 }, done: "Miam, du poisson !" },
                       { desc: "Il me faut 10 bois 🪵", need: { wood: 10 }, reward: { money: 35, xp: 40 }, done: "Parfait pour mon arbre à chat !" },
-                      { desc: "Ramène 5 pierres 🧱", need: { stone: 5 }, reward: { money: 45, xp: 55 }, done: "Merci, c'est lourd !" }
+                      { desc: "Ramène 5 pierres 🧱", need: { stone: 5 }, reward: { money: 45, xp: 55 }, done: "Merci, c'est lourd !" },
+                      // ── Vague 2 ──
+                      { desc: "Pêche 6 poissons pour ma réserve 🐟", need: { fish: 6 }, reward: { money: 60, xp: 55 }, done: "Ma réserve est pleine !", unlock: { totalQuests: 3, level: 2 } },
+                      { desc: "Ramène 8 bois et 4 pierres 🪵🧱", need: { wood: 8, stone: 4 }, reward: { money: 70, xp: 65 }, done: "Mon arbre à chat sera immense !", unlock: { totalQuests: 3, level: 2 } }
                   ]},
     'Jo 🐶':   { emoji: '🐶', home: { x: 1500, y: 900  }, greetings: ["Woof !", "T'as du bois ?", "C'est grand dehors !"],
                   quests: [
                       { desc: "J'ai besoin de 8 bois 🪵", need: { wood: 8 }, reward: { money: 25, xp: 35 }, done: "Génial, je vais construire !" },
                       { desc: "Trouve-moi 4 pierres 🧱", need: { stone: 4 }, reward: { money: 30, xp: 40 }, done: "Solide comme un roc !" },
-                      { desc: "Rapporte 2 poissons et 3 pommes", need: { fish: 2, apples: 3 }, reward: { money: 60, xp: 70 }, done: "Un festin ! Merci !" }
+                      { desc: "Rapporte 2 poissons et 3 pommes", need: { fish: 2, apples: 3 }, reward: { money: 60, xp: 70 }, done: "Un festin ! Merci !" },
+                      // ── Vague 2 ──
+                      { desc: "Il me faut 15 bois pour un grand projet 🪵", need: { wood: 15 }, reward: { money: 65, xp: 60 }, done: "Je vais construire un palais !", unlock: { totalQuests: 3, level: 2 } },
+                      { desc: "Rapporte 5 poissons et 6 pierres 🐟🧱", need: { fish: 5, stone: 6 }, reward: { money: 85, xp: 75 }, done: "Merci Charlie, t'es le meilleur !", unlock: { totalQuests: 3, level: 2 } }
                   ]}
 };
 
