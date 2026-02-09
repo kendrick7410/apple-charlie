@@ -21,8 +21,10 @@ Game.ui.update = function() {
     setText('bread-count', s.inventory.bread);
     setText('fish-count', s.inventory.fish);
     setText('flower-count', s.inventory.flowers);
+    setText('butterfly-count', s.inventory.butterflies);
     setText('money-count', s.inventory.money);
     setText('material-count', s.inventory.materials);
+    setText('village-revenue', s.villageRevenue);
 
     // Plant button
     var pBtn = document.getElementById('plant-btn');
@@ -97,7 +99,8 @@ Game.ui.updateToolbar = function() {
         '🪓': "Hache active ! Double le bois récolté (4 au lieu de 2)",
         '🎣': "Canne active ! Pêche 2x plus rapide",
         '🚿': "Arrosoir ! Clique sur une culture pour l'arroser",
-        '⛏️': "Pelle ! Utilise le bouton Pelle ON/OFF pour tracer des chemins"
+        '⛏️': "Pelle ! Utilise le bouton Pelle ON/OFF pour tracer des chemins",
+        '🥅': "Filet ! Clique sur un papillon pour le capturer"
     };
     tools.forEach(function(t) {
         var div = document.createElement('div');
@@ -155,6 +158,54 @@ Game.ui.notify = function(msg, type) {
         n.style.transform = 'translateX(-50%) translateY(-20px)';
     }, 1800);
     setTimeout(function() { n.remove(); }, 2300);
+};
+
+Game.ui.updateMuseum = function() {
+    var s = Game.state;
+    // Fish collection
+    var fishEl = document.getElementById('museum-fish');
+    if (fishEl) {
+        var html = '';
+        for (var fid in Game.FISH_SPECIES) {
+            var sp = Game.FISH_SPECIES[fid];
+            var donated = s.museum.fish[fid];
+            var owned = (s.specimens.fish[fid] || 0) > 0;
+            var rc = Game.RARITY_COLORS[sp.rarity];
+            if (donated) {
+                html += '<span class="museum-item donated" style="border-color:' + rc + '">' + sp.emoji + '<small>' + sp.name + '</small></span>';
+            } else if (owned) {
+                html += '<span class="museum-item available" style="border-color:' + rc + '" onclick="Game.inventory.donateToMuseum(\'fish\',\'' + fid + '\')">' + sp.emoji + '<small>Donner</small></span>';
+            } else {
+                html += '<span class="museum-item empty">?</span>';
+            }
+        }
+        fishEl.innerHTML = html;
+    }
+    // Butterfly collection
+    var bfEl = document.getElementById('museum-butterflies');
+    if (bfEl) {
+        var bhtml = '';
+        for (var bid in Game.BUTTERFLY_SPECIES) {
+            var bsp = Game.BUTTERFLY_SPECIES[bid];
+            var bdonated = s.museum.butterflies[bid];
+            var bowned = (s.specimens.butterflies[bid] || 0) > 0;
+            var brc = Game.RARITY_COLORS[bsp.rarity];
+            if (bdonated) {
+                bhtml += '<span class="museum-item donated" style="border-color:' + brc + '">' + bsp.emoji + '<small>' + bsp.name + '</small></span>';
+            } else if (bowned) {
+                bhtml += '<span class="museum-item available" style="border-color:' + brc + '" onclick="Game.inventory.donateToMuseum(\'butterflies\',\'' + bid + '\')">' + bsp.emoji + '<small>Donner</small></span>';
+            } else {
+                bhtml += '<span class="museum-item empty">?</span>';
+            }
+        }
+        bfEl.innerHTML = bhtml;
+    }
+    // Count
+    var totalFish = Object.keys(Game.FISH_SPECIES).length;
+    var totalBf = Object.keys(Game.BUTTERFLY_SPECIES).length;
+    var donatedFish = Object.keys(s.museum.fish).length;
+    var donatedBf = Object.keys(s.museum.butterflies).length;
+    setText('museum-count', (donatedFish + donatedBf) + '/' + (totalFish + totalBf));
 };
 
 function setText(id, val) {

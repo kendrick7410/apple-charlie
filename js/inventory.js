@@ -105,13 +105,22 @@ Game.inventory.startFishing = function() {
 
     setTimeout(function() {
         s.inventory.fish++;
+        // Roll fish species
+        var spId = Game.inventory.rollFishSpecies();
+        if (spId) {
+            s.specimens.fish[spId] = (s.specimens.fish[spId] || 0) + 1;
+            var sp = Game.FISH_SPECIES[spId];
+            var rarityLabel = { common: '', uncommon: '✨', rare: '💎', legendary: '👑' };
+            Game.ui.notify(sp.name + " attrapé ! " + sp.emoji + " " + (rarityLabel[sp.rarity] || ''));
+        } else {
+            Game.ui.notify("Poisson attrapé ! 🐟");
+        }
         s.isFishing = false;
         Game.xp.add(8);
         if (btn) btn.textContent = "Pêcher 🎣";
         Game.audio.play('fish');
         Game.particles.spawn('🐟', window.innerWidth - 100, window.innerHeight - 100);
         Game.ui.update();
-        Game.ui.notify("Poisson attrapé ! 🐟");
     }, fishTime);
 };
 
@@ -144,6 +153,63 @@ Game.inventory.collectFishRevenue = function() {
     Game.xp.add(Math.floor(amount / 10));
     Game.ui.update();
     Game.ui.notify("Collecté " + amount + "💰 de la poissonnerie !");
+};
+
+Game.inventory.rollFishSpecies = function() {
+    var totalW = 0;
+    var entries = [];
+    for (var id in Game.FISH_SPECIES) {
+        var sp = Game.FISH_SPECIES[id];
+        entries.push({ id: id, weight: sp.weight });
+        totalW += sp.weight;
+    }
+    var r = Math.random() * totalW;
+    for (var i = 0; i < entries.length; i++) {
+        r -= entries[i].weight;
+        if (r <= 0) return entries[i].id;
+    }
+    return entries[entries.length - 1].id;
+};
+
+Game.inventory.donateToMuseum = function(type, speciesId) {
+    var s = Game.state;
+    if (s.museum[type][speciesId]) {
+        Game.ui.notify("Déjà au musée !");
+        return;
+    }
+    if (!s.specimens[type][speciesId] || s.specimens[type][speciesId] <= 0) {
+        Game.ui.notify("Tu n'as pas ce spécimen !");
+        return;
+    }
+    s.specimens[type][speciesId]--;
+    s.museum[type][speciesId] = true;
+    if (type === 'fish') s.inventory.fish = Math.max(0, s.inventory.fish - 1);
+    if (type === 'butterflies') s.inventory.butterflies = Math.max(0, s.inventory.butterflies - 1);
+    var table = type === 'fish' ? Game.FISH_SPECIES : Game.BUTTERFLY_SPECIES;
+    var sp = table[speciesId];
+    var reward = sp.value * 2;
+    s.inventory.money += reward;
+    Game.xp.add(sp.value);
+    Game.audio.playCoin();
+    Game.particles.spawn('⭐', window.innerWidth / 2, window.innerHeight / 2, { count: 5, spread: 40 });
+    Game.ui.update();
+    Game.ui.updateMuseum();
+    Game.ui.notify(sp.name + " donné au musée ! +" + reward + "💰");
+};
+
+Game.inventory.collectVillageRevenue = function() {
+    var s = Game.state;
+    if (s.villageRevenue <= 0) {
+        Game.ui.notify("Pas de revenus du village !");
+        return;
+    }
+    var amount = s.villageRevenue;
+    s.inventory.money += amount;
+    s.villageRevenue = 0;
+    Game.audio.playCoin();
+    Game.particles.spawn('💰', window.innerWidth / 2, window.innerHeight / 2, { count: 4, spread: 50, vy: -80 });
+    Game.ui.update();
+    Game.ui.notify("Revenus du village : +" + amount + "💰");
 };
 
 Game.inventory.bakeBread = function() {
