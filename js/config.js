@@ -108,31 +108,31 @@ Game.TIME_PHASES = {
 };
 
 Game.HOUSES = [
-    { id: 'lya',  name: 'Lya 🐰',  x: 850,  y: 1200, emoji: '🏘️', furniture: [['🛏️',50,50],['🎨',450,100],['🧶',250,250]] },
-    { id: 'melo', name: 'Melo 🐱', x: 1100, y: 1400, emoji: '🏠', furniture: [['🛋️',400,50],['📺',450,50],['🍜',100,300]] },
-    { id: 'jo',   name: 'Jo 🐶',   x: 1500, y: 900,  emoji: '🏘️', furniture: [['🎸',50,400],['🍕',300,300],['🏆',50,50]] },
-    { id: 'celestine', name: 'Célestine 🦊', x: 700, y: 1500, emoji: '🏡', furniture: [['🔮',50,50],['📖',400,100],['🕯️',250,300]] },
+    { id: 'lya',  name: 'Eloise 🐰',  x: 850,  y: 1200, emoji: '🏘️', furniture: [['🛏️',50,50],['🎨',450,100],['🧶',250,250]] },
+    { id: 'melo', name: 'Lea 🐱', x: 1100, y: 1400, emoji: '🏠', furniture: [['🛋️',400,50],['📺',450,50],['🍜',100,300]] },
+    { id: 'jo',   name: 'Tom 🐶',   x: 1500, y: 900,  emoji: '🏘️', furniture: [['🎸',50,400],['🍕',300,300],['🏆',50,50]] },
+    { id: 'celestine', name: 'Lucie 🦊', x: 700, y: 1500, emoji: '🏡', furniture: [['🔮',50,50],['📖',400,100],['🕯️',250,300]] },
     { id: 'charlie', name: 'Charlie 🤠', x: 1400, y: 1200, emoji: '🏗️', furniture: [] }
 ];
 
 Game.VILLAGER_DATA = {
-    'Lya 🐰':  { emoji: '🐰', home: { x: 850,  y: 1200 }, greetings: ["Salut Charlie !", "Tu as des fleurs ?", "J'adore peindre !"],
+    'Eloise 🐰':  { emoji: '🐰', home: { x: 850,  y: 1200 }, greetings: ["Salut Charlie !", "Tu as des fleurs ?", "J'adore peindre !"],
                   dialogues: [
                       "Tu savais que les fleurs poussent mieux au printemps ? 🌸",
                       "J'ai commencé une peinture du village, elle est presque finie !",
-                      "Melo m'a demandé un portrait... il bouge trop ! 😅",
+                      "Lea m'a demandé un portrait... il bouge trop ! 😅",
                       "Les couchers de soleil ici sont magnifiques, tu trouves pas ?",
                       "Un jour j'ouvrirai une galerie d'art dans le village ! 🎨",
-                      "Jo dit que mes peintures sentent la fleur. C'est un compliment non ?",
+                      "Tom dit que mes peintures sentent la fleur. C'est un compliment non ?",
                       "J'adore mélanger les couleurs de l'automne sur ma palette. 🍁",
                       "Tu crois qu'un jour on pourrait avoir un musée ici ?",
                       "La lumière du matin est parfaite pour peindre les montagnes au loin.",
-                      "Célestine m'a donné des pigments magiques... les couleurs bougent toutes seules ! ✨",
+                      "Lucie m'a donné des pigments magiques... les couleurs bougent toutes seules ! ✨",
                       "Quand il pleut, je peins la pluie. Quand il neige, je peins la neige. 🎨",
                       "J'ai rêvé que mes tableaux prenaient vie. C'était beau et un peu effrayant !",
                       "Le printemps me donne envie de tout peindre en rose et en vert.",
-                      "Jo m'a construit un chevalet en bois. Il est super solide ! 🪵",
-                      "Melo dort parfois sur mes toiles fraîches... il a des taches de peinture partout ! 🐱"
+                      "Tom m'a construit un chevalet en bois. Il est super solide ! 🪵",
+                      "Lea dort parfois sur mes toiles fraîches... il a des taches de peinture partout ! 🐱"
                   ],
                   quests: [
                       { desc: "Rapporte-moi 5 fleurs 🌻", need: { flowers: 5 }, reward: { money: 30, xp: 40 }, done: "Merci ! C'est magnifique !" },
@@ -148,22 +148,22 @@ Game.VILLAGER_DATA = {
                       { desc: "Exposition : 20 fleurs et 10 pommes 🎨🌸", need: { flowers: 20, apples: 10 }, reward: { money: 150, xp: 110 }, done: "L'exposition est un succès !", unlock: { totalQuests: 10, level: 6 } },
                       { desc: "Fresque géante : 8 pains, 6 pommes, 15 fleurs 🖼️", need: { bread: 8, apples: 6, flowers: 15 }, reward: { money: 180, xp: 130 }, done: "Ma plus belle œuvre !", unlock: { totalQuests: 10, level: 6 } }
                   ]},
-    'Melo 🐱': { emoji: '🐱', home: { x: 1100, y: 1400 }, greetings: ["Miaou !", "Tu as du poisson ?", "Il fait beau !"],
+    'Lea 🐱': { emoji: '🐱', home: { x: 1100, y: 1400 }, greetings: ["Miaou !", "Tu as du poisson ?", "Il fait beau !"],
                   dialogues: [
                       "Tu sais ce qui est mieux que le poisson ? PLUS de poisson ! 🐟",
                       "J'ai fait une sieste de 3 heures... c'était trop court.",
-                      "Célestine dit que les chats voient les esprits. Moi je vois que du poisson.",
+                      "Lucie dit que les chats voient les esprits. Moi je vois que du poisson.",
                       "Mon arbre à chat sera le plus grand du monde, tu verras !",
                       "La nuit, j'observe les étoiles depuis mon toit. C'est paisible. ✨",
-                      "Jo veut qu'on joue à la balle. C'est un truc de chien ça, non ?",
+                      "Tom veut qu'on joue à la balle. C'est un truc de chien ça, non ?",
                       "Le bruit de la rivière me donne sommeil... zzz... 💤",
                       "Tu savais que les chats dorment 16 heures par jour ? Je suis en retard !",
                       "L'hiver c'est bien. On peut dormir encore plus longtemps. ❄️",
                       "J'ai essayé de pêcher cette nuit. Le poisson brille sous la lune ! 🌙",
-                      "Lya dit que je suis photogénique. Normal, je suis un chat. 😼",
+                      "Eloise dit que je suis photogénique. Normal, je suis un chat. 😼",
                       "Mon rêve ? Une montagne de poisson et un hamac au soleil.",
                       "Quand il fait chaud, je fais la sieste sous le grand arbre près de la fontaine.",
-                      "J'ai appris à Célestine comment ronronner. Elle n'y arrive pas du tout. 😂",
+                      "J'ai appris à Lucie comment ronronner. Elle n'y arrive pas du tout. 😂",
                       "Le poisson grillé c'est bien, mais le poisson cru c'est de l'art. 🐟"
                   ],
                   quests: [
@@ -180,22 +180,22 @@ Game.VILLAGER_DATA = {
                       { desc: "Buffet de luxe : 15 poissons et 10 pommes 🐟🍎", need: { fish: 15, apples: 10 }, reward: { money: 145, xp: 105 }, done: "Le buffet royal du chat !", unlock: { totalQuests: 10, level: 6 } },
                       { desc: "Tour à chat : 25 bois et 15 pierres 🪵🧱", need: { wood: 25, stone: 15 }, reward: { money: 170, xp: 125 }, done: "Miaou ! La plus haute tour !", unlock: { totalQuests: 10, level: 6 } }
                   ]},
-    'Jo 🐶':   { emoji: '🐶', home: { x: 1500, y: 900  }, greetings: ["Woof !", "T'as du bois ?", "C'est grand dehors !"],
+    'Tom 🐶':   { emoji: '🐶', home: { x: 1500, y: 900  }, greetings: ["Woof !", "T'as du bois ?", "C'est grand dehors !"],
                   dialogues: [
                       "Un jour je construirai un pont géant pour traverser la rivière ! 🌉",
                       "J'ai enterré un os quelque part... mais où ? 🦴",
-                      "Lya m'a peint ! Je suis beau dessus, hein ?",
+                      "Eloise m'a peint ! Je suis beau dessus, hein ?",
                       "Tu crois qu'on pourrait construire un phare dans le village ?",
                       "La forêt est pleine de bons arbres pour construire. Allons-y !",
-                      "Célestine m'a lu mon avenir. Il y a beaucoup de bâtons dedans. 🪵",
+                      "Lucie m'a lu mon avenir. Il y a beaucoup de bâtons dedans. 🪵",
                       "J'ai couru tout autour du village ce matin. Trois fois ! 🏃",
                       "Tu sens cette odeur ? C'est le bois fraîchement coupé. J'adore !",
                       "Mon rêve c'est de construire une tour assez haute pour voir la mer. 🗼",
-                      "Melo dit que je cours trop. Moi je dis qu'il dort trop ! 😄",
+                      "Lea dit que je cours trop. Moi je dis qu'il dort trop ! 😄",
                       "J'ai trouvé un os ancien près de la rivière. Il porte chance, non ? 🦴",
                       "L'aventure c'est ma passion ! Explorons la forêt ensemble un jour !",
                       "En hiver, la neige rend les constructions plus compliquées mais plus belles. ❄️",
-                      "Lya m'a appris à dessiner des plans. Mes maisons seront encore mieux !",
+                      "Eloise m'a appris à dessiner des plans. Mes maisons seront encore mieux !",
                       "Le sport c'est la vie ! Course, natation, construction... tout compte ! 💪"
                   ],
                   quests: [
@@ -212,23 +212,23 @@ Game.VILLAGER_DATA = {
                       { desc: "Château : 30 bois et 20 pierres 🏰", need: { wood: 30, stone: 20 }, reward: { money: 160, xp: 120 }, done: "Mon château est magnifique !", unlock: { totalQuests: 10, level: 6 } },
                       { desc: "Grande fête : 12 poissons, 8 pommes, 5 pains 🎉", need: { fish: 12, apples: 8, bread: 5 }, reward: { money: 175, xp: 130 }, done: "Woof ! Quelle fête incroyable !", unlock: { totalQuests: 10, level: 6 } }
                   ]},
-    'Célestine 🦊': { emoji: '🦊', home: { x: 700, y: 1500 }, greetings: ["Bonjour voyageur !", "Les étoiles parlent...", "Tu sens cette magie ?"],
+    'Lucie 🦊': { emoji: '🦊', home: { x: 700, y: 1500 }, greetings: ["Bonjour voyageur !", "Les étoiles parlent...", "Tu sens cette magie ?"],
                   dialogues: [
                       "La rivière murmure des secrets à qui sait écouter... 🌊",
                       "J'ai vu une étoile filante hier. J'ai fait un vœu pour le village. ✨",
                       "Mes potions demandent des ingrédients rares. La nature est généreuse.",
-                      "Melo pense que je suis mystérieuse. C'est parce qu'il ne lit pas ! 📖",
+                      "Lea pense que je suis mystérieuse. C'est parce qu'il ne lit pas ! 📖",
                       "Chaque saison a sa propre magie. L'automne est ma préférée. 🍂",
                       "Le village grandit grâce à toi, Charlie. Les esprits sont contents. 🦊",
                       "Les étoiles m'ont dit que quelque chose de beau arrivera bientôt... 🌟",
                       "Ma dernière potion a transformé une pierre en cristal. Enfin presque.",
                       "Les esprits de la forêt dansent quand personne ne regarde. Je les ai vus ! 👻",
                       "Au printemps, la magie est partout. On la sent dans le vent. 🌸",
-                      "Jo m'a demandé un sort pour courir plus vite. La magie ne marche pas comme ça ! 😅",
+                      "Tom m'a demandé un sort pour courir plus vite. La magie ne marche pas comme ça ! 😅",
                       "La pleine lune est idéale pour préparer mes potions les plus puissantes. 🌕",
                       "Chaque fleur du village contient une petite étincelle de magie.",
                       "La sagesse vient avec le temps. Et avec beaucoup de thé. ☕",
-                      "Lya peint la magie sans le savoir. Ses tableaux brillent la nuit. 🎨"
+                      "Eloise peint la magie sans le savoir. Ses tableaux brillent la nuit. 🎨"
                   ],
                   quests: [
                       // ── Vague 1 : disponible dès le début ──
@@ -250,12 +250,12 @@ Game.VILLAGER_DATA = {
                       "Mes poissons sont pêchés du jour ! Pas comme ceux d'à côté ! 🐟",
                       "Tu veux du poisson ? J'ai tout ce qu'il faut !",
                       "Les villageois adorent mon poisson. Normal, il est FRAIS !",
-                      "Melo est mon meilleur client. Ce chat a du goût ! 🐱",
+                      "Lea est mon meilleur client. Ce chat a du goût ! 🐱",
                       "Dépose tes poissons ici, je m'occupe de tout vendre !",
                       "Le secret d'un bon poisson ? La fraîcheur, par Toutatis ! ⚡",
-                      "Jo m'a commandé du poisson grillé. Mais moi je vends du CRU !",
-                      "Lya a peint ma boutique. Depuis, les clients affluent ! 🎨",
-                      "Célestine dit que mes poissons ont une aura magique. Je dis juste qu'ils sont frais.",
+                      "Tom m'a commandé du poisson grillé. Mais moi je vends du CRU !",
+                      "Eloise a peint ma boutique. Depuis, les clients affluent ! 🎨",
+                      "Lucie dit que mes poissons ont une aura magique. Je dis juste qu'ils sont frais.",
                       "15 clochettes le poisson, c'est donné ! Ailleurs c'est 10 à la fontaine...",
                       "Un jour j'ouvrirai une deuxième boutique de l'autre côté de la rivière !",
                       "La pluie c'est bon pour la pêche, mais mauvais pour l'étalage... 🌧️",
@@ -352,10 +352,10 @@ Game.RARITY_COLORS = {
 };
 
 Game.VILLAGER_JOBS = {
-    'Lya 🐰':           { job: 'Artiste',       income: 5 },
-    'Melo 🐱':          { job: 'Pêcheur',       income: 8 },
-    'Jo 🐶':            { job: 'Constructeur',   income: 7 },
-    'Célestine 🦊':     { job: 'Alchimiste',    income: 10 },
+    'Eloise 🐰':           { job: 'Artiste',       income: 5 },
+    'Lea 🐱':          { job: 'Pêcheur',       income: 8 },
+    'Tom 🐶':            { job: 'Constructeur',   income: 7 },
+    'Lucie 🦊':     { job: 'Alchimiste',    income: 10 },
     'Ordralfabétix 🐡': { job: 'Poissonnier',   income: 12 }
 };
 
