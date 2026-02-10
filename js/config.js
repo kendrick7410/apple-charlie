@@ -5,8 +5,8 @@
 window.Game = window.Game || {};
 
 Game.CONFIG = {
-    WORLD_W: 3000,
-    WORLD_H: 3000,
+    WORLD_W: 4500,
+    WORLD_H: 4500,
     TILE: 60,
     LERP_SPEED: 0.18,
     PLAYER_SPEED: 4,
@@ -16,10 +16,10 @@ Game.CONFIG = {
     SEASON_DURATION_MS: 7 * 60000,  // 7 min par saison
 
     // Spawn counts
-    TREE_COUNT: 25,
-    STONE_COUNT: 18,
-    FLOWER_COUNT: 45,
-    CREATURE_COUNT: 12,
+    TREE_COUNT: 35,
+    STONE_COUNT: 25,
+    FLOWER_COUNT: 60,
+    CREATURE_COUNT: 18,
 
     // Respawn delays (ms)
     TREE_RESPAWN: 8000,
@@ -58,6 +58,7 @@ Game.CONFIG = {
         fishShop:     { x: 650,  y: 1100 },
         museum:       { x: 1300, y: 1500 },
         forest:       { x: 1900, y: 450  },
+        mountain:     { x: 3500, y: 800  },
         riverBaseX:   550
     },
 

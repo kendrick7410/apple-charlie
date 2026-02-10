@@ -40,8 +40,8 @@ function createCreature() {
     el.style.fontSize = '1.5rem';
     el.style.transition = 'none';
     el.style.zIndex = '15';
-    var x = 200 + Math.random() * 2600;
-    var y = 200 + Math.random() * 2600;
+    var x = 200 + Math.random() * (Game.CONFIG.WORLD_W - 400);
+    var y = 200 + Math.random() * (Game.CONFIG.WORLD_H - 400);
     el.style.left = x + 'px';
     el.style.top = y + 'px';
     document.getElementById('game-world').appendChild(el);
@@ -108,10 +108,10 @@ Game.creatures.update = function(dt) {
         c.y += c.vy;
 
         // Wrap
-        if (c.x < 50) c.x = 2900;
-        if (c.x > 2950) c.x = 100;
-        if (c.y < 50) c.y = 2900;
-        if (c.y > 2950) c.y = 100;
+        if (c.x < 50) c.x = Game.CONFIG.WORLD_W - 100;
+        if (c.x > Game.CONFIG.WORLD_W - 50) c.x = 100;
+        if (c.y < 50) c.y = Game.CONFIG.WORLD_H - 100;
+        if (c.y > Game.CONFIG.WORLD_H - 50) c.y = 100;
 
         c.el.style.left = c.x + 'px';
         c.el.style.top = c.y + 'px';
@@ -173,8 +173,8 @@ Game.creatures.tryCapture = function(creature) {
     creature.el.onclick = null;
     // Respawn after delay
     setTimeout(function() {
-        creature.x = 200 + Math.random() * 2600;
-        creature.y = 200 + Math.random() * 2600;
+        creature.x = 200 + Math.random() * (Game.CONFIG.WORLD_W - 400);
+        creature.y = 200 + Math.random() * (Game.CONFIG.WORLD_H - 400);
     }, 10000);
 };
 
@@ -206,8 +206,8 @@ function updateWasps(dt, season, isNight) {
         }
         w.x += w.vx;
         w.y += w.vy;
-        w.x = Math.max(50, Math.min(2950, w.x));
-        w.y = Math.max(50, Math.min(2950, w.y));
+        w.x = Math.max(50, Math.min(Game.CONFIG.WORLD_W - 50, w.x));
+        w.y = Math.max(50, Math.min(Game.CONFIG.WORLD_H - 50, w.y));
         w.el.style.left = w.x + 'px';
         w.el.style.top = w.y + 'px';
     }
@@ -220,8 +220,8 @@ function spawnWasp() {
     el.style.zIndex = '16';
     el.style.transition = 'none';
     el.textContent = '🐝';
-    var x = 400 + Math.random() * 2200;
-    var y = 400 + Math.random() * 2200;
+    var x = 400 + Math.random() * (Game.CONFIG.WORLD_W - 800);
+    var y = 400 + Math.random() * (Game.CONFIG.WORLD_H - 800);
     el.style.left = x + 'px';
     el.style.top = y + 'px';
     document.getElementById('game-world').appendChild(el);
@@ -237,26 +237,38 @@ function spawnWasp() {
 
 function getCreatureType(season, isNight) {
     if (isNight) {
-        // Night creatures: fireflies and hedgehogs
-        return Math.random() > 0.3 ? '✨' : '🦔';
+        // Night creatures: fireflies, hedgehogs, and owls
+        var r = Math.random();
+        if (r > 0.7) return '🦉'; // Owls
+        if (r > 0.3) return '✨'; // Fireflies
+        return '🦔'; // Hedgehogs
     }
     if (season === 'winter') {
-        // Winter: occasional deer
-        return Math.random() > 0.85 ? '🦌' : '';
+        // Winter: deer, eagles, occasional bears
+        var r = Math.random();
+        if (r > 0.95) return '🐻'; // Very rare bears
+        if (r > 0.88) return '🦅'; // Eagles
+        if (r > 0.75) return '🦌'; // Deer
+        return ''; // Mostly empty in winter
     }
     if (season === 'spring' || season === 'summer') {
-        // Spring/Summer: butterflies, birds, squirrels, and rare deer
+        // Spring/Summer: butterflies, birds, squirrels, deer, eagles, beavers, rare bears
         var r = Math.random();
-        if (r > 0.92) return '🦌'; // Rare deer
-        if (r > 0.65) return '🐿️'; // Squirrels
-        if (r > 0.35) return '🦋'; // Butterflies
+        if (r > 0.96) return '🐻'; // Very rare bears
+        if (r > 0.90) return '🦌'; // Deer
+        if (r > 0.84) return '🦅'; // Eagles
+        if (r > 0.76) return '🦫'; // Beavers
+        if (r > 0.55) return '🐿️'; // Squirrels
+        if (r > 0.30) return '🦋'; // Butterflies
         return '🐦'; // Birds
     }
-    // Autumn: butterflies, birds, squirrels, hedgehogs
+    // Autumn: butterflies, birds, squirrels, hedgehogs, deer, eagles
     var r = Math.random();
-    if (r > 0.75) return '🦔'; // Hedgehogs in autumn
-    if (r > 0.5) return '🐿️'; // Squirrels
-    if (r > 0.3) return '🦋'; // Some butterflies
+    if (r > 0.92) return '🦅'; // Eagles
+    if (r > 0.85) return '🦌'; // Deer
+    if (r > 0.72) return '🦔'; // Hedgehogs
+    if (r > 0.48) return '🐿️'; // Squirrels
+    if (r > 0.28) return '🦋'; // Butterflies
     return '🐦'; // Birds
 }
 

@@ -65,6 +65,9 @@ Game.world.init = function() {
     // Mini-forest
     Game.world.createForest();
 
+    // Mountain (Le Cervin)
+    Game.world.createMountain();
+
     // Hills (relief)
     Game.world.createHills();
 
@@ -191,6 +194,64 @@ Game.world.createForest = function() {
         tree.dataset.hasApple = (season !== 'winter') ? 'true' : 'false';
         world.appendChild(tree);
     }
+};
+
+Game.world.createMountain = function() {
+    var world = document.getElementById('game-world');
+    var loc = Game.CONFIG.LOCATIONS.mountain;
+
+    // Mountain base
+    var base = document.createElement('div');
+    base.className = 'mountain-base';
+    base.style.cssText = 'position:absolute;z-index:0;pointer-events:none;';
+    base.style.left = (loc.x - 400) + 'px';
+    base.style.top = (loc.y - 250) + 'px';
+    base.style.width = '800px';
+    base.style.height = '500px';
+    base.style.background = 'radial-gradient(ellipse at 50% 100%, rgba(120,100,80,0.3) 0%, rgba(150,130,110,0.2) 40%, transparent 70%)';
+    world.appendChild(base);
+
+    // Mountain emoji (peak)
+    var peak = document.createElement('div');
+    peak.className = 'entity';
+    peak.style.fontSize = '8rem';
+    peak.style.left = loc.x + 'px';
+    peak.style.top = (loc.y - 100) + 'px';
+    peak.style.filter = 'drop-shadow(0 8px 12px rgba(0,0,0,0.3))';
+    peak.innerHTML = '🏔️';
+    world.appendChild(peak);
+
+    // Label
+    var label = document.createElement('div');
+    label.className = 'entity';
+    label.style.left = loc.x + 'px';
+    label.style.top = (loc.y + 80) + 'px';
+    label.innerHTML = '<div class="building-label" style="font-size:12px;font-weight:bold;">⛰️ Le Cervin</div>';
+    world.appendChild(label);
+
+    // Snow patches around peak
+    for (var i = 0; i < 5; i++) {
+        var snow = document.createElement('div');
+        snow.className = 'entity';
+        snow.style.fontSize = (2 + Math.random() * 1.5) + 'rem';
+        var angle = (i / 5) * Math.PI * 2;
+        var dist = 80 + Math.random() * 40;
+        snow.style.left = (loc.x + Math.cos(angle) * dist) + 'px';
+        snow.style.top = (loc.y - 50 + Math.sin(angle) * dist) + 'px';
+        snow.innerHTML = '❄️';
+        snow.style.opacity = '0.7';
+        world.appendChild(snow);
+    }
+
+    // Mountain Refuge
+    var refuge = document.createElement('div');
+    refuge.className = 'entity';
+    refuge.style.fontSize = '4rem';
+    refuge.style.left = (loc.x - 200) + 'px';
+    refuge.style.top = (loc.y + 150) + 'px';
+    refuge.style.cursor = 'pointer';
+    refuge.innerHTML = '<div style="font-size:4rem;">🏚️</div><div class="building-label">🔥 Refuge du Cervin</div>';
+    world.appendChild(refuge);
 };
 
 Game.world.createHills = function() {
