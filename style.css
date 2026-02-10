@@ -550,6 +550,52 @@ body {
     pointer-events: none;
 }
 
+/* ── Mountain Snow Animation ── */
+.mountain-snow {
+    animation: snow-float infinite ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes snow-float {
+    0%, 100% {
+        transform: translateY(0) translateX(0) rotate(0deg);
+        opacity: 0.7;
+    }
+    25% {
+        transform: translateY(-15px) translateX(10px) rotate(90deg);
+        opacity: 0.9;
+    }
+    50% {
+        transform: translateY(-8px) translateX(-8px) rotate(180deg);
+        opacity: 0.6;
+    }
+    75% {
+        transform: translateY(-18px) translateX(5px) rotate(270deg);
+        opacity: 0.8;
+    }
+}
+
+/* ── Mountain Goat Animation ── */
+.mountain-goat {
+    animation: goat-walk 6s infinite ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes goat-walk {
+    0%, 100% {
+        transform: translateX(0) scaleX(1);
+    }
+    25% {
+        transform: translateX(30px) scaleX(1);
+    }
+    50% {
+        transform: translateX(60px) scaleX(-1);
+    }
+    75% {
+        transform: translateX(30px) scaleX(-1);
+    }
+}
+
 /* ── Title screen animations ── */
 @keyframes title-float {
     from { transform: translateY(0) rotate(0deg); }

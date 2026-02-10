@@ -229,19 +229,31 @@ Game.world.createMountain = function() {
     label.innerHTML = '<div class="building-label" style="font-size:12px;font-weight:bold;">⛰️ Le Cervin</div>';
     world.appendChild(label);
 
-    // Snow patches around peak
-    for (var i = 0; i < 5; i++) {
+    // Animated snow patches around peak
+    for (var i = 0; i < 8; i++) {
         var snow = document.createElement('div');
-        snow.className = 'entity';
-        snow.style.fontSize = (2 + Math.random() * 1.5) + 'rem';
-        var angle = (i / 5) * Math.PI * 2;
-        var dist = 80 + Math.random() * 40;
+        snow.className = 'entity mountain-snow';
+        snow.style.fontSize = (1.5 + Math.random() * 2) + 'rem';
+        var angle = (i / 8) * Math.PI * 2;
+        var dist = 80 + Math.random() * 60;
         snow.style.left = (loc.x + Math.cos(angle) * dist) + 'px';
-        snow.style.top = (loc.y - 50 + Math.sin(angle) * dist) + 'px';
+        snow.style.top = (loc.y - 100 + Math.sin(angle) * dist) + 'px';
         snow.innerHTML = '❄️';
         snow.style.opacity = '0.7';
+        snow.style.animationDelay = (i * 0.3) + 's';
+        snow.style.animationDuration = (3 + Math.random() * 2) + 's';
         world.appendChild(snow);
     }
+
+    // Mountain goat (bouquetin)
+    var goat = document.createElement('div');
+    goat.className = 'entity mountain-goat';
+    goat.style.fontSize = '3rem';
+    goat.style.left = (loc.x + 150) + 'px';
+    goat.style.top = (loc.y + 30) + 'px';
+    goat.innerHTML = '🐐';
+    goat.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))';
+    world.appendChild(goat);
 
     // Mountain Refuge
     var refuge = document.createElement('div');
