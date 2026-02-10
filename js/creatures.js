@@ -236,12 +236,28 @@ function spawnWasp() {
 }
 
 function getCreatureType(season, isNight) {
-    if (isNight) return '✨'; // Fireflies at night
-    if (season === 'winter') return ''; // Nothing in winter
-    if (season === 'spring' || season === 'summer') {
-        return Math.random() > 0.5 ? '🦋' : '🐦';
+    if (isNight) {
+        // Night creatures: fireflies and hedgehogs
+        return Math.random() > 0.3 ? '✨' : '🦔';
     }
-    return Math.random() > 0.7 ? '🦋' : '🐦'; // Some butterflies in autumn
+    if (season === 'winter') {
+        // Winter: occasional deer
+        return Math.random() > 0.85 ? '🦌' : '';
+    }
+    if (season === 'spring' || season === 'summer') {
+        // Spring/Summer: butterflies, birds, squirrels, and rare deer
+        var r = Math.random();
+        if (r > 0.92) return '🦌'; // Rare deer
+        if (r > 0.65) return '🐿️'; // Squirrels
+        if (r > 0.35) return '🦋'; // Butterflies
+        return '🐦'; // Birds
+    }
+    // Autumn: butterflies, birds, squirrels, hedgehogs
+    var r = Math.random();
+    if (r > 0.75) return '🦔'; // Hedgehogs in autumn
+    if (r > 0.5) return '🐿️'; // Squirrels
+    if (r > 0.3) return '🦋'; // Some butterflies
+    return '🐦'; // Birds
 }
 
 // Fish jumping in river
