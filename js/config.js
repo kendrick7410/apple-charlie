@@ -309,6 +309,38 @@ Game.VILLAGER_DATA = {
                       // ── Vague 4 ──
                       { desc: "Collection royale : 15 poissons, 15 fleurs 👑", need: { fish: 15, flowers: 15 }, reward: { money: 170, xp: 125 }, done: "Une collection digne d'un roi !", unlock: { totalQuests: 10, level: 6 } },
                       { desc: "Archives complètes : 20 fleurs, 12 pommes, 10 pains 📖", need: { flowers: 20, apples: 12, bread: 10 }, reward: { money: 195, xp: 140 }, done: "Les archives sont complètes !", unlock: { totalQuests: 10, level: 6 } }
+                  ]},
+    'Max 🧗': { emoji: '🧗', home: { x: 3300, y: 950 }, greetings: ["Bienvenue au refuge !", "Attention en montagne !", "Salut l'aventurier !"],
+                  dialogues: [
+                      "Le Cervin est magnifique, mais dangereux. Toujours rester prudent ! ⛰️",
+                      "J'ai vu un aigle ce matin. Majestueux créature ! 🦅",
+                      "Le refuge est ouvert toute l'année, même en hiver. ☃️",
+                      "Tu veux du chocolat chaud ? Rien de mieux après une randonnée !",
+                      "Les ours sortent parfois de la forêt. Fais attention Charlie ! 🐻",
+                      "En hiver, les tempêtes de neige peuvent être terribles ici. ❄️",
+                      "J'entends les hiboux la nuit. Ils chassent près du refuge. 🦉",
+                      "Pedro du musée vient parfois observer les aigles ici. 🦉",
+                      "La vue depuis le sommet est à couper le souffle ! 🏔️",
+                      "Tom veut construire un pont pour faciliter l'accès. Bonne idée !",
+                      "Les castors ont construit un barrage près de la rivière. 🦫",
+                      "Lucie dit que le Cervin a une énergie magique. Je le sens aussi. ✨",
+                      "Chaque saison change le visage de la montagne. C'est magnifique.",
+                      "Les randonneurs me demandent souvent des provisions. 🎒",
+                      "Le feu de cheminée du refuge ne s'éteint jamais. 🔥"
+                  ],
+                  quests: [
+                      { desc: "Apporte 5 bois pour le refuge 🪵", need: { wood: 5 }, reward: { money: 40, xp: 45 }, done: "Parfait pour le feu !" },
+                      { desc: "Il me faut 4 pommes pour la randonnée 🍎", need: { apples: 4 }, reward: { money: 35, xp: 40 }, done: "Merci, c'est énergisant !" },
+                      { desc: "Rapporte 3 pains pour les voyageurs 🍞", need: { bread: 3 }, reward: { money: 45, xp: 50 }, done: "Les randonneurs seront ravis !" },
+                      // ── Vague 2 ──
+                      { desc: "Provisions d'hiver : 8 bois et 5 pommes 🪵🍎", need: { wood: 8, apples: 5 }, reward: { money: 75, xp: 70 }, done: "Le refuge est prêt pour l'hiver !", unlock: { totalQuests: 3, level: 2 } },
+                      { desc: "Réserve de secours : 6 pains et 4 pommes 🍞🍎", need: { bread: 6, apples: 4 }, reward: { money: 85, xp: 75 }, done: "Provisions stockées !", unlock: { totalQuests: 3, level: 2 } },
+                      // ── Vague 3 ──
+                      { desc: "Grand stock : 12 bois, 8 pains, 6 pommes 🏔️", need: { wood: 12, bread: 8, apples: 6 }, reward: { money: 125, xp: 100 }, done: "Le refuge peut accueillir tous les voyageurs !", unlock: { totalQuests: 6, level: 4 } },
+                      { desc: "Expédition longue : 15 bois et 10 pains 🎒", need: { wood: 15, bread: 10 }, reward: { money: 140, xp: 105 }, done: "Prêt pour l'expédition au sommet !", unlock: { totalQuests: 6, level: 4 } },
+                      // ── Vague 4 ──
+                      { desc: "Refuge d'hiver extrême : 20 bois, 15 pains, 10 pommes ❄️", need: { wood: 20, bread: 15, apples: 10 }, reward: { money: 180, xp: 135 }, done: "Le refuge peut survivre à tout !", unlock: { totalQuests: 10, level: 6 } },
+                      { desc: "Réserve ultime : 25 bois, 12 pains, 8 pommes, 10 pierres ⛰️", need: { wood: 25, bread: 12, apples: 8, stone: 10 }, reward: { money: 210, xp: 150 }, done: "Max le gardien légendaire !", unlock: { totalQuests: 10, level: 6 } }
                   ]}
 };
 
@@ -390,7 +422,8 @@ Game.VILLAGER_JOBS = {
     'Tom 🐶':            { job: 'Constructeur',   income: 7 },
     'Lucie 🦊':     { job: 'Alchimiste',    income: 10 },
     'Ordralfabétix 🐡': { job: 'Poissonnier',   income: 12 },
-    'Pedro 🦉':         { job: 'Conservateur',  income: 9 }
+    'Pedro 🦉':         { job: 'Conservateur',  income: 9 },
+    'Max 🧗':           { job: 'Gardien',       income: 11 }
 };
 
 Game.SOUNDS = {
