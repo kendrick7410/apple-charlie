@@ -43,7 +43,12 @@ Game.tools.placePath = function(worldX, worldY) {
     var gx = Math.round(worldX / 60) * 60;
     var gy = Math.round(worldY / 60) * 60;
 
-    // Check if path already exists at this position
+    // Check if near river (within 200px of river base)
+    var riverX = Game.CONFIG.LOCATIONS.riverBaseX;
+    var distToRiver = Math.abs(gx - riverX);
+    var isNearRiver = distToRiver < 200;
+
+    // Check if path/water already exists at this position
     var existing = -1;
     for (var i = 0; i < Game.state.placedPaths.length; i++) {
         var p = Game.state.placedPaths[i];
@@ -54,23 +59,33 @@ Game.tools.placePath = function(worldX, worldY) {
     }
 
     if (existing >= 0) {
-        // Remove path
+        // Remove path/water
+        var type = Game.state.placedPaths[existing].type || 'path';
         Game.state.placedPaths.splice(existing, 1);
-        var el = document.querySelector('.player-path[data-px="' + gx + '"][data-py="' + gy + '"]');
+        var className = type === 'water' ? 'player-water' : 'player-path';
+        var el = document.querySelector('.' + className + '[data-px="' + gx + '"][data-py="' + gy + '"]');
         if (el) el.remove();
         Game.audio.play('collect');
     } else {
-        // Place path
-        Game.state.placedPaths.push({ x: gx, y: gy });
-        Game.tools.renderPathTile(gx, gy);
+        // Place path or water
+        var type = isNearRiver ? 'water' : 'path';
+        Game.state.placedPaths.push({ x: gx, y: gy, type: type });
+        Game.tools.renderTile(gx, gy, type);
         Game.audio.play('craft');
+        if (type === 'water') {
+            Game.ui.notify("Rivière creusée ! 💧");
+        }
     }
 };
 
-Game.tools.renderPathTile = function(x, y) {
+Game.tools.renderTile = function(x, y, type) {
     var world = document.getElementById('game-world');
     var tile = document.createElement('div');
-    tile.className = 'path player-path';
+    if (type === 'water') {
+        tile.className = 'player-water';
+    } else {
+        tile.className = 'path player-path';
+    }
     tile.style.left = x + 'px';
     tile.style.top = y + 'px';
     tile.style.width = '60px';
@@ -80,9 +95,14 @@ Game.tools.renderPathTile = function(x, y) {
     world.appendChild(tile);
 };
 
+// Keep old function for backwards compatibility
+Game.tools.renderPathTile = function(x, y) {
+    Game.tools.renderTile(x, y, 'path');
+};
+
 Game.tools.renderAllPaths = function() {
     Game.state.placedPaths.forEach(function(p) {
-        Game.tools.renderPathTile(p.x, p.y);
+        Game.tools.renderTile(p.x, p.y, p.type || 'path');
     });
 };
 
