@@ -276,6 +276,38 @@ Game.VILLAGER_DATA = {
                       // ── Vague 4 ──
                       { desc: "Réserve royale : 25 poissons 🐟👑", need: { fish: 25 }, reward: { money: 180, xp: 130 }, done: "La plus grande réserve du village !", unlock: { totalQuests: 10, level: 6 } },
                       { desc: "Buffet océan : 15 poissons, 8 pains, 5 pommes 🌊", need: { fish: 15, bread: 8, apples: 5 }, reward: { money: 200, xp: 140 }, done: "Par Toutatis, quel buffet !", unlock: { totalQuests: 10, level: 6 } }
+                  ]},
+    'Pedro 🦉': { emoji: '🦉', home: { x: 1300, y: 1500 }, greetings: ["Bienvenue au musée ! 🏛️", "Houuu houuu !", "Belle collection !"],
+                  dialogues: [
+                      "Le musée est mon royaume nocturne. Je veille sur chaque spécimen. 🌙",
+                      "Les papillons sont fascinants ! Chacun raconte une histoire.",
+                      "J'ai étudié toutes les espèces de poissons de la rivière. 🐟",
+                      "La nuit, je classe les nouvelles découvertes. C'est paisible. 🦉",
+                      "Eloise vient souvent dessiner nos spécimens. Elle a du talent ! 🎨",
+                      "Lucie m'a appris que certains papillons sont magiques. ✨",
+                      "Mon rêve ? Compléter la collection entière du musée !",
+                      "Tom veut construire une extension au musée. Quelle bonne idée ! 🏛️",
+                      "Les lucioles de nuit sont mes préférées. Elles illuminent le musée.",
+                      "J'ai une excellente vue nocturne. Pratique pour repérer les spécimens rares !",
+                      "Lea m'apporte parfois du poisson frais. Même les conservateurs ont faim ! 😄",
+                      "Chaque donation enrichit notre patrimoine culturel. Merci Charlie !",
+                      "Les papillons légendaires sont si rares... mais si beaux ! 👑",
+                      "Le musée ouvre ses portes à tous, de l'aube au crépuscule.",
+                      "Je garde précieusement chaque spécimen. C'est ma mission de vie ! 🦉"
+                  ],
+                  quests: [
+                      { desc: "Donne 3 poissons au musée 🐟", need: { fish: 3 }, reward: { money: 40, xp: 45 }, done: "Magnifiques spécimens !" },
+                      { desc: "Apporte 5 fleurs pour l'exposition 🌸", need: { flowers: 5 }, reward: { money: 35, xp: 40 }, done: "L'exposition florale est prête !" },
+                      { desc: "Je cherche 4 pommes pour mes études 🍎", need: { apples: 4 }, reward: { money: 30, xp: 35 }, done: "Parfait pour mes recherches !" },
+                      // ── Vague 2 ──
+                      { desc: "Collection spéciale : 6 poissons et 4 fleurs 🐟🌸", need: { fish: 6, flowers: 4 }, reward: { money: 70, xp: 65 }, done: "Quelle belle collection !", unlock: { totalQuests: 3, level: 2 } },
+                      { desc: "Exposition nature : 8 fleurs et 5 pommes 🌻🍎", need: { flowers: 8, apples: 5 }, reward: { money: 80, xp: 70 }, done: "L'exposition est un succès !", unlock: { totalQuests: 3, level: 2 } },
+                      // ── Vague 3 ──
+                      { desc: "Grande collection : 10 poissons, 10 fleurs 🐟🌸", need: { fish: 10, flowers: 10 }, reward: { money: 120, xp: 95 }, done: "Le musée rayonne de beauté !", unlock: { totalQuests: 6, level: 4 } },
+                      { desc: "Étude complète : 8 pommes, 6 pains, 8 fleurs 📚", need: { apples: 8, bread: 6, flowers: 8 }, reward: { money: 135, xp: 100 }, done: "Mes recherches avancent bien !", unlock: { totalQuests: 6, level: 4 } },
+                      // ── Vague 4 ──
+                      { desc: "Collection royale : 15 poissons, 15 fleurs 👑", need: { fish: 15, flowers: 15 }, reward: { money: 170, xp: 125 }, done: "Une collection digne d'un roi !", unlock: { totalQuests: 10, level: 6 } },
+                      { desc: "Archives complètes : 20 fleurs, 12 pommes, 10 pains 📖", need: { flowers: 20, apples: 12, bread: 10 }, reward: { money: 195, xp: 140 }, done: "Les archives sont complètes !", unlock: { totalQuests: 10, level: 6 } }
                   ]}
 };
 
@@ -356,7 +388,8 @@ Game.VILLAGER_JOBS = {
     'Lea 🐱':          { job: 'Pêcheur',       income: 8 },
     'Tom 🐶':            { job: 'Constructeur',   income: 7 },
     'Lucie 🦊':     { job: 'Alchimiste',    income: 10 },
-    'Ordralfabétix 🐡': { job: 'Poissonnier',   income: 12 }
+    'Ordralfabétix 🐡': { job: 'Poissonnier',   income: 12 },
+    'Pedro 🦉':         { job: 'Conservateur',  income: 9 }
 };
 
 Game.SOUNDS = {

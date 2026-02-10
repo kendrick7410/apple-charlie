@@ -135,16 +135,16 @@ Game.creatures.tryCapture = function(creature) {
         Game.ui.notify("Il te faut un filet ! 🥅");
         return;
     }
-    // Check proximity
-    if (Math.hypot(s.charlie.x - creature.x, s.charlie.y - creature.y) > 150) {
+    // Check proximity (increased from 150 to 250 for easier capture)
+    if (Math.hypot(s.charlie.x - creature.x, s.charlie.y - creature.y) > 250) {
         Game.ui.notify("Trop loin ! Rapproche-toi 🦋");
         return;
     }
     if (!creature.speciesId) return;
 
     var sp = Game.BUTTERFLY_SPECIES[creature.speciesId];
-    // Capture chance based on rarity
-    var chance = { common: 0.9, uncommon: 0.75, rare: 0.5, legendary: 0.3 };
+    // Capture chance based on rarity (increased chances for easier capture)
+    var chance = { common: 1.0, uncommon: 0.9, rare: 0.75, legendary: 0.55 };
     if (Math.random() > (chance[sp.rarity] || 0.5)) {
         Game.ui.notify("Raté ! Le papillon s'enfuit ! 🦋");
         Game.audio.play('error');
