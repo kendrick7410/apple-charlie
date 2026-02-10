@@ -20,8 +20,10 @@ Game.villagers.init = function() {
         v.className = 'entity villager-sprite';
         v.style.left = (data.home.x + 80) + 'px';
         v.style.top = (data.home.y + 100) + 'px';
+        // Extract name without emoji
+        var nameOnly = name.split(' ')[0];
         v.innerHTML = '<span class="villager-emoji">' + data.emoji + '</span>' +
-            '<div class="building-label">' + name + '</div>' +
+            '<div class="building-label">' + nameOnly + '</div>' +
             '<div class="speech-bubble"></div>';
         v.style.fontSize = '2.5rem';
         v.style.cursor = 'pointer';

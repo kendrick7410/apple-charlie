@@ -42,7 +42,9 @@ Game.world.init = function() {
         div.style.left = h.x + 'px';
         div.style.top = h.y + 'px';
         div.dataset.houseId = h.id;
-        div.innerHTML = '<div>' + h.emoji + '</div><div class="building-label">Chez ' + h.name + '</div><div class="house-door"></div>';
+        // Extract name without emoji
+        var nameOnly = h.name.split(' ')[0];
+        div.innerHTML = '<div>' + h.emoji + '</div><div class="building-label">Chez ' + nameOnly + '</div><div class="house-door"></div>';
         world.appendChild(div);
     });
 
