@@ -646,18 +646,8 @@ body {
 
 /* ── Player Path Tiles ── */
 .player-path {
-    border-radius: 30px;
+    border-radius: 8px;
     opacity: 0.9;
-}
-
-/* ── Player Water Tiles ── */
-.player-water {
-    position: absolute;
-    background: var(--river-color);
-    border-radius: 30px;
-    opacity: 0.95;
-    z-index: 2;
-    animation: water-shimmer 3s infinite ease-in-out;
 }
 
 /* ── Shovel Toggle ── */
