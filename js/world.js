@@ -56,7 +56,7 @@ Game.world.init = function() {
     site.style.left = Game.CONFIG.LOCATIONS.charlieHouse.x + 'px';
     site.style.top = Game.CONFIG.LOCATIONS.charlieHouse.y + 'px';
     site.style.fontSize = '5rem';
-    site.innerHTML = houseEmoji + '<div class="building-label">Maison de Charlie</div><div class="house-door"></div>';
+    site.innerHTML = houseEmoji + '<div class="building-label">Maison de Charlie</div>';
     world.appendChild(site);
 
     // Museum
@@ -218,7 +218,7 @@ Game.world.updateHouseSite = function() {
     var hEmoji = Game.HOUSE_STAGES[s.houseLevel];
     var site = document.getElementById('house-site');
     if (site) {
-        site.innerHTML = hEmoji + '<div class="building-label">' + hLabel + '</div><div class="house-door"></div>';
+        site.innerHTML = hEmoji + '<div class="building-label">' + hLabel + '</div>';
     }
 };
 
