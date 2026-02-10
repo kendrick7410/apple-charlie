@@ -44,7 +44,7 @@ Game.world.init = function() {
         div.dataset.houseId = h.id;
         // Extract name without emoji
         var nameOnly = h.name.split(' ')[0];
-        div.innerHTML = '<div>' + h.emoji + '</div><div class="building-label">Chez ' + nameOnly + '</div><div class="house-door"></div>';
+        div.innerHTML = '<div>' + h.emoji + '</div><div class="building-label">Chez ' + nameOnly + '</div>';
         world.appendChild(div);
     });
 
