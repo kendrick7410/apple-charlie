@@ -310,7 +310,7 @@ Game.VILLAGER_DATA = {
                       { desc: "Collection royale : 15 poissons, 15 fleurs 👑", need: { fish: 15, flowers: 15 }, reward: { money: 170, xp: 125 }, done: "Une collection digne d'un roi !", unlock: { totalQuests: 10, level: 6 } },
                       { desc: "Archives complètes : 20 fleurs, 12 pommes, 10 pains 📖", need: { flowers: 20, apples: 12, bread: 10 }, reward: { money: 195, xp: 140 }, done: "Les archives sont complètes !", unlock: { totalQuests: 10, level: 6 } }
                   ]},
-    'Max 🧗': { emoji: '🧗', home: { x: 3300, y: 950 }, greetings: ["Bienvenue au refuge !", "Attention en montagne !", "Salut l'aventurier !"],
+    'Max 🦬': { emoji: '🦬', home: { x: 3300, y: 950 }, greetings: ["Bienvenue au refuge !", "Attention en montagne !", "Salut l'aventurier !"],
                   dialogues: [
                       "Le Cervin est magnifique, mais dangereux. Toujours rester prudent ! ⛰️",
                       "J'ai vu un aigle ce matin. Majestueux créature ! 🦅",
@@ -423,7 +423,7 @@ Game.VILLAGER_JOBS = {
     'Lucie 🦊':     { job: 'Alchimiste',    income: 10 },
     'Ordralfabétix 🐡': { job: 'Poissonnier',   income: 12 },
     'Pedro 🦉':         { job: 'Conservateur',  income: 9 },
-    'Max 🧗':           { job: 'Gardien',       income: 11 }
+    'Max 🦬':           { job: 'Gardien',       income: 11 }
 };
 
 Game.SOUNDS = {
