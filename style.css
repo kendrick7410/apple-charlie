@@ -596,6 +596,41 @@ body {
     }
 }
 
+/* ── Lake Animation ── */
+.lake-water {
+    animation: water-ripple 4s infinite ease-in-out;
+}
+
+@keyframes water-ripple {
+    0%, 100% {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.85;
+        transform: scale(1.02);
+    }
+}
+
+.lake-shimmer {
+    animation: shimmer-move 5s infinite ease-in-out;
+}
+
+@keyframes shimmer-move {
+    0%, 100% {
+        opacity: 0.3;
+        transform: translateX(0) translateY(0);
+    }
+    33% {
+        opacity: 0.5;
+        transform: translateX(20px) translateY(-10px);
+    }
+    66% {
+        opacity: 0.2;
+        transform: translateX(-15px) translateY(5px);
+    }
+}
+
 /* ── Title screen animations ── */
 @keyframes title-float {
     from { transform: translateY(0) rotate(0deg); }

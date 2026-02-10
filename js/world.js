@@ -68,6 +68,9 @@ Game.world.init = function() {
     // Mountain (Le Cervin)
     Game.world.createMountain();
 
+    // Lake (Lac du Cervin)
+    Game.world.createLake();
+
     // Hills (relief)
     Game.world.createHills();
 
@@ -264,6 +267,56 @@ Game.world.createMountain = function() {
     refuge.style.cursor = 'pointer';
     refuge.innerHTML = '<div style="font-size:4rem;">🏚️</div><div class="building-label">🔥 Refuge du Cervin</div>';
     world.appendChild(refuge);
+};
+
+Game.world.createLake = function() {
+    var world = document.getElementById('game-world');
+    var loc = Game.CONFIG.LOCATIONS.lake;
+
+    // Lake water body
+    var lake = document.createElement('div');
+    lake.className = 'lake-water';
+    lake.style.cssText = 'position:absolute;border-radius:50%;z-index:2;pointer-events:none;';
+    lake.style.left = (loc.x - 250) + 'px';
+    lake.style.top = (loc.y - 150) + 'px';
+    lake.style.width = '500px';
+    lake.style.height = '300px';
+    lake.style.background = 'radial-gradient(ellipse at center, rgba(90,160,220,0.8) 0%, rgba(70,130,200,0.7) 50%, rgba(50,100,170,0.5) 80%, transparent 100%)';
+    lake.style.boxShadow = 'inset 0 2px 8px rgba(0,0,0,0.2)';
+    world.appendChild(lake);
+
+    // Lake shimmer effect
+    var shimmer = document.createElement('div');
+    shimmer.className = 'lake-shimmer';
+    shimmer.style.cssText = 'position:absolute;border-radius:50%;z-index:3;pointer-events:none;';
+    shimmer.style.left = (loc.x - 200) + 'px';
+    shimmer.style.top = (loc.y - 120) + 'px';
+    shimmer.style.width = '400px';
+    shimmer.style.height = '240px';
+    shimmer.style.background = 'radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.3) 0%, transparent 50%)';
+    world.appendChild(shimmer);
+
+    // Label
+    var label = document.createElement('div');
+    label.className = 'entity';
+    label.style.left = loc.x + 'px';
+    label.style.top = (loc.y - 180) + 'px';
+    label.innerHTML = '<div class="building-label" style="font-size:11px;font-weight:bold;">💧 Lac du Cervin</div>';
+    world.appendChild(label);
+
+    // Decorative elements (reeds/plants)
+    for (var i = 0; i < 6; i++) {
+        var reed = document.createElement('div');
+        reed.className = 'entity';
+        reed.style.fontSize = (1.5 + Math.random() * 0.5) + 'rem';
+        var angle = (i / 6) * Math.PI * 2;
+        var dist = 220 + Math.random() * 40;
+        reed.style.left = (loc.x + Math.cos(angle) * dist) + 'px';
+        reed.style.top = (loc.y + Math.sin(angle) * dist * 0.6) + 'px';
+        reed.innerHTML = '🌾';
+        reed.style.opacity = '0.7';
+        world.appendChild(reed);
+    }
 };
 
 Game.world.createHills = function() {
