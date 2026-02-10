@@ -158,28 +158,28 @@ Game.world.createForest = function() {
     var loc = Game.CONFIG.LOCATIONS.forest;
     var season = Game.state.season;
 
-    // Forest ground
+    // Forest ground (enlarged)
     var ground = document.createElement('div');
     ground.className = 'forest-ground';
     ground.style.cssText = 'position:absolute;border-radius:50%;pointer-events:none;z-index:0;';
-    ground.style.left = (loc.x - 200) + 'px';
-    ground.style.top = (loc.y - 200) + 'px';
-    ground.style.width = '400px';
-    ground.style.height = '400px';
+    ground.style.left = (loc.x - 350) + 'px';
+    ground.style.top = (loc.y - 350) + 'px';
+    ground.style.width = '700px';
+    ground.style.height = '700px';
     world.appendChild(ground);
 
     // Label
     var label = document.createElement('div');
     label.className = 'entity';
     label.style.left = loc.x + 'px';
-    label.style.top = (loc.y - 180) + 'px';
-    label.innerHTML = '<div class="building-label">🌳 Mini-forêt</div>';
+    label.style.top = (loc.y - 330) + 'px';
+    label.innerHTML = '<div class="building-label">🌳 Grande Forêt</div>';
     world.appendChild(label);
 
-    // Dense tree cluster
-    for (var i = 0; i < 18; i++) {
+    // Dense tree cluster (more trees in larger area)
+    for (var i = 0; i < 35; i++) {
         var angle = Math.random() * Math.PI * 2;
-        var dist = Math.random() * 180;
+        var dist = Math.random() * 320;
         var tx = loc.x + Math.cos(angle) * dist;
         var ty = loc.y + Math.sin(angle) * dist;
         var tree = document.createElement('div');
