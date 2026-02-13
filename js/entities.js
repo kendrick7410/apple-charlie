@@ -83,11 +83,17 @@ Game.entities.checkCollect = function() {
     var s = Game.state;
     var cx = s.charlie.x, cy = s.charlie.y;
 
+    // Larger collection radius on mobile for easier gameplay
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    var stoneRadius = isMobile ? 80 : 40;
+    var flowerRadius = isMobile ? 80 : 40;
+    var treeRadius = isMobile ? 100 : 50;
+
     // Stones
     var stones = document.querySelectorAll('.stone');
     for (var i = 0; i < stones.length; i++) {
         var st = stones[i];
-        if (Math.hypot(cx - parseInt(st.style.left), cy - parseInt(st.style.top)) < 40) {
+        if (Math.hypot(cx - parseInt(st.style.left), cy - parseInt(st.style.top)) < stoneRadius) {
             s.inventory.stone++;
             Game.xp.add(3);
             Game.particles.spawnWorld('🧱', parseInt(st.style.left), parseInt(st.style.top));
@@ -103,7 +109,7 @@ Game.entities.checkCollect = function() {
     var flowers = document.querySelectorAll('.flower:not(.placed-flower)');
     for (var j = 0; j < flowers.length; j++) {
         var fl = flowers[j];
-        if (Math.hypot(cx - parseInt(fl.style.left), cy - parseInt(fl.style.top)) < 40) {
+        if (Math.hypot(cx - parseInt(fl.style.left), cy - parseInt(fl.style.top)) < flowerRadius) {
             s.inventory.flowers++;
             Game.xp.add(2);
             Game.particles.spawnWorld('🌻', parseInt(fl.style.left), parseInt(fl.style.top));
@@ -118,7 +124,7 @@ Game.entities.checkCollect = function() {
     var trees = document.querySelectorAll('.tree');
     for (var k = 0; k < trees.length; k++) {
         var tr = trees[k];
-        if (tr.dataset.hasApple === 'true' && Math.hypot(cx - parseInt(tr.style.left), cy - parseInt(tr.style.top)) < 50) {
+        if (tr.dataset.hasApple === 'true' && Math.hypot(cx - parseInt(tr.style.left), cy - parseInt(tr.style.top)) < treeRadius) {
             Game.entities.harvest(tr);
         }
     }

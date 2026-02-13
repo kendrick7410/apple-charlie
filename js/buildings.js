@@ -9,38 +9,43 @@ Game.buildings.checkProximity = function() {
     var cx = s.charlie.x, cy = s.charlie.y;
     var loc = Game.CONFIG.LOCATIONS;
 
+    // Larger proximity radius on mobile for easier interaction
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    var proximityMult = isMobile ? 1.5 : 1;
+
     // Fountain
     var fountainPanel = document.getElementById('action-fountain');
-    if (fountainPanel) fountainPanel.style.display = Math.hypot(cx - loc.fountain.x, cy - loc.fountain.y) < 120 ? 'flex' : 'none';
+    if (fountainPanel) fountainPanel.style.display = Math.hypot(cx - loc.fountain.x, cy - loc.fountain.y) < (120 * proximityMult) ? 'flex' : 'none';
 
     // Bakery
     var bakeryPanel = document.getElementById('action-bakery');
-    if (bakeryPanel) bakeryPanel.style.display = Math.hypot(cx - loc.bakery.x, cy - loc.bakery.y) < 100 ? 'flex' : 'none';
+    if (bakeryPanel) bakeryPanel.style.display = Math.hypot(cx - loc.bakery.x, cy - loc.bakery.y) < (100 * proximityMult) ? 'flex' : 'none';
 
     // Shop
     var shopPanel = document.getElementById('action-shop');
-    if (shopPanel) shopPanel.style.display = Math.hypot(cx - loc.shop.x, cy - loc.shop.y) < 100 ? 'flex' : 'none';
+    if (shopPanel) shopPanel.style.display = Math.hypot(cx - loc.shop.x, cy - loc.shop.y) < (100 * proximityMult) ? 'flex' : 'none';
 
     // Fish Shop
     var fishShopPanel = document.getElementById('action-fishShop');
-    if (fishShopPanel) fishShopPanel.style.display = Math.hypot(cx - loc.fishShop.x, cy - loc.fishShop.y) < 100 ? 'flex' : 'none';
+    if (fishShopPanel) fishShopPanel.style.display = Math.hypot(cx - loc.fishShop.x, cy - loc.fishShop.y) < (100 * proximityMult) ? 'flex' : 'none';
 
     // Museum
     var museumPanel = document.getElementById('action-museum');
     if (museumPanel) {
-        var nearMuseum = Math.hypot(cx - loc.museum.x, cy - loc.museum.y) < 100;
+        var nearMuseum = Math.hypot(cx - loc.museum.x, cy - loc.museum.y) < (100 * proximityMult);
         museumPanel.style.display = nearMuseum ? 'flex' : 'none';
         if (nearMuseum) Game.ui.updateMuseum();
     }
 
-    // River fishing
-    var isNearRiver = cx > 450 && cx < 750;
+    // River fishing - wider zone on mobile
+    var riverMargin = isMobile ? 100 : 0;
+    var isNearRiver = cx > (450 - riverMargin) && cx < (750 + riverMargin);
     var isNearBridge = (cy > 930 && cy < 1050) || (cy > 1780 && cy < 1900);
     var riverPanel = document.getElementById('action-river');
     if (riverPanel) riverPanel.style.display = (isNearRiver && !isNearBridge && s.season !== 'winter') ? 'flex' : 'none';
 
     // Charlie's house
-    if (Math.hypot(cx - loc.charlieHouse.x, cy - loc.charlieHouse.y) < 100) {
+    if (Math.hypot(cx - loc.charlieHouse.x, cy - loc.charlieHouse.y) < (100 * proximityMult)) {
         if (s.houseLevel < 4) {
             if (s.inventory.materials > 0) Game.buildings.buildHouse();
         } else {
@@ -50,7 +55,7 @@ Game.buildings.checkProximity = function() {
 
     // NPC houses
     Game.HOUSES.forEach(function(h) {
-        if (h.id !== 'charlie' && Math.hypot(cx - h.x, cy - (h.y + 50)) < 60) {
+        if (h.id !== 'charlie' && Math.hypot(cx - h.x, cy - (h.y + 50)) < (60 * proximityMult)) {
             Game.buildings.enterHouse(h);
         }
     });
