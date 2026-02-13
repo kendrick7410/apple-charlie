@@ -89,6 +89,10 @@ Game.engine.initJoystick = function() {
                 // Direct position update for joystick - smoother movement
                 Game.state.charlie.x += dir.dx * (Game.CONFIG.TILE * 0.5);
                 Game.state.charlie.y += dir.dy * (Game.CONFIG.TILE * 0.5);
+
+                // IMPORTANT: Check for collectibles and building proximity after moving
+                Game.buildings.checkProximity();
+                Game.entities.checkCollect();
             } else if (Game.state.currentView === 'interior') {
                 Game.state.interiorCharlie.x += dir.dx * (Game.CONFIG.TILE * 0.5);
                 Game.state.interiorCharlie.y += dir.dy * (Game.CONFIG.TILE * 0.5);
