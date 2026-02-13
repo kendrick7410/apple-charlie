@@ -25,12 +25,29 @@ Game.engine.init = function() {
         delete Game.state.keysDown[key.toLowerCase()];
     });
 
-    // Click to move (world)
-    document.getElementById('viewport').addEventListener('mousedown', function(e) {
+    // Click/Touch to move (world)
+    var viewport = document.getElementById('viewport');
+
+    function handleMoveInput(e) {
         if (Game.state.currentView !== 'world') return;
-        if (e.target.closest('button, .ui-card, #action-fountain, #action-bakery, #action-shop, #action-river, #action-fishShop, #action-museum, .building-label, .villager-sprite, .garden-cell')) return;
+        if (e.target.closest('button, .ui-card, #action-fountain, #action-bakery, #action-shop, #action-river, #action-fishShop, #action-museum, .building-label, .villager-sprite, .garden-cell, #mobile-toggle, #joystick')) return;
         Game.audio.resume();
         Game.player.handleClick(e);
+    }
+
+    viewport.addEventListener('mousedown', handleMoveInput);
+    viewport.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 1) {
+            // Simulate mouse event for touch
+            var touch = e.touches[0];
+            var mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            mouseEvent.clientX = touch.clientX;
+            mouseEvent.clientY = touch.clientY;
+            handleMoveInput(mouseEvent);
+        }
     });
 
     // Touch joystick support
@@ -45,20 +62,36 @@ Game.engine.initJoystick = function() {
         { dx: 0, dy: 1 },  // down
         { dx: 1, dy: 0 }   // right
     ];
-    var intervals = [];
+    var activeInterval = null;
 
     btns.forEach(function(btn, i) {
         var dir = dirs[i];
 
         function startMove() {
             Game.audio.resume();
+
+            // Clear any existing interval
+            if (activeInterval) {
+                clearInterval(activeInterval);
+            }
+
+            // Move immediately on press
+            move();
+
+            // Continue moving while held
+            activeInterval = setInterval(function() {
+                move();
+            }, 100);
+        }
+
+        function move() {
             if (Game.state.currentView === 'world') {
-                // Direct position update for joystick
-                Game.state.charlie.x += dir.dx * Game.CONFIG.TILE;
-                Game.state.charlie.y += dir.dy * Game.CONFIG.TILE;
+                // Direct position update for joystick - smoother movement
+                Game.state.charlie.x += dir.dx * (Game.CONFIG.TILE * 0.5);
+                Game.state.charlie.y += dir.dy * (Game.CONFIG.TILE * 0.5);
             } else if (Game.state.currentView === 'interior') {
-                Game.state.interiorCharlie.x += dir.dx * Game.CONFIG.TILE;
-                Game.state.interiorCharlie.y += dir.dy * Game.CONFIG.TILE;
+                Game.state.interiorCharlie.x += dir.dx * (Game.CONFIG.TILE * 0.5);
+                Game.state.interiorCharlie.y += dir.dy * (Game.CONFIG.TILE * 0.5);
                 Game.state.interiorCharlie.x = Math.max(20, Math.min(540, Game.state.interiorCharlie.x));
                 Game.state.interiorCharlie.y = Math.max(20, Math.min(540, Game.state.interiorCharlie.y));
                 var ic = document.getElementById('interior-charlie');
@@ -72,9 +105,33 @@ Game.engine.initJoystick = function() {
             }
         }
 
-        btn.onmousedown = btn.ontouchstart = function(e) {
+        function stopMove() {
+            if (activeInterval) {
+                clearInterval(activeInterval);
+                activeInterval = null;
+            }
+        }
+
+        // Mouse events
+        btn.onmousedown = function(e) {
             e.preventDefault();
             startMove();
+        };
+
+        btn.onmouseup = btn.onmouseleave = function(e) {
+            e.preventDefault();
+            stopMove();
+        };
+
+        // Touch events
+        btn.ontouchstart = function(e) {
+            e.preventDefault();
+            startMove();
+        };
+
+        btn.ontouchend = btn.ontouchcancel = function(e) {
+            e.preventDefault();
+            stopMove();
         };
     });
 };

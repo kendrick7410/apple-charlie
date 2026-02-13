@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Le Village de Charlie</title>
     <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -43,7 +43,7 @@
 <!-- ═══════════ Main HUD ═══════════ -->
 
 <!-- Top-left: Status -->
-<div style="position:fixed;top:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:8px;max-width:240px;">
+<div id="status-panel" style="position:fixed;top:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:8px;max-width:240px;">
     <!-- Charlie Info -->
     <div class="ui-card" style="padding:10px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -158,6 +158,9 @@
     </div>
 </div>
 
+<!-- Mobile toggle button -->
+<button id="mobile-toggle" onclick="toggleMobileUI()" style="display:none;position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:1001;background:#ff9d5c;color:white;border:none;border-radius:50%;width:44px;height:44px;font-size:1.2rem;box-shadow:0 4px 8px rgba(0,0,0,0.2);cursor:pointer;">📊</button>
+
 <!-- ═══════════ Time Controls (top-right) ═══════════ -->
 <div style="position:fixed;top:10px;right:10px;z-index:1000;">
     <div class="ui-card" style="padding:6px 10px;display:flex;gap:4px;align-items:center;font-size:0.65rem;">
@@ -205,6 +208,49 @@
 <script src="js/ui.js"></script>
 
 <script>
+// ── Mobile UI Toggle ──
+let mobileUIVisible = true;
+
+function toggleMobileUI() {
+    const panel = document.getElementById('status-panel');
+    const btn = document.getElementById('mobile-toggle');
+    mobileUIVisible = !mobileUIVisible;
+
+    if (mobileUIVisible) {
+        panel.style.display = 'flex';
+        btn.textContent = '📊';
+    } else {
+        panel.style.display = 'none';
+        btn.textContent = '👁️';
+    }
+}
+
+// Detect mobile and show toggle button
+function detectMobile() {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+                     || window.innerWidth <= 768;
+
+    if (isMobile) {
+        const toggleBtn = document.getElementById('mobile-toggle');
+        if (toggleBtn) {
+            toggleBtn.style.display = 'block';
+        }
+
+        // Start with UI hidden on very small screens
+        if (window.innerWidth <= 480) {
+            const panel = document.getElementById('status-panel');
+            if (panel) {
+                panel.style.display = 'none';
+                mobileUIVisible = false;
+                toggleBtn.textContent = '👁️';
+            }
+        }
+    }
+}
+
+// Call on load and resize
+window.addEventListener('resize', detectMobile);
+
 // ── Main bootstrap ──
 (function(){
 "use strict";
@@ -257,6 +303,7 @@ function buildCookingUI() {
 
 // On page load → show title screen
 window.onload = function() {
+    detectMobile();
     Game.titlescreen.show();
 };
 
