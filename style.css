@@ -836,13 +836,14 @@ button {
         left: 50% !important;
         transform: translateX(-50%);
         bottom: 20px !important;
-        gap: 10px;
+        gap: 12px;
     }
 
     #joystick button {
-        width: 80px;
-        height: 80px;
-        font-size: 1.8rem;
+        width: 110px;
+        height: 110px;
+        font-size: 2.5rem;
+        font-weight: bold;
     }
 
     /* Make action buttons bigger */
@@ -938,13 +939,14 @@ button {
         left: 50% !important;
         transform: translateX(-50%);
         bottom: 15px !important;
-        gap: 12px;
+        gap: 15px;
     }
 
     #joystick button {
-        width: 90px;
-        height: 90px;
-        font-size: 2rem;
+        width: 120px;
+        height: 120px;
+        font-size: 3rem;
+        font-weight: bold;
     }
 
     /* Bigger action buttons */
