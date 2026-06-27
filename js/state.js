@@ -43,7 +43,8 @@ Game.state = {
     houseFurniture: {},  // per-house id
     totalTimePlayed: 0,
     keysDown: {},
-    paused: false
+    paused: false,
+    dead: false
 };
 
 // Deep clone default state for new game

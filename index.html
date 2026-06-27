@@ -228,6 +228,15 @@
     </div>
 </div>
 
+<!-- Écran de mort (faim vide) -->
+<div id="death-screen" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(40,0,0,0.88);flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;">
+    <div style="font-size:5rem;margin-bottom:10px;">💀</div>
+    <div style="font-size:2.4rem;font-weight:bold;color:#ff5252;margin-bottom:8px;font-family:'Varela Round',sans-serif;">VOUS ÊTES MORT</div>
+    <div style="font-size:1.1rem;margin-bottom:6px;">Tu n'as plus rien mangé... 🍽️</div>
+    <div id="death-lost" style="font-size:1.3rem;font-weight:bold;color:#ffca28;margin-bottom:24px;">-50 clochettes 💰</div>
+    <button onclick="Game.ui.revive()" class="btn-animal" style="background:#66bb6a;box-shadow:0 5px 0 #43a047;font-size:1.1rem;padding:14px 34px;">Recommencer 🌅</button>
+</div>
+
 <!-- Menu Manger (barre de faim) -->
 <div id="panel-eat" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5800;width:90%;max-width:300px;max-height:80vh;overflow-y:auto;">
     <div class="ui-card" style="padding:14px;">

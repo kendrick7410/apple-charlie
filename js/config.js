@@ -50,7 +50,7 @@ Game.CONFIG = {
 
     // Faim
     HUNGER_MAX: 100,
-    HUNGER_DRAIN_MS: 4500,   // perd 1 point de faim toutes les 4,5 s (~7,5 min plein → vide)
+    HUNGER_DRAIN_MS: 9000,   // perd 1 point de faim toutes les 9 s (~15 min plein → vide)
 
     // Locations
     LOCATIONS: {

@@ -175,7 +175,8 @@ Game.engine.loop = function(now) {
             Game.state.hunger = Math.max(0, Game.state.hunger - 1);
             Game.ui.update();
             if (Game.state.hunger === 30) Game.ui.notify("🍽️ Tu commences à avoir faim...");
-            else if (Game.state.hunger === 0) Game.ui.notify("🍽️ Tu as très faim ! Mange vite (bouton 🍴 Manger).");
+            else if (Game.state.hunger === 15) Game.ui.notify("🍽️ Tu as très faim ! Mange vite (bouton 🍴 Manger).");
+            else if (Game.state.hunger === 0) Game.ui.showDeath();
         }
     }
 

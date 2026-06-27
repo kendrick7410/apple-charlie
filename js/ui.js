@@ -248,6 +248,37 @@ Game.ui.updateCollections = function() {
     }
 };
 
+// Mort de faim : écran "Vous êtes mort" + perte de 50 clochettes
+Game.ui.showDeath = function() {
+    var s = Game.state;
+    if (s.dead) return;
+    s.dead = true;
+    s.paused = true;
+    var lost = Math.min(50, s.inventory.money);
+    s.inventory.money = Math.max(0, s.inventory.money - 50);
+    Game.audio.play('error');
+    Game.ui.update();
+    var lostEl = document.getElementById('death-lost');
+    if (lostEl) lostEl.textContent = '-' + lost + ' clochettes 💰';
+    var screen = document.getElementById('death-screen');
+    if (screen) screen.style.display = 'flex';
+};
+
+Game.ui.revive = function() {
+    var s = Game.state;
+    s.hunger = Game.CONFIG.HUNGER_MAX;          // on repart le ventre plein
+    var f = Game.CONFIG.LOCATIONS.fountain;
+    s.charlie.x = f.x; s.charlie.y = f.y + 90;  // réapparition à la fontaine
+    s.charlie.visualX = f.x; s.charlie.visualY = f.y + 90;
+    var screen = document.getElementById('death-screen');
+    if (screen) screen.style.display = 'none';
+    s.paused = false;
+    s.dead = false;
+    if (Game.player.updateCamera) Game.player.updateCamera();
+    Game.ui.update();
+    Game.ui.notify("Te revoilà à la fontaine, le ventre plein ! 🍽️");
+};
+
 // Menu "Manger" : liste ce que Charlie possède à manger
 Game.ui.updateEatMenu = function() {
     var panel = document.getElementById('eat-items');
