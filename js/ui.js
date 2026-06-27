@@ -26,6 +26,17 @@ Game.ui.update = function() {
     setText('material-count', s.inventory.materials);
     setText('village-revenue', s.villageRevenue);
 
+    // Barre de faim
+    var hf = document.getElementById('hunger-bar-fill');
+    if (hf) {
+        var pct = Math.max(0, Math.min(100, s.hunger));
+        hf.style.width = pct + '%';
+        hf.style.background = pct < 25
+            ? 'linear-gradient(90deg,#e53935,#ff7043)'
+            : 'linear-gradient(90deg,#ff7043,#ffca28)';
+    }
+    setText('hunger-text', Math.round(s.hunger) + '/100');
+
     // Plant button
     var pBtn = document.getElementById('plant-btn');
     if (pBtn) {
@@ -235,6 +246,32 @@ Game.ui.updateCollections = function() {
         globesEl.innerHTML = ghtml;
         setText('collection-globes-count', s.snowGlobes.length + '/' + Game.SNOW_GLOBES.length);
     }
+};
+
+// Menu "Manger" : liste ce que Charlie possède à manger
+Game.ui.updateEatMenu = function() {
+    var panel = document.getElementById('eat-items');
+    if (!panel) return;
+    var s = Game.state;
+    var html = '', any = false;
+    Game.FOODS.forEach(function(f) {
+        var n = Game.inventory.foodCount(f);
+        if (n > 0) {
+            any = true;
+            html += '<button class="shop-btn" onclick="Game.inventory.eat(\'' + f.id + '\')">' +
+                f.emoji + ' ' + f.label + ' x' + n + ' (+' + f.hunger + ' faim)</button>';
+        }
+    });
+    panel.innerHTML = any ? html :
+        '<div style="font-size:0.72rem;color:#777;">Tu n\'as rien à manger ! Cuisine à la boulangerie 🍞 ou cultive ton jardin 🌱.</div>';
+};
+
+Game.ui.toggleEat = function() {
+    var p = document.getElementById('panel-eat');
+    if (!p) return;
+    var show = p.style.display === 'none' || !p.style.display;
+    p.style.display = show ? 'block' : 'none';
+    if (show) Game.ui.updateEatMenu();
 };
 
 // Menu de téléportation (touche N)

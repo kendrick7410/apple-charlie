@@ -57,6 +57,16 @@
         </div>
         <div id="xp-text" style="font-size:0.6rem;color:#8b6914;text-align:right;">0/100 XP</div>
 
+        <!-- Hunger Bar -->
+        <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
+            <span style="font-size:0.8rem;">🍖</span>
+            <div style="flex:1;height:11px;background:#e8d8b0;border-radius:6px;overflow:hidden;">
+                <div id="hunger-bar-fill" style="height:100%;width:100%;background:linear-gradient(90deg,#ff7043,#ffca28);border-radius:6px;transition:width 0.3s;"></div>
+            </div>
+            <button onclick="Game.ui.toggleEat()" style="font-size:0.62rem;padding:3px 8px;border:none;border-radius:8px;background:#8bc34a;color:#fff;cursor:pointer;font-weight:bold;white-space:nowrap;">🍴 Manger</button>
+        </div>
+        <div id="hunger-text" style="font-size:0.6rem;color:#8b6914;text-align:right;">100/100</div>
+
         <!-- Inventory Grid -->
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1px 8px;font-size:0.7rem;margin-top:4px;">
             <span>🍎 Pommes:</span> <span id="apple-count" style="font-weight:bold;color:#e53935;text-align:right;">0</span>
@@ -215,6 +225,18 @@
         <div id="collection-globes" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;"></div>
         <div style="font-size:0.78rem;font-weight:bold;color:#c62828;margin-bottom:3px;">🍕 Pizzas de David — <span id="collection-pizzas-count">0/8</span></div>
         <div id="collection-pizzas" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+    </div>
+</div>
+
+<!-- Menu Manger (barre de faim) -->
+<div id="panel-eat" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5800;width:90%;max-width:300px;max-height:80vh;overflow-y:auto;">
+    <div class="ui-card" style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-weight:bold;font-size:1rem;color:#5d4037;">🍴 Manger</div>
+            <button onclick="Game.ui.toggleEat()" style="border:none;background:#ef9a9a;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-weight:bold;">✕</button>
+        </div>
+        <div style="font-size:0.68rem;color:#777;margin-bottom:8px;">Mange ce que tu as cuisiné 🍞 ou cultivé 🌱 pour remplir ta faim.</div>
+        <div id="eat-items" style="display:flex;flex-direction:column;gap:5px;"></div>
     </div>
 </div>
 

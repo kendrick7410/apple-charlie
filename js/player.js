@@ -22,7 +22,7 @@ Game.player.update = function(dt, now) {
     var s = Game.state;
     if (s.currentView !== 'world') return;
 
-    var speed = Game.CONFIG.PLAYER_SPEED;
+    var speed = Game.CONFIG.PLAYER_SPEED * (s.hunger <= 0 ? 0.55 : 1);  // affamé = plus lent
     var moved = false;
     var keys = s.keysDown;
 

@@ -48,6 +48,10 @@ Game.CONFIG = {
     XP_PER_LEVEL: 100,
     MAX_LEVEL: 15,
 
+    // Faim
+    HUNGER_MAX: 100,
+    HUNGER_DRAIN_MS: 4500,   // perd 1 point de faim toutes les 4,5 s (~7,5 min plein → vide)
+
     // Locations
     LOCATIONS: {
         fountain:     { x: 1000, y: 1000 },
@@ -156,6 +160,22 @@ Game.SHOPS = [
     { id: 'pizzeria', name: 'Pizzeria David', sign: '🍕', loc: 'pizzeria', panel: 'action-pizzeria', theme: 'pizzeria',
       npc: '🦏', npcLine: "David : Bienvenue dans ma pizzeria ! 🍕🦏", purpose: "David le rhinocéros te prépare de bonnes pizzas. Achète-les et goûte-les toutes !",
       decor: [['🍕',70,140],['🧀',460,140],['🍅',250,110],['🔥',110,440],['🪵',440,440],['🌿',60,300],['🍷',460,300],['🪑',250,440]] }
+];
+
+// Nourriture : ce que Charlie peut manger pour remplir sa faim
+// store : où l'objet est stocké → 'cooked' (cuisine), 'harvest' (jardin), 'inventory'
+Game.FOODS = [
+    { id: 'gourmet',    label: 'Plateau gourmet',  emoji: '🍱', hunger: 55, store: 'cooked' },
+    { id: 'cake',       label: 'Gâteau',           emoji: '🎂', hunger: 45, store: 'cooked' },
+    { id: 'applePie',   label: 'Tarte aux pommes', emoji: '🥧', hunger: 35, store: 'cooked' },
+    { id: 'sushi',      label: 'Sushi',            emoji: '🍣', hunger: 30, store: 'cooked' },
+    { id: 'soup',       label: 'Soupe',            emoji: '🍲', hunger: 25, store: 'cooked' },
+    { id: 'pumpkin',    label: 'Citrouille',       emoji: '🎃', hunger: 24, store: 'harvest' },
+    { id: 'bread',      label: 'Pain',             emoji: '🍞', hunger: 20, store: 'inventory' },
+    { id: 'strawberry', label: 'Fraise',           emoji: '🍓', hunger: 16, store: 'harvest' },
+    { id: 'carrot',     label: 'Carotte',          emoji: '🥕', hunger: 14, store: 'harvest' },
+    { id: 'wheat',      label: 'Blé',              emoji: '🌾', hunger: 11, store: 'harvest' },
+    { id: 'apples',     label: 'Pomme',            emoji: '🍎', hunger: 10, store: 'inventory' }
 ];
 
 // Les pizzas de David (à acheter et goûter toutes → collection)

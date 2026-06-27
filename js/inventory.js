@@ -131,6 +131,41 @@ Game.inventory.buySnowGlobe = function(id) {
     Game.ui.notify(g.name + " achetée ! " + g.emoji + " (visible dans ta maison ❄️)");
 };
 
+// Quantité d'un aliment selon où il est stocké
+Game.inventory.foodCount = function(f) {
+    var s = Game.state;
+    if (f.store === 'cooked')  return s.cookedItems[f.id] || 0;
+    if (f.store === 'harvest') return s.harvest[f.id] || 0;
+    return s.inventory[f.id] || 0;
+};
+
+// Manger un aliment pour remplir la barre de faim
+Game.inventory.eat = function(id) {
+    var s = Game.state;
+    var f = null;
+    for (var i = 0; i < Game.FOODS.length; i++) { if (Game.FOODS[i].id === id) f = Game.FOODS[i]; }
+    if (!f) return;
+    if (Game.inventory.foodCount(f) <= 0) {
+        Game.ui.notify("Tu n'as pas de " + f.label.toLowerCase() + " ! " + f.emoji);
+        Game.audio.play('error');
+        return;
+    }
+    if (s.hunger >= Game.CONFIG.HUNGER_MAX) {
+        Game.ui.notify("Tu es déjà rassasié ! 😋");
+        return;
+    }
+    if (f.store === 'cooked')  s.cookedItems[id]--;
+    else if (f.store === 'harvest') s.harvest[id]--;
+    else s.inventory[id]--;
+    s.hunger = Math.min(Game.CONFIG.HUNGER_MAX, s.hunger + f.hunger);
+    Game.xp.add(2);
+    Game.audio.playChime();
+    Game.particles.spawn(f.emoji, window.innerWidth / 2, window.innerHeight / 2, { count: 4, spread: 40, vy: -60 });
+    Game.ui.update();
+    if (Game.ui.updateEatMenu) Game.ui.updateEatMenu();
+    Game.ui.notify("Miam ! " + f.label + " " + f.emoji + " +" + f.hunger + " faim");
+};
+
 // Acheter une pizza chez David (donne de l'XP, et on garde en mémoire celles goûtées)
 Game.inventory.buyPizza = function(id) {
     var s = Game.state;

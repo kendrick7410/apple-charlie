@@ -63,13 +63,14 @@ Game.farming.onPlotClick = function(index) {
     if (!plot) return;
 
     if (plot.crop && plot.stage >= 3) {
-        // Harvest
-        var cropData = Game.CROPS[plot.crop];
-        s.inventory.money += cropData.sell;
+        // Récolte : on garde le légume/fruit pour le MANGER (barre de faim)
+        var cropId = plot.crop;
+        var cropData = Game.CROPS[cropId];
+        s.harvest[cropId] = (s.harvest[cropId] || 0) + 1;
         Game.xp.add(cropData.xp);
         Game.audio.playChime();
         Game.particles.spawnWorld(cropData.emoji, gardenLoc.x + (index % 5) * 39, gardenLoc.y + Math.floor(index / 5) * 39 + 20);
-        Game.ui.notify(cropData.label + " récolté ! +" + cropData.sell + "💰");
+        Game.ui.notify(cropData.label + " récolté ! " + cropData.emoji + " (à manger 🍴)");
         plot.crop = null;
         plot.stage = 0;
         plot.waterLevel = 0;

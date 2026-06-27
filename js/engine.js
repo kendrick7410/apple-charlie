@@ -6,6 +6,7 @@ var lastTime = 0;
 var fishJumpTimer = 0;
 var fishShopTimer = 0;
 var villageRevenueTimer = 0;
+var hungerTimer = 0;
 
 Game.engine = {};
 
@@ -90,8 +91,9 @@ Game.engine.initJoystick = function() {
         function move() {
             if (Game.state.currentView === 'world') {
                 // Direct position update for joystick - smoother movement
-                Game.state.charlie.x += dir.dx * (Game.CONFIG.TILE * 0.5);
-                Game.state.charlie.y += dir.dy * (Game.CONFIG.TILE * 0.5);
+                var hungerMul = Game.state.hunger <= 0 ? 0.55 : 1;  // affamé = plus lent
+                Game.state.charlie.x += dir.dx * (Game.CONFIG.TILE * 0.5) * hungerMul;
+                Game.state.charlie.y += dir.dy * (Game.CONFIG.TILE * 0.5) * hungerMul;
 
                 // IMPORTANT: Check for collectibles and building proximity after moving
                 Game.buildings.checkProximity();
@@ -164,6 +166,18 @@ Game.engine.loop = function(now) {
     Game.forest.update(dt);
     Game.particles.update(now);
     Game.weather.update(dt);
+
+    // Faim qui se vide lentement
+    hungerTimer += dt;
+    if (hungerTimer >= Game.CONFIG.HUNGER_DRAIN_MS) {
+        hungerTimer = 0;
+        if (Game.state.hunger > 0) {
+            Game.state.hunger = Math.max(0, Game.state.hunger - 1);
+            Game.ui.update();
+            if (Game.state.hunger === 30) Game.ui.notify("🍽️ Tu commences à avoir faim...");
+            else if (Game.state.hunger === 0) Game.ui.notify("🍽️ Tu as très faim ! Mange vite (bouton 🍴 Manger).");
+        }
+    }
 
     // Fish shop passive selling
     fishShopTimer += dt;
