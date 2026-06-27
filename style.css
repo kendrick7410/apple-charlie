@@ -119,6 +119,37 @@ html, body {
 .room.theme-fishShop { --floor: #bfe3f0; background-color: #bfe3f0; border-color: #2a8bbf; }
 .room.theme-museum   { --floor: #2b2545; background-color: #2b2545; border-color: #5a4b8a; }
 .room.theme-museum #shop-purpose { background: rgba(255,255,255,0.12); color: #f0eaff; }
+.room.theme-souvenir { --floor: #d7f3ee; background-color: #d7f3ee; border-color: #009688; }
+
+/* ── Mer & plage ── */
+.sea-water {
+    background: linear-gradient(180deg, #5cc6e8 0%, #2f9fd0 35%, #1f7fb8 70%, #15689e 100%);
+    box-shadow: inset 0 6px 18px rgba(255,255,255,0.25);
+}
+.sea-foam {
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,0.85) 0 30px, rgba(255,255,255,0.35) 30px 60px);
+    border-radius: 50%;
+    animation: foam-roll 3s linear infinite;
+    opacity: 0.7;
+}
+@keyframes foam-roll { 0% { background-position: 0 0; } 100% { background-position: 60px 0; } }
+.cargo-boat { transition: none; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.3)); }
+.sea-creature { animation: edelweiss-bob 1.8s ease-in-out infinite; }
+.cargo-crate { animation: edelweiss-bob 1.2s ease-in-out infinite; }
+
+/* ── Boules à neige dans la maison ── */
+.snow-globe-display {
+    position: absolute;
+    width: 54px; height: 58px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.9), rgba(180,220,240,0.55) 60%, rgba(150,200,230,0.35));
+    border-radius: 50% 50% 45% 45%;
+    border-bottom: 6px solid #8d6e63;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.25), inset 0 0 8px rgba(255,255,255,0.6);
+    z-index: 105;
+    cursor: default;
+}
 
 #shop-purpose {
     position: absolute;

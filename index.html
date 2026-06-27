@@ -90,6 +90,7 @@
             <button onclick="Game.saveGame();Game.ui.notify('Sauvegardé ! 💾')">💾 Sauver</button>
             <button onclick="Game.audio.toggleMute();this.textContent=Game.audio.isMuted()?'🔇 Son':'🔊 Son'">🔊 Son</button>
             <button id="shovel-toggle" onclick="Game.tools.toggleShovel()">⛏️ Pelle OFF</button>
+            <button onclick="Game.ui.toggleCollections()">📖 Collection</button>
         </div>
     </div>
 
@@ -114,7 +115,16 @@
 
 <div id="action-fountain" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
     <button onclick="Game.inventory.sellAll()" class="btn-animal" style="background:#42a5f5;box-shadow:0 4px 0 #1e88e5;">Tout vendre ⛲</button>
+    <button onclick="Game.inventory.sellWood()" class="btn-animal" style="background:#a1887f;box-shadow:0 4px 0 #795548;">Vendre mon bois 🪵 (3💰/u)</button>
     <button onclick="Game.inventory.collectVillageRevenue()" class="btn-animal" style="background:#66bb6a;box-shadow:0 4px 0 #43a047;">Revenus village : <span id="village-revenue">0</span>💰</button>
+</div>
+
+<div id="action-souvenir" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
+    <div class="ui-card" style="padding:10px;max-width:240px;max-height:65vh;overflow-y:auto;">
+        <div style="font-size:0.8rem;font-weight:bold;color:#00897b;margin-bottom:4px;">🎁 Boutique Souvenir</div>
+        <div style="font-size:0.65rem;color:#555;margin-bottom:6px;">Boules à neige à collectionner (déco maison ❄️)</div>
+        <div id="souvenir-items" style="display:flex;flex-direction:column;gap:4px;"></div>
+    </div>
 </div>
 
 <div id="action-enter" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
@@ -181,6 +191,22 @@
     </div>
 </div>
 
+<!-- Panneau Collections (mer, montagne, boules à neige) -->
+<div id="panel-collections" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5800;max-width:340px;width:90%;max-height:80vh;overflow-y:auto;">
+    <div class="ui-card" style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-size:1rem;font-weight:bold;color:#5d4037;">📖 Mes Collections</div>
+            <button onclick="Game.ui.toggleCollections()" style="border:none;background:#ef9a9a;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-weight:bold;">✕</button>
+        </div>
+        <div style="font-size:0.78rem;font-weight:bold;color:#0277bd;margin-bottom:3px;">🌊 Mer — <span id="collection-sea-count">0/9</span></div>
+        <div id="collection-sea" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;"></div>
+        <div style="font-size:0.78rem;font-weight:bold;color:#6d4c41;margin-bottom:3px;">⛰️ Montagne — <span id="collection-mountain-count">0/8</span></div>
+        <div id="collection-mountain" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;"></div>
+        <div style="font-size:0.78rem;font-weight:bold;color:#00897b;margin-bottom:3px;">❄️ Boules à neige — <span id="collection-globes-count">0/8</span></div>
+        <div id="collection-globes" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+    </div>
+</div>
+
 <!-- Mobile toggle button -->
 <button id="mobile-toggle" onclick="toggleMobileUI()" style="display:none;position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:1001;background:#ff9d5c;color:white;border:none;border-radius:50%;width:44px;height:44px;font-size:1.2rem;box-shadow:0 4px 8px rgba(0,0,0,0.2);cursor:pointer;">📊</button>
 
@@ -227,6 +253,7 @@
 <script src="js/minimap.js"></script>
 <script src="js/creatures.js"></script>
 <script src="js/mountain.js"></script>
+<script src="js/coast.js"></script>
 <script src="js/titlescreen.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/ui.js"></script>
@@ -294,6 +321,7 @@ Game.startGame = function() {
     Game.villagers.init();
     Game.creatures.init();
     Game.mountain.reset();
+    Game.coast.init();
     Game.minimap.init();
 
     // Init UI

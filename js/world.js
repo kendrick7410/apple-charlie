@@ -68,6 +68,18 @@ Game.world.init = function() {
     // Mountain (Le Cervin)
     Game.world.createMountain();
 
+    // 3 sommets supplémentaires à côté du Cervin
+    Game.world.createExtraPeaks();
+
+    // Mer + grande plage (bas de la carte)
+    Game.world.createSeaAndBeach();
+
+    // Port (bateaux de marchandise)
+    Game.world.createPort();
+
+    // Boutique souvenir (au bord de la plage)
+    Game.world.createBuilding(Game.CONFIG.LOCATIONS.souvenirShop.x, Game.CONFIG.LOCATIONS.souvenirShop.y, "🎁", "Boutique Souvenir", "souvenir-anchor");
+
     // Lake (Lac du Cervin)
     Game.world.createLake();
 
@@ -336,6 +348,153 @@ Game.world.createHills = function() {
         div.style.height = h.size + 'px';
         world.appendChild(div);
     });
+};
+
+// 3 sommets plus petits autour du Cervin (un vrai massif)
+Game.world.createExtraPeaks = function() {
+    var world = document.getElementById('game-world');
+    var peaks = [
+        { loc: Game.CONFIG.LOCATIONS.mountain2, name: 'Le Glacier', size: '6.5rem' },
+        { loc: Game.CONFIG.LOCATIONS.mountain3, name: 'La Dent', size: '6rem' },
+        { loc: Game.CONFIG.LOCATIONS.mountain4, name: 'Le Pic Blanc', size: '7rem' }
+    ];
+    peaks.forEach(function(pk) {
+        var loc = pk.loc;
+        var base = document.createElement('div');
+        base.style.cssText = 'position:absolute;z-index:0;pointer-events:none;';
+        base.style.left = (loc.x - 300) + 'px';
+        base.style.top = (loc.y - 180) + 'px';
+        base.style.width = '600px';
+        base.style.height = '380px';
+        base.style.background = 'radial-gradient(ellipse at 50% 100%, rgba(120,100,80,0.3) 0%, rgba(150,130,110,0.18) 45%, transparent 72%)';
+        world.appendChild(base);
+
+        var peak = document.createElement('div');
+        peak.className = 'entity';
+        peak.style.fontSize = pk.size;
+        peak.style.left = loc.x + 'px';
+        peak.style.top = (loc.y - 80) + 'px';
+        peak.style.filter = 'drop-shadow(0 8px 12px rgba(0,0,0,0.3))';
+        peak.innerHTML = '🏔️';
+        world.appendChild(peak);
+
+        var label = document.createElement('div');
+        label.className = 'entity';
+        label.style.left = loc.x + 'px';
+        label.style.top = (loc.y + 70) + 'px';
+        label.innerHTML = '<div class="building-label" style="font-size:11px;font-weight:bold;">⛰️ ' + pk.name + '</div>';
+        world.appendChild(label);
+
+        for (var i = 0; i < 5; i++) {
+            var snow = document.createElement('div');
+            snow.className = 'entity mountain-snow';
+            snow.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
+            var angle = (i / 5) * Math.PI * 2;
+            var dist = 60 + Math.random() * 50;
+            snow.style.left = (loc.x + Math.cos(angle) * dist) + 'px';
+            snow.style.top = (loc.y - 70 + Math.sin(angle) * dist) + 'px';
+            snow.innerHTML = '❄️';
+            snow.style.opacity = '0.7';
+            world.appendChild(snow);
+        }
+    });
+};
+
+// Mer + grande plage de sable
+Game.world.createSeaAndBeach = function() {
+    var world = document.getElementById('game-world');
+    var W = Game.CONFIG.WORLD_W;
+    var beachTop = Game.CONFIG.BEACH_TOP;
+    var seaTop = Game.CONFIG.SEA_TOP;
+
+    // Bande de sable
+    var sand = document.createElement('div');
+    sand.style.cssText = 'position:absolute;z-index:0;pointer-events:none;left:0;width:' + W + 'px;';
+    sand.style.top = beachTop + 'px';
+    sand.style.height = (W - beachTop) + 'px';
+    sand.style.background = 'linear-gradient(180deg, #f3e2b3 0%, #efd89a 40%, #ecd089 100%)';
+    world.appendChild(sand);
+
+    // Mer
+    var seaEl = document.createElement('div');
+    seaEl.className = 'sea-water';
+    seaEl.style.cssText = 'position:absolute;z-index:1;pointer-events:none;left:0;width:' + W + 'px;';
+    seaEl.style.top = seaTop + 'px';
+    seaEl.style.height = (W - seaTop) + 'px';
+    world.appendChild(seaEl);
+
+    // Écume animée sur la ligne de rivage
+    var foam = document.createElement('div');
+    foam.className = 'sea-foam';
+    foam.style.cssText = 'position:absolute;z-index:2;pointer-events:none;left:0;width:' + W + 'px;height:30px;';
+    foam.style.top = (seaTop - 12) + 'px';
+    world.appendChild(foam);
+
+    // Label
+    var label = document.createElement('div');
+    label.className = 'entity';
+    label.style.left = Game.CONFIG.LOCATIONS.beach.x + 'px';
+    label.style.top = (beachTop + 30) + 'px';
+    label.innerHTML = '<div class="building-label" style="font-size:13px;font-weight:bold;">🏖️ Grande Plage</div>';
+    world.appendChild(label);
+
+    // Décor de plage : palmiers, parasols, châteaux de sable
+    var decor = [
+        ['🌴', 500, beachTop + 60, '4rem'], ['🌴', 1700, beachTop + 40, '4.5rem'],
+        ['🌴', 2900, beachTop + 70, '4rem'], ['🌴', 3800, beachTop + 50, '4.5rem'],
+        ['⛱️', 1000, beachTop + 180, '3.5rem'], ['⛱️', 2300, beachTop + 200, '3.5rem'],
+        ['⛱️', 3400, beachTop + 170, '3.5rem'], ['🏖️', 1900, beachTop + 280, '3rem'],
+        ['🏐', 2600, beachTop + 300, '2.2rem'], ['🪨', 700, beachTop + 320, '2.5rem']
+    ];
+    decor.forEach(function(d) {
+        var el = document.createElement('div');
+        el.className = 'entity';
+        el.style.left = d[1] + 'px';
+        el.style.top = d[2] + 'px';
+        el.style.fontSize = d[3];
+        el.style.zIndex = '3';
+        el.innerHTML = d[0];
+        world.appendChild(el);
+    });
+};
+
+// Port avec ponton (les bateaux y déposent la marchandise)
+Game.world.createPort = function() {
+    var world = document.getElementById('game-world');
+    var loc = Game.CONFIG.LOCATIONS.port;
+
+    // Ponton en bois qui avance dans la mer
+    var dock = document.createElement('div');
+    dock.style.cssText = 'position:absolute;z-index:4;pointer-events:none;border-radius:8px;';
+    dock.style.left = (loc.x - 45) + 'px';
+    dock.style.top = loc.y + 'px';
+    dock.style.width = '90px';
+    dock.style.height = '380px';
+    dock.style.backgroundImage = 'repeating-linear-gradient(0deg, #a67c52, #a67c52 18px, #8b6544 18px, #8b6544 22px)';
+    dock.style.boxShadow = '0 4px 10px rgba(0,0,0,0.25)';
+    world.appendChild(dock);
+
+    // Bornes du ponton
+    [ -45, 45 ].forEach(function(dx) {
+        var post = document.createElement('div');
+        post.className = 'entity';
+        post.style.left = (loc.x + dx) + 'px';
+        post.style.top = (loc.y + 340) + 'px';
+        post.style.fontSize = '1.6rem';
+        post.style.zIndex = '5';
+        post.innerHTML = '🪵';
+        world.appendChild(post);
+    });
+
+    // Panneau du port
+    var label = document.createElement('div');
+    label.className = 'entity';
+    label.style.left = loc.x + 'px';
+    label.style.top = (loc.y - 40) + 'px';
+    label.style.fontSize = '3rem';
+    label.style.zIndex = '5';
+    label.innerHTML = '<div>⚓</div><div class="building-label">Port de Charlie</div>';
+    world.appendChild(label);
 };
 
 Game.world.updateHouseSite = function() {

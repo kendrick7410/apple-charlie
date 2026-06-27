@@ -59,9 +59,20 @@ Game.CONFIG = {
         museum:       { x: 1300, y: 1500 },
         forest:       { x: 1900, y: 450  },
         mountain:     { x: 3500, y: 800  },
+        mountain2:    { x: 3980, y: 1080 },
+        mountain3:    { x: 3020, y: 1080 },
+        mountain4:    { x: 3500, y: 1420 },
         lake:         { x: 3200, y: 600  },
+        beach:        { x: 2250, y: 3420 },
+        souvenirShop: { x: 1450, y: 3230 },
+        port:         { x: 3150, y: 3330 },
         riverBaseX:   550
     },
+
+    // Plage / mer
+    BEACH_TOP: 3150,      // début du sable
+    SEA_TOP: 3700,        // début de la mer
+    BOAT_INTERVAL: 25000, // un bateau au port toutes les ~25s
 
     // Fish shop
     FISH_SHOP_SELL_INTERVAL: 30000,
@@ -137,7 +148,47 @@ Game.SHOPS = [
       decor: [['🐠',70,140],['🦀',460,150],['🐙',250,110],['🦐',150,130],['🧊',110,440],['⚖️',440,440],['🐟',60,310],['🪣',460,310]] },
     { id: 'museum', name: 'Musée', sign: '🏛️', loc: 'museum', panel: 'action-museum', theme: 'museum', nightOnly: true,
       npc: '🦉', purpose: "Le hibou t'achète tes ressources 🍎🪵🧱🌻 contre des clochettes. Donne aussi tes spécimens !",
-      decor: [['🖼️',70,140],['🗿',460,140],['🏺',250,110],['🦴',60,310],['💎',460,310],['🕯️',110,440],['📜',440,440],['🔭',250,440]] }
+      decor: [['🖼️',70,140],['🗿',460,140],['🏺',250,110],['🦴',60,310],['💎',460,310],['🕯️',110,440],['📜',440,440],['🔭',250,440]] },
+    { id: 'souvenir', name: 'Boutique Souvenir', sign: '🎁', loc: 'souvenirShop', panel: 'action-souvenir', theme: 'souvenir',
+      npc: '🧑‍💼', purpose: "Achète des boules à neige à collectionner. Elles décorent ta maison ! ❄️",
+      decor: [['🎁',70,140],['🧸',460,140],['🪅',250,110],['📮',60,310],['🛍️',460,310],['🏖️',110,440],['🐚',440,440],['🌴',250,440]] }
+];
+
+// Animaux de la mer (à collectionner sur la plage, en marchant dessus)
+Game.SEA_SPECIES = {
+    shell:    { name: 'Coquillage',     emoji: '🐚', rarity: 'common',    value: 6,  weight: 38 },
+    crab:     { name: 'Crabe',          emoji: '🦀', rarity: 'common',    value: 10, weight: 30 },
+    starfish: { name: 'Étoile de mer',  emoji: '⭐', rarity: 'uncommon',  value: 15, weight: 18 },
+    shrimp:   { name: 'Crevette',       emoji: '🦐', rarity: 'uncommon',  value: 14, weight: 16 },
+    squid:    { name: 'Calmar',         emoji: '🦑', rarity: 'rare',      value: 30, weight: 9  },
+    octopus:  { name: 'Pieuvre',        emoji: '🐙', rarity: 'rare',      value: 35, weight: 8  },
+    lobster:  { name: 'Homard',         emoji: '🦞', rarity: 'rare',      value: 40, weight: 6  },
+    jellyfish:{ name: 'Méduse',         emoji: '🪼', rarity: 'legendary', value: 70, weight: 3  },
+    seahorse: { name: 'Poisson tropical',emoji: '🐠', rarity: 'legendary',value: 80, weight: 2  }
+};
+
+// Animaux de la montagne (à collectionner en marchant dessus, près des sommets)
+Game.MOUNTAIN_SPECIES = {
+    marmot:  { name: 'Marmotte',      emoji: '🐹', rarity: 'common',    value: 10, weight: 34 },
+    ibex:    { name: 'Bouquetin',     emoji: '🐐', rarity: 'common',    value: 12, weight: 28 },
+    hare:    { name: 'Lièvre',        emoji: '🐇', rarity: 'uncommon',  value: 16, weight: 20 },
+    fox:     { name: 'Renard',        emoji: '🦊', rarity: 'uncommon',  value: 18, weight: 15 },
+    eagle:   { name: 'Aigle',         emoji: '🦅', rarity: 'rare',      value: 35, weight: 8  },
+    chamois: { name: 'Chamois',       emoji: '🦌', rarity: 'rare',      value: 38, weight: 7  },
+    bear:    { name: 'Ours',          emoji: '🐻', rarity: 'legendary', value: 75, weight: 3  },
+    leopard: { name: 'Once des neiges',emoji: '🐆', rarity: 'legendary',value: 90, weight: 2  }
+};
+
+// Boules à neige (boutique souvenir) → à collectionner, affichées dans la maison
+Game.SNOW_GLOBES = [
+    { id: 'cervin',  name: 'Boule Cervin',  emoji: '🏔️', price: 60  },
+    { id: 'palmier', name: 'Boule Palmier', emoji: '🌴', price: 80  },
+    { id: 'sapin',   name: 'Boule Sapin',   emoji: '🎄', price: 90  },
+    { id: 'manchot', name: 'Boule Manchot', emoji: '🐧', price: 110 },
+    { id: 'chateau', name: 'Boule Château', emoji: '🏰', price: 130 },
+    { id: 'phare',   name: 'Boule Phare',   emoji: '🗼', price: 150 },
+    { id: 'ours',    name: 'Boule Ours',    emoji: '🐻', price: 170 },
+    { id: 'ville',   name: 'Boule Ville',   emoji: '🏙️', price: 200 }
 ];
 
 // Prix d'achat du hibou (clochettes par ressource) — il achète ce que tu récoltes

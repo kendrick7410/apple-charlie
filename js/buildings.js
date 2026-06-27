@@ -100,6 +100,24 @@ Game.buildings.enterHouse = function(house) {
         room.appendChild(div);
     });
 
+    // Étagère de boules à neige (uniquement chez Charlie)
+    var oldGlobes = room.querySelectorAll('.snow-globe-display');
+    for (var g = 0; g < oldGlobes.length; g++) oldGlobes[g].remove();
+    if (house.id === 'charlie' && s.snowGlobes.length) {
+        s.snowGlobes.forEach(function(gid, i) {
+            var data = null;
+            for (var k = 0; k < Game.SNOW_GLOBES.length; k++) { if (Game.SNOW_GLOBES[k].id === gid) data = Game.SNOW_GLOBES[k]; }
+            if (!data) return;
+            var el = document.createElement('div');
+            el.className = 'snow-globe-display';
+            el.title = data.name;
+            el.textContent = data.emoji;
+            el.style.left = (30 + (i % 8) * 64) + 'px';
+            el.style.top = (24 + Math.floor(i / 8) * 70) + 'px';
+            room.appendChild(el);
+        });
+    }
+
     document.getElementById('interior-view').style.display = 'flex';
     // Show cooking panel only when entering from bakery proximity
     var cookPanel = document.getElementById('cooking-panel');
@@ -216,6 +234,7 @@ Game.buildings.enterShop = function(shopId) {
         Game.ui.updateMuseum();
         if (Game.ui.updateOwlShop) Game.ui.updateOwlShop();
     }
+    if (shop.id === 'souvenir' && Game.ui.updateSouvenirShop) Game.ui.updateSouvenirShop();
     Game.ui.update();
 
     document.getElementById('action-enter').style.display = 'none';

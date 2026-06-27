@@ -82,6 +82,10 @@ Game.ui.update = function() {
     if (Game.state.activeShop && Game.state.activeShop.id === 'museum') {
         Game.ui.updateOwlShop();
     }
+    // Refresh the souvenir shop while inside it
+    if (Game.state.activeShop && Game.state.activeShop.id === 'souvenir') {
+        Game.ui.updateSouvenirShop();
+    }
 };
 
 Game.ui.updateXP = function() {
@@ -147,6 +151,68 @@ Game.ui.updateShop = function() {
         }
     });
     panel.innerHTML = html;
+};
+
+Game.ui.updateSouvenirShop = function() {
+    var panel = document.getElementById('souvenir-items');
+    if (!panel) return;
+    var s = Game.state;
+    var html = '';
+    Game.SNOW_GLOBES.forEach(function(g) {
+        var owned = s.snowGlobes.indexOf(g.id) !== -1;
+        html += '<button class="shop-btn' + (owned ? ' owned' : '') + '" onclick="Game.inventory.buySnowGlobe(\'' + g.id + '\')">' +
+            g.emoji + ' ' + g.name + (owned ? ' ✅' : ' (' + g.price + '💰)') + '</button>';
+    });
+    panel.innerHTML = html;
+};
+
+// Panneau de collections (mer, montagne, boules à neige)
+Game.ui.updateCollections = function() {
+    var s = Game.state;
+    function renderSpecies(containerId, table, coll) {
+        var el = document.getElementById(containerId);
+        if (!el) return;
+        var html = '';
+        for (var id in table) {
+            var sp = table[id];
+            var got = coll[id] || 0;
+            var rc = Game.RARITY_COLORS[sp.rarity] || '#8bc34a';
+            if (got > 0) {
+                html += '<span class="museum-item donated" style="border-color:' + rc + '">' + sp.emoji + '<small>' + sp.name + ' x' + got + '</small></span>';
+            } else {
+                html += '<span class="museum-item empty">?</span>';
+            }
+        }
+        el.innerHTML = html;
+    }
+    renderSpecies('collection-sea', Game.SEA_SPECIES, s.seaCollection);
+    renderSpecies('collection-mountain', Game.MOUNTAIN_SPECIES, s.mountainCollection);
+
+    var seaCount = Object.keys(s.seaCollection).length, seaTotal = Object.keys(Game.SEA_SPECIES).length;
+    var mtnCount = Object.keys(s.mountainCollection).length, mtnTotal = Object.keys(Game.MOUNTAIN_SPECIES).length;
+    setText('collection-sea-count', seaCount + '/' + seaTotal);
+    setText('collection-mountain-count', mtnCount + '/' + mtnTotal);
+
+    var globesEl = document.getElementById('collection-globes');
+    if (globesEl) {
+        var ghtml = '';
+        Game.SNOW_GLOBES.forEach(function(g) {
+            var owned = s.snowGlobes.indexOf(g.id) !== -1;
+            ghtml += owned
+                ? '<span class="museum-item donated" style="border-color:#29b6f6">' + g.emoji + '<small>' + g.name + '</small></span>'
+                : '<span class="museum-item empty">?</span>';
+        });
+        globesEl.innerHTML = ghtml;
+        setText('collection-globes-count', s.snowGlobes.length + '/' + Game.SNOW_GLOBES.length);
+    }
+};
+
+Game.ui.toggleCollections = function() {
+    var p = document.getElementById('panel-collections');
+    if (!p) return;
+    var show = p.style.display === 'none' || !p.style.display;
+    p.style.display = show ? 'block' : 'none';
+    if (show) Game.ui.updateCollections();
 };
 
 Game.ui.updateOwlShop = function() {

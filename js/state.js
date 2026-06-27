@@ -30,6 +30,9 @@ Game.state = {
     fishShop: { stock: 0, revenue: 0 },
     specimens: { fish: {}, butterflies: {} },
     museum: { fish: {}, butterflies: {} },
+    seaCollection: {},       // animaux de la mer trouvés { id: count }
+    mountainCollection: {},  // animaux de la montagne trouvés { id: count }
+    snowGlobes: [],          // boules à neige possédées [id, ...]
     villageRevenue: 0,
     timeSpeed: 1,
     placedFlowers: [],   // [{x,y,emoji}]
@@ -89,6 +92,9 @@ Game.saveGame = function() {
         fishShop: { stock: s.fishShop.stock, revenue: s.fishShop.revenue },
         specimens: JSON.parse(JSON.stringify(s.specimens)),
         museum: JSON.parse(JSON.stringify(s.museum)),
+        seaCollection: Object.assign({}, s.seaCollection),
+        mountainCollection: Object.assign({}, s.mountainCollection),
+        snowGlobes: s.snowGlobes.slice(),
         villageRevenue: s.villageRevenue,
         timeSpeed: s.timeSpeed,
         placedFlowers: s.placedFlowers.slice(),
@@ -128,6 +134,9 @@ Game.loadGame = function() {
         if (data.fishShop) { s.fishShop.stock = data.fishShop.stock || 0; s.fishShop.revenue = data.fishShop.revenue || 0; }
         if (data.specimens) s.specimens = data.specimens;
         if (data.museum) s.museum = data.museum;
+        if (data.seaCollection) s.seaCollection = data.seaCollection;
+        if (data.mountainCollection) s.mountainCollection = data.mountainCollection;
+        if (data.snowGlobes) s.snowGlobes = data.snowGlobes;
         if (data.villageRevenue !== undefined) s.villageRevenue = data.villageRevenue;
         if (data.timeSpeed !== undefined) s.timeSpeed = data.timeSpeed;
         if (data.placedFlowers) s.placedFlowers = data.placedFlowers;

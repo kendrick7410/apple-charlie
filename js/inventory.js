@@ -87,6 +87,50 @@ Game.inventory.buyFromShop = function(item) {
     }
 };
 
+// Vendre tout son bois à la fontaine du village
+Game.inventory.sellWood = function() {
+    var s = Game.state;
+    if (s.inventory.wood <= 0) {
+        Game.ui.notify("Tu n'as pas de bois à vendre ! 🪵");
+        Game.audio.play('error');
+        return;
+    }
+    var n = s.inventory.wood;
+    var gain = n * 3;
+    s.inventory.wood = 0;
+    s.inventory.money += gain;
+    Game.xp.add(Math.max(1, Math.floor(gain / 10)));
+    Game.audio.playCoin();
+    Game.particles.spawn('💰', window.innerWidth / 2, window.innerHeight / 2, { count: 4, spread: 50, vy: -70 });
+    Game.ui.update();
+    Game.ui.notify("Bois vendu à la fontaine : " + n + " 🪵 pour +" + gain + "💰");
+};
+
+// Acheter une boule à neige (boutique souvenir) → déco maison à collectionner
+Game.inventory.buySnowGlobe = function(id) {
+    var s = Game.state;
+    var g = null;
+    for (var i = 0; i < Game.SNOW_GLOBES.length; i++) { if (Game.SNOW_GLOBES[i].id === id) g = Game.SNOW_GLOBES[i]; }
+    if (!g) return;
+    if (s.snowGlobes.indexOf(id) !== -1) {
+        Game.ui.notify("Tu as déjà cette boule à neige ! " + g.emoji);
+        return;
+    }
+    if (s.inventory.money < g.price) {
+        Game.ui.notify("Il te faut " + g.price + "💰");
+        Game.audio.play('error');
+        return;
+    }
+    s.inventory.money -= g.price;
+    s.snowGlobes.push(id);
+    Game.xp.add(15);
+    Game.audio.playCoin();
+    Game.particles.spawn('❄️', window.innerWidth / 2, window.innerHeight / 2, { count: 6, spread: 60 });
+    Game.ui.update();
+    if (Game.ui.updateSouvenirShop) Game.ui.updateSouvenirShop();
+    Game.ui.notify(g.name + " achetée ! " + g.emoji + " (visible dans ta maison ❄️)");
+};
+
 Game.inventory.startFishing = function() {
     var s = Game.state;
     if (s.isFishing) return;

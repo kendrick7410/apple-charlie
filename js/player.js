@@ -51,6 +51,8 @@ Game.player.update = function(dt, now) {
     // Clamp
     s.charlie.x = Math.max(30, Math.min(Game.CONFIG.WORLD_W - 30, s.charlie.x));
     s.charlie.y = Math.max(30, Math.min(Game.CONFIG.WORLD_H - 30, s.charlie.y));
+    // On ne marche pas dans la mer : on reste sur le sable, au bord de l'eau
+    if (s.charlie.y > Game.CONFIG.SEA_TOP - 12) s.charlie.y = Game.CONFIG.SEA_TOP - 12;
 
     // Smooth interpolation (lerp)
     var lerp = Game.CONFIG.LERP_SPEED;

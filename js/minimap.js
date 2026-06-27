@@ -27,6 +27,12 @@ Game.minimap.update = function() {
     ctxM.fillStyle = Game.SEASON_GRASS[s.season] || '#8cd47e';
     ctxM.fillRect(0, 0, W, H);
 
+    // Beach (sand) + Sea (bottom of the map)
+    ctxM.fillStyle = '#efd89a';
+    ctxM.fillRect(0, Game.CONFIG.BEACH_TOP * SCALE, W, (Game.CONFIG.WORLD_H - Game.CONFIG.BEACH_TOP) * SCALE);
+    ctxM.fillStyle = '#2f9fd0';
+    ctxM.fillRect(0, Game.CONFIG.SEA_TOP * SCALE, W, (Game.CONFIG.WORLD_H - Game.CONFIG.SEA_TOP) * SCALE);
+
     // River
     ctxM.fillStyle = '#5ba3ff';
     var baseX = Game.CONFIG.LOCATIONS.riverBaseX;
@@ -48,6 +54,15 @@ Game.minimap.update = function() {
     drawRect(locs.bakery.x, locs.bakery.y, 25);
     drawRect(locs.shop.x, locs.shop.y, 25);
     drawRect(locs.charlieHouse.x, locs.charlieHouse.y, 25);
+    drawRect(locs.souvenirShop.x, locs.souvenirShop.y, 25);
+
+    // Port
+    ctxM.fillStyle = '#8b6544';
+    drawRect(locs.port.x, locs.port.y + 150, 22);
+
+    // Mountains (4 peaks)
+    ctxM.fillStyle = '#e8e8f0';
+    [locs.mountain, locs.mountain2, locs.mountain3, locs.mountain4].forEach(function(m){ drawRect(m.x, m.y, 26); });
 
     // Houses
     Game.HOUSES.forEach(function(h) {
