@@ -86,6 +86,10 @@ Game.ui.update = function() {
     if (Game.state.activeShop && Game.state.activeShop.id === 'souvenir') {
         Game.ui.updateSouvenirShop();
     }
+    // Refresh David's pizzeria while inside it
+    if (Game.state.activeShop && Game.state.activeShop.id === 'pizzeria') {
+        Game.ui.updatePizzeria();
+    }
 };
 
 Game.ui.updateXP = function() {
@@ -153,6 +157,19 @@ Game.ui.updateShop = function() {
     panel.innerHTML = html;
 };
 
+Game.ui.updatePizzeria = function() {
+    var panel = document.getElementById('pizzeria-items');
+    if (!panel) return;
+    var s = Game.state;
+    var html = '';
+    Game.PIZZAS.forEach(function(pz) {
+        var tasted = s.pizzasTasted[pz.id];
+        html += '<button class="shop-btn" onclick="Game.inventory.buyPizza(\'' + pz.id + '\')">' +
+            pz.emoji + ' ' + pz.name + ' (' + pz.price + '💰)' + (tasted ? ' ✅' : '') + '</button>';
+    });
+    panel.innerHTML = html;
+};
+
 Game.ui.updateSouvenirShop = function() {
     var panel = document.getElementById('souvenir-items');
     if (!panel) return;
@@ -187,6 +204,19 @@ Game.ui.updateCollections = function() {
     }
     renderSpecies('collection-sea', Game.SEA_SPECIES, s.seaCollection);
     renderSpecies('collection-mountain', Game.MOUNTAIN_SPECIES, s.mountainCollection);
+
+    var pizzasEl = document.getElementById('collection-pizzas');
+    if (pizzasEl) {
+        var phtml = '';
+        Game.PIZZAS.forEach(function(pz) {
+            var tasted = s.pizzasTasted[pz.id];
+            phtml += tasted
+                ? '<span class="museum-item donated" style="border-color:#e65100">' + pz.emoji + '<small>' + pz.name + '</small></span>'
+                : '<span class="museum-item empty">?</span>';
+        });
+        pizzasEl.innerHTML = phtml;
+        setText('collection-pizzas-count', Object.keys(s.pizzasTasted).length + '/' + Game.PIZZAS.length);
+    }
 
     var seaCount = Object.keys(s.seaCollection).length, seaTotal = Object.keys(Game.SEA_SPECIES).length;
     var mtnCount = Object.keys(s.mountainCollection).length, mtnTotal = Object.keys(Game.MOUNTAIN_SPECIES).length;

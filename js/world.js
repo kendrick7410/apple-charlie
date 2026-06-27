@@ -62,6 +62,9 @@ Game.world.init = function() {
     // Museum
     Game.world.createBuilding(Game.CONFIG.LOCATIONS.museum.x, Game.CONFIG.LOCATIONS.museum.y, "🏛️", "Musée", "museum-anchor");
 
+    // Pizzeria David (le rhinocéros)
+    Game.world.createBuilding(Game.CONFIG.LOCATIONS.pizzeria.x, Game.CONFIG.LOCATIONS.pizzeria.y, "🍕", "Pizzeria David", "pizzeria-anchor");
+
     // Mini-forest
     Game.world.createForest();
 

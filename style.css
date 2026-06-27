@@ -120,6 +120,7 @@ html, body {
 .room.theme-museum   { --floor: #2b2545; background-color: #2b2545; border-color: #5a4b8a; }
 .room.theme-museum #shop-purpose { background: rgba(255,255,255,0.12); color: #f0eaff; }
 .room.theme-souvenir { --floor: #d7f3ee; background-color: #d7f3ee; border-color: #009688; }
+.room.theme-pizzeria { --floor: #f6e0c4; background-color: #f6e0c4; border-color: #c62828; }
 
 /* ── Mer & plage ── */
 .sea-water {

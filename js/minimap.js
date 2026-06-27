@@ -55,6 +55,7 @@ Game.minimap.update = function() {
     drawRect(locs.shop.x, locs.shop.y, 25);
     drawRect(locs.charlieHouse.x, locs.charlieHouse.y, 25);
     drawRect(locs.souvenirShop.x, locs.souvenirShop.y, 25);
+    drawRect(locs.pizzeria.x, locs.pizzeria.y, 25);
 
     // Port
     ctxM.fillStyle = '#8b6544';

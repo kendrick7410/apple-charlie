@@ -57,6 +57,7 @@ Game.CONFIG = {
         garden:       { x: 1550, y: 1350 },
         fishShop:     { x: 650,  y: 1100 },
         museum:       { x: 1300, y: 1500 },
+        pizzeria:     { x: 1900, y: 1150 },
         forest:       { x: 1900, y: 450  },
         mountain:     { x: 3500, y: 800  },
         mountain2:    { x: 3980, y: 1080 },
@@ -151,7 +152,22 @@ Game.SHOPS = [
       decor: [['🖼️',70,140],['🗿',460,140],['🏺',250,110],['🦴',60,310],['💎',460,310],['🕯️',110,440],['📜',440,440],['🔭',250,440]] },
     { id: 'souvenir', name: 'Boutique Souvenir', sign: '🎁', loc: 'souvenirShop', panel: 'action-souvenir', theme: 'souvenir',
       npc: '🧑‍💼', purpose: "Achète des boules à neige à collectionner. Elles décorent ta maison ! ❄️",
-      decor: [['🎁',70,140],['🧸',460,140],['🪅',250,110],['📮',60,310],['🛍️',460,310],['🏖️',110,440],['🐚',440,440],['🌴',250,440]] }
+      decor: [['🎁',70,140],['🧸',460,140],['🪅',250,110],['📮',60,310],['🛍️',460,310],['🏖️',110,440],['🐚',440,440],['🌴',250,440]] },
+    { id: 'pizzeria', name: 'Pizzeria David', sign: '🍕', loc: 'pizzeria', panel: 'action-pizzeria', theme: 'pizzeria',
+      npc: '🦏', npcLine: "David : Bienvenue dans ma pizzeria ! 🍕🦏", purpose: "David le rhinocéros te prépare de bonnes pizzas. Achète-les et goûte-les toutes !",
+      decor: [['🍕',70,140],['🧀',460,140],['🍅',250,110],['🔥',110,440],['🪵',440,440],['🌿',60,300],['🍷',460,300],['🪑',250,440]] }
+];
+
+// Les pizzas de David (à acheter et goûter toutes → collection)
+Game.PIZZAS = [
+    { id: 'margherita',   name: 'Margherita',        emoji: '🍕', price: 15, xp: 10 },
+    { id: 'reine',        name: 'La Reine',          emoji: '🍕', price: 20, xp: 14 },
+    { id: 'fromages',     name: '4 Fromages',        emoji: '🧀', price: 25, xp: 18 },
+    { id: 'pepperoni',    name: 'Pepperoni',         emoji: '🍕', price: 25, xp: 18 },
+    { id: 'hawaii',       name: 'Hawaïenne',         emoji: '🍍', price: 28, xp: 20 },
+    { id: 'vegetarienne', name: 'Végétarienne',      emoji: '🥦', price: 22, xp: 16 },
+    { id: 'calzone',      name: 'Calzone',           emoji: '🥟', price: 30, xp: 22 },
+    { id: 'david',        name: 'La Spéciale David', emoji: '🦏', price: 50, xp: 45 }
 ];
 
 // Animaux de la mer (à collectionner sur la plage, en marchant dessus)

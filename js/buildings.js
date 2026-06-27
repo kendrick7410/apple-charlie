@@ -199,10 +199,16 @@ Game.buildings.enterShop = function(shopId) {
     if (shop.npc) {
         npc.textContent = shop.npc;
         npc.style.display = 'block';
-        npc.onclick = (shop.id === 'museum')
-            ? function(e){ e.stopPropagation(); Game.buildings.talkToOwl(); }
-            : null;
-        npc.style.cursor = (shop.id === 'museum') ? 'pointer' : 'default';
+        if (shop.id === 'museum') {
+            npc.onclick = function(e){ e.stopPropagation(); Game.buildings.talkToOwl(); };
+            npc.style.cursor = 'pointer';
+        } else if (shop.npcLine) {
+            npc.onclick = (function(line){ return function(e){ e.stopPropagation(); Game.ui.notify(line); }; })(shop.npcLine);
+            npc.style.cursor = 'pointer';
+        } else {
+            npc.onclick = null;
+            npc.style.cursor = 'default';
+        }
     } else {
         npc.style.display = 'none';
         npc.onclick = null;
@@ -235,6 +241,7 @@ Game.buildings.enterShop = function(shopId) {
         if (Game.ui.updateOwlShop) Game.ui.updateOwlShop();
     }
     if (shop.id === 'souvenir' && Game.ui.updateSouvenirShop) Game.ui.updateSouvenirShop();
+    if (shop.id === 'pizzeria' && Game.ui.updatePizzeria) Game.ui.updatePizzeria();
     Game.ui.update();
 
     document.getElementById('action-enter').style.display = 'none';

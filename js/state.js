@@ -33,6 +33,7 @@ Game.state = {
     seaCollection: {},       // animaux de la mer trouvés { id: count }
     mountainCollection: {},  // animaux de la montagne trouvés { id: count }
     snowGlobes: [],          // boules à neige possédées [id, ...]
+    pizzasTasted: {},        // pizzas de David goûtées { id: count }
     villageRevenue: 0,
     timeSpeed: 1,
     placedFlowers: [],   // [{x,y,emoji}]
@@ -95,6 +96,7 @@ Game.saveGame = function() {
         seaCollection: Object.assign({}, s.seaCollection),
         mountainCollection: Object.assign({}, s.mountainCollection),
         snowGlobes: s.snowGlobes.slice(),
+        pizzasTasted: Object.assign({}, s.pizzasTasted),
         villageRevenue: s.villageRevenue,
         timeSpeed: s.timeSpeed,
         placedFlowers: s.placedFlowers.slice(),
@@ -137,6 +139,7 @@ Game.loadGame = function() {
         if (data.seaCollection) s.seaCollection = data.seaCollection;
         if (data.mountainCollection) s.mountainCollection = data.mountainCollection;
         if (data.snowGlobes) s.snowGlobes = data.snowGlobes;
+        if (data.pizzasTasted) s.pizzasTasted = data.pizzasTasted;
         if (data.villageRevenue !== undefined) s.villageRevenue = data.villageRevenue;
         if (data.timeSpeed !== undefined) s.timeSpeed = data.timeSpeed;
         if (data.placedFlowers) s.placedFlowers = data.placedFlowers;
