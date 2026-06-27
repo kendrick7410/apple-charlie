@@ -23,7 +23,7 @@
         </div>
 
         <!-- Interior Crafting Panel -->
-        <div style="position:fixed;bottom:10px;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:5500;">
+        <div id="interior-craft-bar" style="position:fixed;bottom:10px;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:5500;">
             <div class="ui-card" style="padding:10px;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
                 <button onclick="Game.crafting.craftFurniture('chair')" class="btn-animal btn-craft">🪑 Chaise (2🪵)</button>
                 <button onclick="Game.crafting.craftFurniture('table')" class="btn-animal btn-craft">🪵 Table (4🪵)</button>
@@ -115,6 +115,10 @@
 <div id="action-fountain" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
     <button onclick="Game.inventory.sellAll()" class="btn-animal" style="background:#42a5f5;box-shadow:0 4px 0 #1e88e5;">Tout vendre ⛲</button>
     <button onclick="Game.inventory.collectVillageRevenue()" class="btn-animal" style="background:#66bb6a;box-shadow:0 4px 0 #43a047;">Revenus village : <span id="village-revenue">0</span>💰</button>
+</div>
+
+<div id="action-enter" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
+    <button id="enter-shop-btn" class="btn-animal" style="background:#6d4c41;box-shadow:0 4px 0 #4e342e;">🚪 Entrer</button>
 </div>
 
 <div id="action-bakery" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">

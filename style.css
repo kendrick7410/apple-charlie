@@ -113,6 +113,33 @@ html, body {
     border: 3px dashed #fbc02d;
 }
 
+/* ── Shop interiors (walk-in boutiques) ── */
+.room.theme-bakery   { --floor: #f3d9a8; background-color: #f3d9a8; border-color: #bf8c3e; }
+.room.theme-shop     { --floor: #cfe8d8; background-color: #cfe8d8; border-color: #3e9e6a; }
+.room.theme-fishShop { --floor: #bfe3f0; background-color: #bfe3f0; border-color: #2a8bbf; }
+
+#shop-sign {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 5px 22px;
+    border-radius: 0 0 14px 14px;
+    font-weight: bold;
+    font-size: 1rem;
+    white-space: nowrap;
+    z-index: 120;
+    pointer-events: none;
+    display: none;
+}
+
+.shop-decor {
+    pointer-events: none;
+    filter: drop-shadow(0 3px 2px rgba(0,0,0,0.25));
+}
+
 /* ── World elements ── */
 .path {
     position: absolute;

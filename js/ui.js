@@ -73,6 +73,11 @@ Game.ui.update = function() {
 
     // Shop UI update
     Game.ui.updateShop();
+
+    // Refresh cooking recipes while inside the bakery
+    if (Game.state.activeShop && Game.state.activeShop.id === 'bakery') {
+        Game.ui.updateCooking();
+    }
 };
 
 Game.ui.updateXP = function() {
@@ -137,6 +142,24 @@ Game.ui.updateShop = function() {
                 '🧱 Matériaux (' + item.price + '💰)</button>';
         }
     });
+    panel.innerHTML = html;
+};
+
+Game.ui.updateCooking = function() {
+    var panel = document.getElementById('cooking-recipes');
+    if (!panel) return;
+    var s = Game.state;
+
+    var html = '';
+    for (var key in Game.COOKING_RECIPES) {
+        var r = Game.COOKING_RECIPES[key];
+        // Build the ingredient list label
+        var needTxt = [];
+        for (var ing in r.need) needTxt.push(r.need[ing] + ' ' + ing);
+        var locked = s.level < r.level;
+        html += '<button class="shop-btn' + (locked ? ' owned' : '') + '" onclick="Game.crafting.cook(\'' + key + '\')" title="' + needTxt.join(', ') + '">' +
+            r.emoji + ' ' + r.label + (locked ? ' 🔒 Niv.' + r.level : ' (' + needTxt.join(', ') + ')') + '</button>';
+    }
     panel.innerHTML = html;
 };
 

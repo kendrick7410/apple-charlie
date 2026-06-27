@@ -5,6 +5,7 @@
 Game.state = {
     currentView: 'title',  // 'title', 'world', 'interior'
     activeHouse: null,
+    activeShop: null,
     charlie: { x: 1000, y: 1100, visualX: 1000, visualY: 1100, facing: 'down', walking: false },
     interiorCharlie: { x: 280, y: 500 },
     inventory: { apples: 0, bread: 0, fish: 0, flowers: 0, money: 0, materials: 0, wood: 0, stone: 0, butterflies: 0 },

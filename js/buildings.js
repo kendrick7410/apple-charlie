@@ -17,17 +17,24 @@ Game.buildings.checkProximity = function() {
     var fountainPanel = document.getElementById('action-fountain');
     if (fountainPanel) fountainPanel.style.display = Math.hypot(cx - loc.fountain.x, cy - loc.fountain.y) < (120 * proximityMult) ? 'flex' : 'none';
 
-    // Bakery
-    var bakeryPanel = document.getElementById('action-bakery');
-    if (bakeryPanel) bakeryPanel.style.display = Math.hypot(cx - loc.bakery.x, cy - loc.bakery.y) < (100 * proximityMult) ? 'flex' : 'none';
-
-    // Shop
-    var shopPanel = document.getElementById('action-shop');
-    if (shopPanel) shopPanel.style.display = Math.hypot(cx - loc.shop.x, cy - loc.shop.y) < (100 * proximityMult) ? 'flex' : 'none';
-
-    // Fish Shop
-    var fishShopPanel = document.getElementById('action-fishShop');
-    if (fishShopPanel) fishShopPanel.style.display = Math.hypot(cx - loc.fishShop.x, cy - loc.fishShop.y) < (100 * proximityMult) ? 'flex' : 'none';
+    // Shops (bakery / shop / fishShop): show an "Entrer" prompt instead of the
+    // floating action panel. The actual shop actions live inside the interior.
+    var nearShop = null;
+    Game.SHOPS.forEach(function(shop) {
+        var l = loc[shop.loc];
+        if (Math.hypot(cx - l.x, cy - l.y) < (100 * proximityMult)) nearShop = shop;
+    });
+    var enterPanel = document.getElementById('action-enter');
+    var enterBtn = document.getElementById('enter-shop-btn');
+    if (enterPanel && enterBtn) {
+        if (nearShop && s.currentView === 'world') {
+            enterPanel.style.display = 'flex';
+            enterBtn.textContent = '🚪 Entrer — ' + nearShop.sign + ' ' + nearShop.name;
+            enterBtn.onclick = function() { Game.buildings.enterShop(nearShop.id); };
+        } else {
+            enterPanel.style.display = 'none';
+        }
+    }
 
     // Museum
     var museumPanel = document.getElementById('action-museum');
@@ -66,9 +73,14 @@ Game.buildings.enterHouse = function(house) {
     if (s.currentView === 'interior') return;
     s.currentView = 'interior';
     s.activeHouse = house;
+    s.activeShop = null;
     s.interiorCharlie = { x: 280, y: 450 };
 
     var room = document.getElementById('current-room');
+    // Drop any shop theme/sign left over from a previous shop visit
+    room.classList.remove('theme-bakery', 'theme-shop', 'theme-fishShop');
+    var leftoverSign = document.getElementById('shop-sign');
+    if (leftoverSign) leftoverSign.style.display = 'none';
     // Clear old furniture
     var old = room.querySelectorAll('.furniture');
     for (var i = 0; i < old.length; i++) old[i].remove();
@@ -104,13 +116,107 @@ Game.buildings.enterHouse = function(house) {
     Game.ui.notify("Bienvenue chez " + house.name);
 };
 
+Game.buildings.enterShop = function(shopId) {
+    var s = Game.state;
+    if (s.currentView === 'interior') return;
+    var shop = Game.SHOPS.find(function(sh){ return sh.id === shopId; });
+    if (!shop) return;
+
+    s.currentView = 'interior';
+    s.activeShop = shop;
+    s.activeHouse = null;
+    s.interiorCharlie = { x: 280, y: 440 };
+
+    var room = document.getElementById('current-room');
+
+    // Apply shop theme (floor / wall colors)
+    room.classList.remove('theme-bakery', 'theme-shop', 'theme-fishShop');
+    room.classList.add('theme-' + shop.theme);
+
+    // Shop sign banner
+    var sign = document.getElementById('shop-sign');
+    if (!sign) {
+        sign = document.createElement('div');
+        sign.id = 'shop-sign';
+        room.appendChild(sign);
+    }
+    sign.textContent = shop.sign + ' ' + shop.name;
+    sign.style.display = 'block';
+
+    // Clear any furniture / decor then place this shop's decor (non-draggable)
+    var old = room.querySelectorAll('.furniture');
+    for (var i = 0; i < old.length; i++) old[i].remove();
+    shop.decor.forEach(function(f) {
+        var div = document.createElement('div');
+        div.className = 'furniture shop-decor';
+        div.textContent = f[0];
+        div.style.left = f[1] + 'px';
+        div.style.top = f[2] + 'px';
+        room.appendChild(div);
+    });
+
+    // Hide the furniture-crafting bar (houses only)
+    var craftBar = document.getElementById('interior-craft-bar');
+    if (craftBar) craftBar.style.display = 'none';
+
+    // Show only this shop's action panel, lifted above the interior overlay
+    Game.SHOPS.forEach(function(sh) {
+        var p = document.getElementById(sh.panel);
+        if (p) { p.style.display = 'none'; p.style.zIndex = ''; }
+    });
+    var panel = document.getElementById(shop.panel);
+    if (panel) {
+        panel.style.display = 'flex';
+        panel.style.zIndex = 6000;
+    }
+
+    // Refresh shop-specific content
+    if (shop.id === 'shop') Game.ui.updateShop();
+    if (shop.id === 'bakery') {
+        var cookPanel = document.getElementById('cooking-panel');
+        if (cookPanel) cookPanel.style.display = 'block';
+        if (Game.ui.updateCooking) Game.ui.updateCooking();
+    }
+    Game.ui.update();
+
+    document.getElementById('action-enter').style.display = 'none';
+    document.getElementById('interior-view').style.display = 'flex';
+    var ic = document.getElementById('interior-charlie');
+    if (ic) {
+        ic.style.left = s.interiorCharlie.x + 'px';
+        ic.style.top = s.interiorCharlie.y + 'px';
+    }
+
+    Game.ui.notify("Bienvenue à la " + shop.name + " " + shop.sign);
+};
+
 Game.buildings.exitHouse = function() {
     var s = Game.state;
     s.currentView = 'world';
     document.getElementById('interior-view').style.display = 'none';
+
+    // Clean up shop interior if we were in one
+    if (s.activeShop) {
+        var room = document.getElementById('current-room');
+        room.classList.remove('theme-bakery', 'theme-shop', 'theme-fishShop');
+        var sign = document.getElementById('shop-sign');
+        if (sign) sign.style.display = 'none';
+        var decor = room.querySelectorAll('.shop-decor');
+        for (var i = 0; i < decor.length; i++) decor[i].remove();
+        var panel = document.getElementById(s.activeShop.panel);
+        if (panel) { panel.style.display = 'none'; panel.style.zIndex = ''; }
+        var cookPanel = document.getElementById('cooking-panel');
+        if (cookPanel) cookPanel.style.display = 'none';
+    }
+
+    // Restore the furniture-crafting bar for houses
+    var craftBar = document.getElementById('interior-craft-bar');
+    if (craftBar) craftBar.style.display = '';
+
     s.charlie.y += 80;
     s.charlie.visualY += 80;
     s.activeHouse = null;
+    s.activeShop = null;
     Game.player.updateCamera();
 };
 

@@ -9,6 +9,7 @@ Game.crafting.craftFurniture = function(recipeId) {
     var s = Game.state;
     var recipe = Game.RECIPES[recipeId];
     if (!recipe) return;
+    if (!s.activeHouse) return;  // furniture crafting only inside houses
 
     if (s.inventory.wood >= recipe.wood && s.inventory.stone >= recipe.stone) {
         s.inventory.wood -= recipe.wood;

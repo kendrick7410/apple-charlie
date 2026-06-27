@@ -117,6 +117,20 @@ Game.HOUSES = [
     { id: 'charlie', name: 'Charlie 🤠', x: 1400, y: 1200, emoji: '🏗️', furniture: [] }
 ];
 
+// ── Shops with walk-in interiors ──
+// loc   : key into CONFIG.LOCATIONS for the building position
+// panel : id of the floating action panel shown inside the shop
+// theme : CSS class suffix (.room.theme-<theme>) for floor/wall colors
+// decor : decorative (non-draggable) furniture placed in the room [emoji, x, y]
+Game.SHOPS = [
+    { id: 'bakery', name: 'Boulangerie', sign: '🍞', loc: 'bakery', panel: 'action-bakery', theme: 'bakery',
+      decor: [['🥖',70,110],['🥐',150,90],['🧁',460,120],['🍰',250,70],['🔥',110,430],['🪵',440,440],['🌾',60,300],['🛒',460,300]] },
+    { id: 'shop', name: 'Magasin', sign: '🏪', loc: 'shop', panel: 'action-shop', theme: 'shop',
+      decor: [['📦',70,110],['🧺',460,110],['🪜',250,70],['🏷️',60,300],['🛒',460,300],['💰',110,440],['🧱',440,440],['🪴',250,440]] },
+    { id: 'fishShop', name: 'Poissonnerie', sign: '🐟', loc: 'fishShop', panel: 'action-fishShop', theme: 'fishShop',
+      decor: [['🐠',70,110],['🦀',460,120],['🐙',250,70],['🦐',150,90],['🧊',110,440],['⚖️',440,440],['🐟',60,300],['🪣',460,300]] }
+];
+
 Game.VILLAGER_DATA = {
     'Eloise 🐰':  { emoji: '🐰', home: { x: 850,  y: 1200 }, greetings: ["Salut Charlie !", "Tu as des fleurs ?", "J'adore peindre !"],
                   dialogues: [
