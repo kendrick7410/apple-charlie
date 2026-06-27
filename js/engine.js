@@ -156,6 +156,7 @@ Game.engine.loop = function(now) {
     Game.villagers.update(dt);
     Game.farming.update(dt);
     Game.creatures.update(dt);
+    Game.mountain.update(dt, now);
     Game.particles.update(now);
     Game.weather.update(dt);
 

@@ -152,6 +152,21 @@
     </div>
 </div>
 
+<div id="action-mountain" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
+    <div class="ui-card" style="padding:10px;max-width:240px;">
+        <div style="font-size:0.8rem;font-weight:bold;color:#5d4037;margin-bottom:4px;">⛰️ Le Défi du Cervin</div>
+        <div style="font-size:0.7rem;margin-bottom:6px;">Récolte 5 edelweiss 🌼 sur la montagne le plus vite possible. Récompense : <b>50 à 150 clochettes</b> selon ton temps !</div>
+        <button onclick="Game.mountain.start()" class="btn-animal" style="background:#6d4c41;box-shadow:0 4px 0 #4e342e;width:100%;">Relever le défi 🏔️</button>
+    </div>
+</div>
+
+<div id="mountain-hud" style="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:2000;display:none;">
+    <div class="ui-card" style="padding:8px 18px;text-align:center;">
+        <div style="font-size:0.8rem;font-weight:bold;color:#5d4037;">⛰️ Défi du Cervin</div>
+        <div style="font-size:0.9rem;">🌼 <span id="mountain-remaining">5</span> restant(s) &nbsp;·&nbsp; ⏱️ <span id="mountain-timer">0</span>s</div>
+    </div>
+</div>
+
 <div id="action-museum" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
     <div class="ui-card" style="padding:10px;max-width:280px;max-height:60vh;overflow-y:auto;">
         <div style="font-size:0.8rem;font-weight:bold;color:#7c4dff;margin-bottom:4px;">🏛️ Musée — <span id="museum-count">0/13</span></div>
@@ -207,6 +222,7 @@
 <script src="js/farming.js"></script>
 <script src="js/minimap.js"></script>
 <script src="js/creatures.js"></script>
+<script src="js/mountain.js"></script>
 <script src="js/titlescreen.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/ui.js"></script>
@@ -273,6 +289,7 @@ Game.startGame = function() {
     Game.entities.init();
     Game.villagers.init();
     Game.creatures.init();
+    Game.mountain.reset();
     Game.minimap.init();
 
     // Init UI

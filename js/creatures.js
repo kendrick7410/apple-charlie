@@ -63,34 +63,44 @@ Game.creatures.update = function(dt) {
     var isNight = Game.time.isNight();
 
     creatures.forEach(function(c) {
-        // Determine type based on season/time
-        var newType = getCreatureType(season, isNight);
-        if (c.type !== newType) {
-            c.type = newType;
-            c.el.textContent = newType;
-            c.el.style.display = newType ? 'block' : 'none';
-            // Assign butterfly species
-            if (newType === '🦋') {
-                c.speciesId = pickSpecies(Game.BUTTERFLY_SPECIES, season, isNight);
-                var sp = c.speciesId ? Game.BUTTERFLY_SPECIES[c.speciesId] : null;
-                if (sp && sp.color) {
-                    c.el.style.filter = 'drop-shadow(0 0 4px ' + sp.color + ')';
+        // Re-roll the animal ONLY when the day/night or season context changes,
+        // not every frame. (Re-rolling every frame made each creature flicker
+        // through many different animals at once — very unrealistic.)
+        var ctx = (isNight ? 'night' : 'day') + '-' + season;
+        if (c.ctx !== ctx) {
+            c.ctx = ctx;
+            var newType = getCreatureType(season, isNight);
+            if (c.type !== newType) {
+                c.type = newType;
+                c.el.textContent = newType;
+                c.el.style.display = newType ? 'block' : 'none';
+                // Assign butterfly species
+                if (newType === '🦋') {
+                    c.speciesId = pickSpecies(Game.BUTTERFLY_SPECIES, season, isNight);
+                    var sp = c.speciesId ? Game.BUTTERFLY_SPECIES[c.speciesId] : null;
+                    if (sp && sp.color) {
+                        c.el.style.filter = 'drop-shadow(0 0 4px ' + sp.color + ')';
+                    } else {
+                        c.el.style.filter = '';
+                    }
+                    // Bigger + slower butterflies = much easier to tap and catch
+                    c.el.style.fontSize = '1.9rem';
+                    c.speedMul = 0.5;
+                    c.el.style.pointerEvents = 'auto';
+                    c.el.style.cursor = 'pointer';
+                    c.el.onclick = (function(creature) { return function(e) {
+                        e.stopPropagation();
+                        Game.creatures.tryCapture(creature);
+                    }; })(c);
                 } else {
+                    c.speciesId = null;
+                    c.speedMul = 1;
+                    c.el.style.fontSize = '1.5rem';
                     c.el.style.filter = '';
+                    c.el.style.pointerEvents = 'none';
+                    c.el.style.cursor = '';
+                    c.el.onclick = null;
                 }
-                // Make butterflies capturable
-                c.el.style.pointerEvents = 'auto';
-                c.el.style.cursor = 'pointer';
-                c.el.onclick = (function(creature) { return function(e) {
-                    e.stopPropagation();
-                    Game.creatures.tryCapture(creature);
-                }; })(c);
-            } else {
-                c.speciesId = null;
-                c.el.style.filter = '';
-                c.el.style.pointerEvents = 'none';
-                c.el.style.cursor = '';
-                c.el.onclick = null;
             }
         }
 
@@ -104,8 +114,9 @@ Game.creatures.update = function(dt) {
             c.vy = (Math.random() - 0.5) * 2;
         }
 
-        c.x += c.vx;
-        c.y += c.vy;
+        var sm = c.speedMul || 1;
+        c.x += c.vx * sm;
+        c.y += c.vy * sm;
 
         // Wrap
         if (c.x < 50) c.x = Game.CONFIG.WORLD_W - 100;
@@ -135,22 +146,22 @@ Game.creatures.tryCapture = function(creature) {
         Game.ui.notify("Il te faut un filet ! 🥅");
         return;
     }
-    // Check proximity (increased from 150 to 250 for easier capture)
-    if (Math.hypot(s.charlie.x - creature.x, s.charlie.y - creature.y) > 250) {
+    // Generous capture radius so you rarely get "trop loin"
+    if (Math.hypot(s.charlie.x - creature.x, s.charlie.y - creature.y) > 400) {
         Game.ui.notify("Trop loin ! Rapproche-toi 🦋");
         return;
     }
     if (!creature.speciesId) return;
 
     var sp = Game.BUTTERFLY_SPECIES[creature.speciesId];
-    // Capture chance based on rarity (increased chances for easier capture)
-    var chance = { common: 1.0, uncommon: 0.9, rare: 0.75, legendary: 0.55 };
-    if (Math.random() > (chance[sp.rarity] || 0.5)) {
+    // High capture chances so it's easy, even for the rare ones
+    var chance = { common: 1.0, uncommon: 1.0, rare: 0.9, legendary: 0.8 };
+    if (Math.random() > (chance[sp.rarity] || 0.6)) {
         Game.ui.notify("Raté ! Le papillon s'enfuit ! 🦋");
         Game.audio.play('error');
-        // Make it flee
-        creature.vx = (Math.random() - 0.5) * 6;
-        creature.vy = (Math.random() - 0.5) * 6;
+        // Make it flee (gentler than before so you can chase it down)
+        creature.vx = (Math.random() - 0.5) * 3;
+        creature.vy = (Math.random() - 0.5) * 3;
         return;
     }
 
@@ -171,10 +182,11 @@ Game.creatures.tryCapture = function(creature) {
     creature.speciesId = null;
     creature.el.style.pointerEvents = 'none';
     creature.el.onclick = null;
-    // Respawn after delay
+    // Respawn after delay (ctx=null forces a fresh species roll so it reappears)
     setTimeout(function() {
         creature.x = 200 + Math.random() * (Game.CONFIG.WORLD_W - 400);
         creature.y = 200 + Math.random() * (Game.CONFIG.WORLD_H - 400);
+        creature.ctx = null;
     }, 10000);
 };
 
