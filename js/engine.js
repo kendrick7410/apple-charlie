@@ -91,9 +91,14 @@ Game.engine.initJoystick = function() {
         function move() {
             if (Game.state.currentView === 'world') {
                 // Direct position update for joystick - smoother movement
-                var hungerMul = Game.state.hunger <= 0 ? 0.55 : 1;  // affamé = plus lent
-                Game.state.charlie.x += dir.dx * (Game.CONFIG.TILE * 0.72) * hungerMul;
-                Game.state.charlie.y += dir.dy * (Game.CONFIG.TILE * 0.72) * hungerMul;
+                var step = Game.CONFIG.TILE * 0.72;
+                if (Game.forest && Game.forest.inZone && Game.forest.inZone(Game.state.charlie.x, Game.state.charlie.y)) {
+                    step *= Game.forest.WOLF_SPEED / Game.CONFIG.PLAYER_SPEED;  // vitesse du loup dans sa zone
+                } else if (Game.state.hunger <= 0) {
+                    step *= 0.55;  // affamé = plus lent
+                }
+                Game.state.charlie.x += dir.dx * step;
+                Game.state.charlie.y += dir.dy * step;
 
                 // IMPORTANT: Check for collectibles and building proximity after moving
                 Game.buildings.checkProximity();

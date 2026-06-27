@@ -22,7 +22,13 @@ Game.player.update = function(dt, now) {
     var s = Game.state;
     if (s.currentView !== 'world') return;
 
-    var speed = Game.CONFIG.PLAYER_SPEED * (s.hunger <= 0 ? 0.55 : 1);  // affamé = plus lent
+    // Dans la zone du loup : Charlie va à la même vitesse que le loup. Sinon : normal (ralenti si affamé).
+    var speed;
+    if (Game.forest && Game.forest.inZone && Game.forest.inZone(s.charlie.x, s.charlie.y)) {
+        speed = Game.forest.WOLF_SPEED;
+    } else {
+        speed = Game.CONFIG.PLAYER_SPEED * (s.hunger <= 0 ? 0.55 : 1);  // affamé = plus lent
+    }
     var moved = false;
     var keys = s.keysDown;
 
