@@ -39,14 +39,18 @@ function spawnSeaCreature() {
     var id = pickWeighted(Game.SEA_SPECIES);
     var sp = Game.SEA_SPECIES[id];
     var x = 320 + Math.random() * (Game.CONFIG.WORLD_W - 640);
-    var y = (Game.CONFIG.BEACH_TOP + 40) + Math.random() * (Game.CONFIG.SEA_TOP - Game.CONFIG.BEACH_TOP - 90);
+    var y = (Game.CONFIG.BEACH_TOP + 60) + Math.random() * (Game.CONFIG.SEA_TOP - Game.CONFIG.BEACH_TOP - 240);
     var el = makeEntity(sp.emoji, x, y, 'sea-creature', '1.9rem', sp.rarity);
     sea.push({ el: el, x: x, y: y, id: id });
 }
 
 function mtnCenters() {
     var L = Game.CONFIG.LOCATIONS;
-    return [L.mountain, L.mountain2, L.mountain3, L.mountain4];
+    return [
+        L.mountain, L.mountain2, L.mountain3, L.mountain4,
+        { x: 2700, y: 760 }, { x: 4320, y: 800 }, { x: 2720, y: 1380 },
+        { x: 4300, y: 1380 }, { x: 3500, y: 360 }
+    ];
 }
 
 function spawnMtnAnimal() {

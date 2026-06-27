@@ -15,8 +15,11 @@ Game.engine.init = function() {
         if (Game.state.currentView === 'title') return;
         var key = e.key;
         if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].indexOf(key) > -1) e.preventDefault();
+        var alreadyDown = Game.state.keysDown[key.toLowerCase()];
         Game.state.keysDown[key] = true;
         Game.state.keysDown[key.toLowerCase()] = true;
+        // Touche N : menu de téléportation (une fois par appui)
+        if (!alreadyDown && key.toLowerCase() === 'n') Game.ui.toggleTeleport();
     });
 
     window.addEventListener('keyup', function(e) {

@@ -207,6 +207,37 @@ Game.ui.updateCollections = function() {
     }
 };
 
+// Menu de téléportation (touche N)
+Game.ui.toggleTeleport = function() {
+    var p = document.getElementById('panel-teleport');
+    if (!p) return;
+    if (Game.state.currentView !== 'world') { p.style.display = 'none'; return; }
+    p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+};
+
+Game.ui.teleportTo = function(key) {
+    var L = Game.CONFIG.LOCATIONS;
+    var dests = {
+        fountain: { x: L.fountain.x, y: L.fountain.y + 90 },
+        mountain: { x: L.mountain.x, y: L.mountain.y + 230 },
+        refuge:   { x: L.mountain.x - 200, y: L.mountain.y + 230 },
+        beach:    { x: L.beach.x, y: L.beach.y - 80 },
+        souvenir: { x: L.souvenirShop.x, y: L.souvenirShop.y + 90 },
+        house:    { x: L.charlieHouse.x, y: L.charlieHouse.y + 90 }
+    };
+    var d = dests[key];
+    if (!d) return;
+    var s = Game.state;
+    s.charlie.x = d.x; s.charlie.y = d.y;
+    s.charlie.visualX = d.x; s.charlie.visualY = d.y;
+    if (Game.player.updateCamera) Game.player.updateCamera();
+    if (Game.buildings.checkProximity) Game.buildings.checkProximity();
+    var p = document.getElementById('panel-teleport');
+    if (p) p.style.display = 'none';
+    Game.ui.notify("Téléportation ! ✨");
+    Game.audio.play('levelup');
+};
+
 Game.ui.toggleCollections = function() {
     var p = document.getElementById('panel-collections');
     if (!p) return;

@@ -91,6 +91,7 @@
             <button onclick="Game.audio.toggleMute();this.textContent=Game.audio.isMuted()?'🔇 Son':'🔊 Son'">🔊 Son</button>
             <button id="shovel-toggle" onclick="Game.tools.toggleShovel()">⛏️ Pelle OFF</button>
             <button onclick="Game.ui.toggleCollections()">📖 Collection</button>
+            <button onclick="Game.ui.toggleTeleport()">🗺️ Voyage</button>
         </div>
     </div>
 
@@ -204,6 +205,24 @@
         <div id="collection-mountain" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;"></div>
         <div style="font-size:0.78rem;font-weight:bold;color:#00897b;margin-bottom:3px;">❄️ Boules à neige — <span id="collection-globes-count">0/8</span></div>
         <div id="collection-globes" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+    </div>
+</div>
+
+<!-- Menu de téléportation (touche N) -->
+<div id="panel-teleport" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5800;width:90%;max-width:300px;">
+    <div class="ui-card" style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="font-weight:bold;font-size:1rem;color:#5d4037;">🗺️ Téléportation <span style="font-size:0.7rem;color:#999;">(touche N)</span></div>
+            <button onclick="Game.ui.toggleTeleport()" style="border:none;background:#ef9a9a;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-weight:bold;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+            <button class="btn-animal" style="width:100%;background:#42a5f5;box-shadow:0 4px 0 #1e88e5;" onclick="Game.ui.teleportTo('fountain')">⛲ La Place (Fontaine)</button>
+            <button class="btn-animal" style="width:100%;background:#8d6e63;box-shadow:0 4px 0 #5d4037;" onclick="Game.ui.teleportTo('mountain')">🏔️ Les Montagnes</button>
+            <button class="btn-animal" style="width:100%;background:#a1887f;box-shadow:0 4px 0 #795548;" onclick="Game.ui.teleportTo('refuge')">🏚️ Le Refuge du Cervin</button>
+            <button class="btn-animal" style="width:100%;background:#ffb74d;box-shadow:0 4px 0 #f57c00;" onclick="Game.ui.teleportTo('beach')">🏖️ La Plage</button>
+            <button class="btn-animal" style="width:100%;background:#26a69a;box-shadow:0 4px 0 #00897b;" onclick="Game.ui.teleportTo('souvenir')">🎁 La Boutique Souvenir</button>
+            <button class="btn-animal" style="width:100%;background:#66bb6a;box-shadow:0 4px 0 #43a047;" onclick="Game.ui.teleportTo('house')">🏡 Ma Maison</button>
+        </div>
     </div>
 </div>
 

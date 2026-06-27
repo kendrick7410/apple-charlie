@@ -350,22 +350,30 @@ Game.world.createHills = function() {
     });
 };
 
-// 3 sommets plus petits autour du Cervin (un vrai massif)
+// Massif de montagnes autour du Cervin : sommets proches mais qui ne se touchent pas
 Game.world.createExtraPeaks = function() {
     var world = document.getElementById('game-world');
+    var L = Game.CONFIG.LOCATIONS;
     var peaks = [
-        { loc: Game.CONFIG.LOCATIONS.mountain2, name: 'Le Glacier', size: '6.5rem' },
-        { loc: Game.CONFIG.LOCATIONS.mountain3, name: 'La Dent', size: '6rem' },
-        { loc: Game.CONFIG.LOCATIONS.mountain4, name: 'Le Pic Blanc', size: '7rem' }
+        // les 3 sommets "nommés" (servent aussi de zone d'apparition des animaux)
+        { loc: L.mountain2, name: 'Le Glacier',   size: '6.5rem' },
+        { loc: L.mountain3, name: 'La Dent',      size: '6rem' },
+        { loc: L.mountain4, name: 'Le Pic Blanc', size: '7rem' },
+        // 5 sommets supplémentaires, espacés (>= 300px) pour ne pas se chevaucher
+        { loc: { x: 2700, y: 760 },  name: "L'Aiguille",     size: '5.5rem' },
+        { loc: { x: 4320, y: 800 },  name: 'Le Mont Roc',    size: '6.5rem' },
+        { loc: { x: 2720, y: 1380 }, name: 'La Roche Grise', size: '5.5rem' },
+        { loc: { x: 4300, y: 1380 }, name: 'Le Sommet Noir', size: '6rem' },
+        { loc: { x: 3500, y: 360 },  name: 'Le Grand Pic',   size: '7.5rem' }
     ];
     peaks.forEach(function(pk) {
         var loc = pk.loc;
         var base = document.createElement('div');
         base.style.cssText = 'position:absolute;z-index:0;pointer-events:none;';
-        base.style.left = (loc.x - 300) + 'px';
-        base.style.top = (loc.y - 180) + 'px';
-        base.style.width = '600px';
-        base.style.height = '380px';
+        base.style.left = (loc.x - 230) + 'px';
+        base.style.top = (loc.y - 150) + 'px';
+        base.style.width = '460px';
+        base.style.height = '320px';
         base.style.background = 'radial-gradient(ellipse at 50% 100%, rgba(120,100,80,0.3) 0%, rgba(150,130,110,0.18) 45%, transparent 72%)';
         world.appendChild(base);
 
@@ -420,21 +428,26 @@ Game.world.createSeaAndBeach = function() {
     add('position:absolute;z-index:0;pointer-events:none;left:0;width:' + W + 'px;top:' + beachTop +
         'px;height:' + (H - beachTop) + 'px;background:linear-gradient(180deg,#f3e2b3 0%,#efd89a 40%,#ecd089 100%);');
 
-    // Dunes ondulées le long de la bordure herbe → sable (adoucit la ligne droite)
-    for (var dx = -60; dx < W; dx += 85) {
-        var dw = 140 + Math.random() * 90;
-        var dy = beachTop - 35 + Math.sin(dx / 320) * 45 + (Math.random() - 0.5) * 30;
-        add('position:absolute;z-index:0;pointer-events:none;border-radius:50%;left:' + dx + 'px;top:' + dy +
-            'px;width:' + dw + 'px;height:' + (70 + Math.random() * 40) +
-            'px;background:radial-gradient(ellipse at 50% 40%,#f1dda0 0%,rgba(241,221,160,0.55) 60%,transparent 80%);');
+    // Côte irrégulière (baies et caps) au lieu d'un rectangle : somme de sinus
+    var grass = Game.SEASON_GRASS[Game.state.season] || '#8cd47e';
+    function coast(x, a, ph) {
+        return Math.sin(x / 560 + ph) * a + Math.sin(x / 230 + ph * 1.7) * (a * 0.5) + Math.sin(x / 90 + ph * 2.3) * (a * 0.25);
     }
 
-    // Touffes d'herbe de plage sur les dunes
-    for (var gx = 100; gx < W; gx += 230 + Math.random() * 160) {
+    // Bordure herbe → sable : gros blobs d'herbe qui avancent dans la plage (forme la baie)
+    for (var dx = -140; dx < W + 140; dx += 70) {
+        var gy = beachTop - 130 + coast(dx, 135, 0.4);
+        add('position:absolute;z-index:0;pointer-events:none;border-radius:50% 50% 46% 46%;left:' + dx +
+            'px;top:' + gy + 'px;width:210px;height:250px;background:radial-gradient(ellipse at 50% 28%,' +
+            grass + ' 0%,' + grass + ' 52%,rgba(0,0,0,0) 72%);');
+    }
+
+    // Touffes d'herbe de plage le long de la côte
+    for (var gx = 80; gx < W; gx += 170 + Math.random() * 170) {
         var gel = document.createElement('div');
         gel.className = 'entity';
-        gel.style.cssText = 'left:' + gx + 'px;top:' + (beachTop - 20 + Math.sin(gx / 320) * 40) +
-            'px;font-size:' + (1.4 + Math.random()) + 'rem;z-index:3;opacity:0.85;';
+        gel.style.cssText = 'left:' + gx + 'px;top:' + (beachTop + 5 + coast(gx, 135, 0.4)) +
+            'px;font-size:' + (1.3 + Math.random()) + 'rem;z-index:3;opacity:0.85;';
         gel.innerHTML = Math.random() > 0.5 ? '🌾' : '🌿';
         world.appendChild(gel);
     }
@@ -443,19 +456,26 @@ Game.world.createSeaAndBeach = function() {
     add('position:absolute;z-index:1;pointer-events:none;left:0;width:' + W + 'px;top:' + seaTop +
         'px;height:' + (H - seaTop) + 'px;', 'sea-water');
 
-    // Rivage ondulé : blobs d'écume qui suivent une courbe (au lieu d'une ligne droite)
-    for (var fx = -40; fx < W; fx += 65) {
-        var fy = seaTop - 22 + Math.sin(fx / 230) * 30;
+    // Rivage sable → mer : blobs de sable par-dessus le haut de la mer (l'eau dessine une courbe)
+    for (var sx = -140; sx < W + 140; sx += 70) {
+        var sy = seaTop - 155 + coast(sx, 95, 2.1);
+        add('position:absolute;z-index:1;pointer-events:none;border-radius:50% 50% 46% 46%;left:' + sx +
+            'px;top:' + sy + 'px;width:205px;height:215px;background:radial-gradient(ellipse at 50% 32%,#efd89a 0%,#ecd089 55%,rgba(0,0,0,0) 74%);');
+    }
+
+    // Écume animée qui suit la même courbe que le rivage
+    for (var fx = -80; fx < W + 80; fx += 60) {
+        var fy = seaTop - 8 + coast(fx, 95, 2.1);
         var blob = add('position:absolute;z-index:2;pointer-events:none;border-radius:50%;left:' + fx + 'px;top:' + fy +
-            'px;width:95px;height:44px;background:radial-gradient(ellipse at center,rgba(255,255,255,0.85) 0%,rgba(255,255,255,0.3) 55%,transparent 80%);',
+            'px;width:95px;height:42px;background:radial-gradient(ellipse at center,rgba(255,255,255,0.85) 0%,rgba(255,255,255,0.3) 55%,transparent 80%);',
             'sea-foam-blob');
         blob.style.animationDelay = ((fx % 780) / 780).toFixed(2) + 's';
     }
 
     // Bassins de marée (petites flaques sur le sable)
-    for (var t = 0; t < 6; t++) {
+    for (var t = 0; t < 7; t++) {
         var px = 300 + Math.random() * (W - 600);
-        var py = beachTop + 120 + Math.random() * (seaTop - beachTop - 200);
+        var py = beachTop + 150 + Math.random() * (seaTop - beachTop - 320);
         add('position:absolute;z-index:1;pointer-events:none;border-radius:50%;left:' + px + 'px;top:' + py +
             'px;width:' + (90 + Math.random() * 80) + 'px;height:' + (45 + Math.random() * 30) +
             'px;background:radial-gradient(ellipse at center,rgba(120,200,230,0.7) 0%,rgba(120,200,230,0.3) 60%,transparent 85%);');
