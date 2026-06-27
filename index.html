@@ -196,6 +196,21 @@
     </div>
 </div>
 
+<div id="action-beach" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
+    <div class="ui-card" style="padding:10px;max-width:240px;">
+        <div style="font-size:0.8rem;font-weight:bold;color:#0277bd;margin-bottom:4px;">🗺️ La Chasse au Trésor</div>
+        <div style="font-size:0.7rem;margin-bottom:6px;">Un coffre est enfoui dans le sable ! Trouve-le au chaud/froid 🔥❄️. Récompense : <b>80 à 140 clochettes</b>.</div>
+        <button onclick="Game.beach.start()" class="btn-animal" style="background:#0288d1;box-shadow:0 4px 0 #01579b;width:100%;">Commencer la chasse 🗺️</button>
+    </div>
+</div>
+
+<div id="beach-hud" style="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:2000;display:none;">
+    <div class="ui-card" style="padding:8px 20px;text-align:center;">
+        <div style="font-size:0.8rem;font-weight:bold;color:#0277bd;">🗺️ Chasse au trésor</div>
+        <div id="beach-temp" style="font-size:1rem;font-weight:bold;">🧊 Glacial</div>
+    </div>
+</div>
+
 <div id="action-museum" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
     <div class="ui-card" style="padding:10px;max-width:280px;max-height:70vh;overflow-y:auto;">
         <div style="font-size:0.8rem;font-weight:bold;color:#7c4dff;margin-bottom:4px;">🦉 Le hibou t'achète</div>
@@ -313,6 +328,7 @@
 <script src="js/mountain.js"></script>
 <script src="js/coast.js"></script>
 <script src="js/forest.js"></script>
+<script src="js/beach.js"></script>
 <script src="js/titlescreen.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/ui.js"></script>
@@ -382,6 +398,7 @@ Game.startGame = function() {
     Game.mountain.reset();
     Game.coast.init();
     Game.forest.init();
+    Game.beach.reset();
     Game.minimap.init();
 
     // Init UI

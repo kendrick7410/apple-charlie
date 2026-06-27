@@ -169,6 +169,7 @@ Game.engine.loop = function(now) {
     Game.mountain.update(dt, now);
     Game.coast.update(dt);
     Game.forest.update(dt);
+    Game.beach.update(dt, now);
     Game.particles.update(now);
     Game.weather.update(dt);
 
