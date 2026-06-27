@@ -39,7 +39,9 @@ function spawnSeaCreature() {
     var id = pickWeighted(Game.SEA_SPECIES);
     var sp = Game.SEA_SPECIES[id];
     var x = 320 + Math.random() * (Game.CONFIG.WORLD_W - 640);
-    var y = (Game.CONFIG.BEACH_TOP + 60) + Math.random() * (Game.CONFIG.SEA_TOP - Game.CONFIG.BEACH_TOP - 240);
+    // sur le sable, au-dessus du bord de l'eau (côte courbe)
+    var shore = Game.world.shorelineY ? Game.world.shorelineY(x) : Game.CONFIG.SEA_TOP;
+    var y = (Game.CONFIG.BEACH_TOP + 70) + Math.random() * Math.max(60, (shore - 90) - (Game.CONFIG.BEACH_TOP + 70));
     var el = makeEntity(sp.emoji, x, y, 'sea-creature', '1.9rem', sp.rarity);
     sea.push({ el: el, x: x, y: y, id: id });
 }
@@ -94,9 +96,11 @@ function collectCreature(kind, arr, idx, collectionKey) {
 function spawnBoat() {
     var port = Game.CONFIG.LOCATIONS.port;
     var startY = Game.CONFIG.WORLD_H + 80;
+    var shore = Game.world.shorelineY ? Game.world.shorelineY(port.x) : port.y + 400;
     var el = makeEntity('⛴️', port.x - 30, startY, 'cargo-boat', '4rem');
     el.style.zIndex = '6';
-    boats.push({ el: el, x: port.x - 30, y: startY, dockY: port.y + 250, phase: 'in', wait: 0 });
+    // Le bateau s'arrête dans l'eau, au bout du ponton
+    boats.push({ el: el, x: port.x - 30, y: startY, dockY: shore + 120, phase: 'in', wait: 0 });
     Game.ui.notify("⛴️ Un bateau de marchandise arrive au port !");
 }
 

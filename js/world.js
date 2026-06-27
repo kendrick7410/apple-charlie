@@ -408,77 +408,75 @@ Game.world.createExtraPeaks = function() {
     });
 };
 
-// Mer + grande plage de sable (rendu naturel : dunes ondulées, rivage courbe, décor dispersé)
+// Ligne de rivage (y du bord de l'eau à la position x) — partagée rendu + collision joueur
+Game.world.shorelineY = function(x) {
+    var seaTop = Game.CONFIG.SEA_TOP, a = 115, ph = 2.1;
+    return seaTop + Math.sin(x / 560 + ph) * a + Math.sin(x / 230 + ph * 1.7) * (a * 0.5) + Math.sin(x / 90 + ph * 2.3) * (a * 0.25);
+};
+
+// Mer + grande plage, dessinées en SVG → côtes parfaitement courbes (aucun bord droit)
 Game.world.createSeaAndBeach = function() {
     var world = document.getElementById('game-world');
     var W = Game.CONFIG.WORLD_W;
     var H = Game.CONFIG.WORLD_H;
     var beachTop = Game.CONFIG.BEACH_TOP;
     var seaTop = Game.CONFIG.SEA_TOP;
+    var SVGNS = 'http://www.w3.org/2000/svg';
 
-    function add(css, cls) {
-        var el = document.createElement('div');
-        if (cls) el.className = cls;
-        el.style.cssText = css;
-        world.appendChild(el);
-        return el;
-    }
-
-    // Bande de sable
-    add('position:absolute;z-index:0;pointer-events:none;left:0;width:' + W + 'px;top:' + beachTop +
-        'px;height:' + (H - beachTop) + 'px;background:linear-gradient(180deg,#f3e2b3 0%,#efd89a 40%,#ecd089 100%);');
-
-    // Côte irrégulière (baies et caps) au lieu d'un rectangle : somme de sinus
-    var grass = Game.SEASON_GRASS[Game.state.season] || '#8cd47e';
     function coast(x, a, ph) {
         return Math.sin(x / 560 + ph) * a + Math.sin(x / 230 + ph * 1.7) * (a * 0.5) + Math.sin(x / 90 + ph * 2.3) * (a * 0.25);
     }
+    var grassLine = function(x) { return beachTop + coast(x, 155, 0.4); };
+    var seaLine = Game.world.shorelineY;
 
-    // Bordure herbe → sable : gros blobs d'herbe qui avancent dans la plage (forme la baie)
-    for (var dx = -140; dx < W + 140; dx += 70) {
-        var gy = beachTop - 130 + coast(dx, 135, 0.4);
-        add('position:absolute;z-index:0;pointer-events:none;border-radius:50% 50% 46% 46%;left:' + dx +
-            'px;top:' + gy + 'px;width:210px;height:250px;background:radial-gradient(ellipse at 50% 28%,' +
-            grass + ' 0%,' + grass + ' 52%,rgba(0,0,0,0) 72%);');
+    // Polygone : suit la courbe du haut (gauche→droite) puis descend jusqu'en bas
+    function fillPath(yFn) {
+        var d = 'M 0 ' + yFn(0).toFixed(1);
+        for (var x = 0; x <= W; x += 36) d += ' L ' + x + ' ' + yFn(x).toFixed(1);
+        return d + ' L ' + W + ' ' + H + ' L 0 ' + H + ' Z';
+    }
+    function linePath(yFn) {
+        var d = 'M 0 ' + yFn(0).toFixed(1);
+        for (var x = 0; x <= W; x += 36) d += ' L ' + x + ' ' + yFn(x).toFixed(1);
+        return d;
     }
 
-    // Touffes d'herbe de plage le long de la côte
+    var svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('width', W);
+    svg.setAttribute('height', H);
+    svg.style.cssText = 'position:absolute;left:0;top:0;z-index:0;pointer-events:none;overflow:visible;';
+    svg.innerHTML =
+        '<defs>' +
+          '<linearGradient id="sandGrad" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop offset="0%" stop-color="#f3e2b3"/><stop offset="100%" stop-color="#e7c879"/></linearGradient>' +
+          '<linearGradient id="seaGrad" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop offset="0%" stop-color="#63cdee"/><stop offset="40%" stop-color="#2f9fd0"/>' +
+            '<stop offset="100%" stop-color="#12608c"/></linearGradient>' +
+        '</defs>' +
+        '<path d="' + fillPath(grassLine) + '" fill="url(#sandGrad)"/>' +
+        '<path d="' + fillPath(seaLine) + '" fill="url(#seaGrad)"/>' +
+        '<path class="sea-foam-svg" d="' + linePath(seaLine) + '" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="16" stroke-linecap="round"/>';
+    world.appendChild(svg);
+
+    // Touffes d'herbe de plage le long de la côte herbe/sable
     for (var gx = 80; gx < W; gx += 170 + Math.random() * 170) {
         var gel = document.createElement('div');
         gel.className = 'entity';
-        gel.style.cssText = 'left:' + gx + 'px;top:' + (beachTop + 5 + coast(gx, 135, 0.4)) +
+        gel.style.cssText = 'left:' + gx + 'px;top:' + (grassLine(gx) + 6) +
             'px;font-size:' + (1.3 + Math.random()) + 'rem;z-index:3;opacity:0.85;';
         gel.innerHTML = Math.random() > 0.5 ? '🌾' : '🌿';
         world.appendChild(gel);
     }
 
-    // Mer
-    add('position:absolute;z-index:1;pointer-events:none;left:0;width:' + W + 'px;top:' + seaTop +
-        'px;height:' + (H - seaTop) + 'px;', 'sea-water');
-
-    // Rivage sable → mer : blobs de sable par-dessus le haut de la mer (l'eau dessine une courbe)
-    for (var sx = -140; sx < W + 140; sx += 70) {
-        var sy = seaTop - 155 + coast(sx, 95, 2.1);
-        add('position:absolute;z-index:1;pointer-events:none;border-radius:50% 50% 46% 46%;left:' + sx +
-            'px;top:' + sy + 'px;width:205px;height:215px;background:radial-gradient(ellipse at 50% 32%,#efd89a 0%,#ecd089 55%,rgba(0,0,0,0) 74%);');
-    }
-
-    // Écume animée qui suit la même courbe que le rivage
-    for (var fx = -80; fx < W + 80; fx += 60) {
-        var fy = seaTop - 8 + coast(fx, 95, 2.1);
-        var blob = add('position:absolute;z-index:2;pointer-events:none;border-radius:50%;left:' + fx + 'px;top:' + fy +
-            'px;width:95px;height:42px;background:radial-gradient(ellipse at center,rgba(255,255,255,0.85) 0%,rgba(255,255,255,0.3) 55%,transparent 80%);',
-            'sea-foam-blob');
-        blob.style.animationDelay = ((fx % 780) / 780).toFixed(2) + 's';
-    }
-
-    // Bassins de marée (petites flaques sur le sable)
+    // Bassins de marée (petites flaques sur le sable, entre la côte et l'eau)
     for (var t = 0; t < 7; t++) {
         var px = 300 + Math.random() * (W - 600);
-        var py = beachTop + 150 + Math.random() * (seaTop - beachTop - 320);
-        add('position:absolute;z-index:1;pointer-events:none;border-radius:50%;left:' + px + 'px;top:' + py +
+        var py = grassLine(px) + 120 + Math.random() * 160;
+        var pool = document.createElement('div');
+        pool.style.cssText = 'position:absolute;z-index:1;pointer-events:none;border-radius:50%;left:' + px + 'px;top:' + py +
             'px;width:' + (90 + Math.random() * 80) + 'px;height:' + (45 + Math.random() * 30) +
-            'px;background:radial-gradient(ellipse at center,rgba(120,200,230,0.7) 0%,rgba(120,200,230,0.3) 60%,transparent 85%);');
+            'px;background:radial-gradient(ellipse at center,rgba(120,200,230,0.7) 0%,rgba(120,200,230,0.3) 60%,transparent 85%);';
+        world.appendChild(pool);
     }
 
     // Label
@@ -511,35 +509,38 @@ Game.world.createSeaAndBeach = function() {
     scatter('🌴', 4,  3,   4,   beachTop + 60,  beachTop + 160);  // palmiers extra
 };
 
-// Port avec ponton (les bateaux y déposent la marchandise)
+// Port avec ponton qui part de la plage et avance DANS l'eau
 Game.world.createPort = function() {
     var world = document.getElementById('game-world');
     var loc = Game.CONFIG.LOCATIONS.port;
+    var shore = Game.world.shorelineY(loc.x);   // bord de l'eau à cet endroit
+    var dockTop = loc.y;
+    var dockBottom = shore + 220;               // le ponton dépasse bien dans la mer
 
-    // Ponton en bois qui avance dans la mer
+    // Ponton en bois
     var dock = document.createElement('div');
     dock.style.cssText = 'position:absolute;z-index:4;pointer-events:none;border-radius:8px;';
     dock.style.left = (loc.x - 45) + 'px';
-    dock.style.top = loc.y + 'px';
+    dock.style.top = dockTop + 'px';
     dock.style.width = '90px';
-    dock.style.height = '380px';
+    dock.style.height = (dockBottom - dockTop) + 'px';
     dock.style.backgroundImage = 'repeating-linear-gradient(0deg, #a67c52, #a67c52 18px, #8b6544 18px, #8b6544 22px)';
     dock.style.boxShadow = '0 4px 10px rgba(0,0,0,0.25)';
     world.appendChild(dock);
 
-    // Bornes du ponton
+    // Pilotis au bout du ponton (dans l'eau)
     [ -45, 45 ].forEach(function(dx) {
         var post = document.createElement('div');
         post.className = 'entity';
         post.style.left = (loc.x + dx) + 'px';
-        post.style.top = (loc.y + 340) + 'px';
+        post.style.top = (dockBottom - 26) + 'px';
         post.style.fontSize = '1.6rem';
         post.style.zIndex = '5';
         post.innerHTML = '🪵';
         world.appendChild(post);
     });
 
-    // Panneau du port
+    // Panneau du port (sur la plage)
     var label = document.createElement('div');
     label.className = 'entity';
     label.style.left = loc.x + 'px';
