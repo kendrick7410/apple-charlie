@@ -469,9 +469,11 @@ Game.world.createSeaAndBeach = function() {
     }
 
     // Bassins de marée (petites flaques sur le sable, entre la côte et l'eau)
-    for (var t = 0; t < 7; t++) {
-        var px = 300 + Math.random() * (W - 600);
-        var py = grassLine(px) + 120 + Math.random() * 160;
+    for (var t = 0; t < 8; t++) {
+        var px = 200 + Math.random() * (W - 400);
+        var pTop = grassLine(px) + 70, pBot = seaLine(px) - 60;
+        if (pBot <= pTop) continue;
+        var py = pTop + Math.random() * (pBot - pTop);
         var pool = document.createElement('div');
         pool.style.cssText = 'position:absolute;z-index:1;pointer-events:none;border-radius:50%;left:' + px + 'px;top:' + py +
             'px;width:' + (90 + Math.random() * 80) + 'px;height:' + (45 + Math.random() * 30) +
@@ -487,26 +489,34 @@ Game.world.createSeaAndBeach = function() {
     label.innerHTML = '<div class="building-label" style="font-size:13px;font-weight:bold;">🏖️ Grande Plage</div>';
     world.appendChild(label);
 
-    // Décor naturel dispersé (palmiers, parasols, rochers, bois flotté, ballons, châteaux)
-    function scatter(emoji, count, minSize, maxSize, fromY, toY) {
+    // Décor dispersé : placé entre la côte (herbe/sable) et l'eau, PAR position x,
+    // donc il suit la courbe du rivage et continue jusqu'au bord de l'eau
+    // (fromFrac/toFrac : 0 = bord herbe, 1 = bord de l'eau)
+    function scatter(emoji, count, minSize, maxSize, fromFrac, toFrac) {
         for (var i = 0; i < count; i++) {
+            var x = 90 + Math.random() * (W - 180);
+            var top = grassLine(x) + 25;     // juste sous la limite herbe/sable
+            var bottom = seaLine(x) - 30;    // juste avant l'eau
+            if (bottom <= top) continue;
+            var y = top + (fromFrac + Math.random() * (toFrac - fromFrac)) * (bottom - top);
             var el = document.createElement('div');
             el.className = 'entity';
-            el.style.left = (200 + Math.random() * (W - 400)) + 'px';
-            el.style.top = (fromY + Math.random() * (toY - fromY)) + 'px';
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
             el.style.fontSize = (minSize + Math.random() * (maxSize - minSize)) + 'rem';
             el.style.zIndex = '3';
             el.innerHTML = emoji;
             world.appendChild(el);
         }
     }
-    scatter('🌴', 11, 3.5, 5.2, beachTop + 30, beachTop + 200);   // palmiers
-    scatter('⛱️', 6,  3,   3.6, beachTop + 150, seaTop - 120);    // parasols
-    scatter('🪨', 9,  1.6, 2.8, beachTop + 80,  seaTop - 80);     // rochers
-    scatter('🪵', 5,  1.8, 2.6, beachTop + 120, seaTop - 90);     // bois flotté
-    scatter('🏖️', 3,  2.6, 3.2, beachTop + 200, seaTop - 120);    // châteaux de sable
-    scatter('🏐', 3,  1.8, 2.4, beachTop + 180, seaTop - 120);    // ballons
-    scatter('🌴', 4,  3,   4,   beachTop + 60,  beachTop + 160);  // palmiers extra
+    scatter('🌴', 16, 3.5, 5.2, 0,    0.4);   // palmiers (côté herbe)
+    scatter('⛱️', 9,  3,   3.6, 0.1,  0.9);   // parasols (toute la plage)
+    scatter('🪨', 14, 1.6, 2.8, 0.05, 0.97);  // rochers (jusqu'au bord de l'eau)
+    scatter('🪵', 8,  1.8, 2.6, 0.15, 0.95);  // bois flotté
+    scatter('🏖️', 5,  2.6, 3.2, 0.2,  0.92);  // châteaux de sable
+    scatter('🏐', 5,  1.8, 2.4, 0.15, 0.92);  // ballons
+    scatter('🩴', 8,  1.4, 2,   0.45, 0.95);  // tongs près de l'eau
+    scatter('🪁', 4,  2.4, 3.2, 0,    0.25);  // cerfs-volants (côté herbe)
 };
 
 // Port avec ponton qui part de la plage et avance DANS l'eau
