@@ -5,8 +5,8 @@
 window.Game = window.Game || {};
 
 Game.CONFIG = {
-    WORLD_W: 4500,
-    WORLD_H: 4500,
+    WORLD_W: 6000,
+    WORLD_H: 6000,
     TILE: 60,
     LERP_SPEED: 0.18,
     PLAYER_SPEED: 4,
@@ -15,11 +15,11 @@ Game.CONFIG = {
     REAL_MS_PER_GAME_HOUR: 60000,   // 1 min réelle = 1h jeu
     SEASON_DURATION_MS: 7 * 60000,  // 7 min par saison
 
-    // Spawn counts
-    TREE_COUNT: 35,
-    STONE_COUNT: 25,
-    FLOWER_COUNT: 60,
-    CREATURE_COUNT: 18,
+    // Spawn counts (carte plus grande → plus de nature)
+    TREE_COUNT: 60,
+    STONE_COUNT: 45,
+    FLOWER_COUNT: 100,
+    CREATURE_COUNT: 28,
 
     // Respawn delays (ms)
     TREE_RESPAWN: 8000,
@@ -63,16 +63,16 @@ Game.CONFIG = {
         mountain3:    { x: 3020, y: 1080 },
         mountain4:    { x: 3500, y: 1420 },
         lake:         { x: 3200, y: 600  },
-        beach:        { x: 2250, y: 3420 },
-        souvenirShop: { x: 1450, y: 3230 },
-        port:         { x: 3150, y: 3330 },
+        beach:        { x: 3000, y: 5200 },
+        souvenirShop: { x: 1700, y: 5040 },
+        port:         { x: 4100, y: 5070 },
         riverBaseX:   550
     },
 
-    // Plage / mer
-    BEACH_TOP: 3150,      // début du sable
-    SEA_TOP: 3700,        // début de la mer
-    BOAT_INTERVAL: 25000, // un bateau au port toutes les ~25s
+    // Plage / mer (tout en bas de la grande carte)
+    BEACH_TOP: 5000,      // début du sable
+    SEA_TOP: 5500,        // début de la mer
+    BOAT_INTERVAL: 60000, // un bateau au port toutes les minutes
 
     // Fish shop
     FISH_SHOP_SELL_INTERVAL: 30000,

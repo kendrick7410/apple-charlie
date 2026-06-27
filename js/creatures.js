@@ -41,7 +41,7 @@ function createCreature() {
     el.style.transition = 'none';
     el.style.zIndex = '15';
     var x = 200 + Math.random() * (Game.CONFIG.WORLD_W - 400);
-    var y = 200 + Math.random() * (Game.CONFIG.WORLD_H - 400);
+    var y = 200 + Math.random() * (Game.CONFIG.BEACH_TOP - 350); // reste sur la terre
     el.style.left = x + 'px';
     el.style.top = y + 'px';
     document.getElementById('game-world').appendChild(el);
@@ -118,11 +118,12 @@ Game.creatures.update = function(dt) {
         c.x += c.vx * sm;
         c.y += c.vy * sm;
 
-        // Wrap
+        // Wrap (limité à la terre, pas la mer)
+        var landBottom = Game.CONFIG.BEACH_TOP - 100;
         if (c.x < 50) c.x = Game.CONFIG.WORLD_W - 100;
         if (c.x > Game.CONFIG.WORLD_W - 50) c.x = 100;
-        if (c.y < 50) c.y = Game.CONFIG.WORLD_H - 100;
-        if (c.y > Game.CONFIG.WORLD_H - 50) c.y = 100;
+        if (c.y < 50) c.y = landBottom;
+        if (c.y > landBottom) c.y = 100;
 
         c.el.style.left = c.x + 'px';
         c.el.style.top = c.y + 'px';
@@ -185,7 +186,7 @@ Game.creatures.tryCapture = function(creature) {
     // Respawn after delay (ctx=null forces a fresh species roll so it reappears)
     setTimeout(function() {
         creature.x = 200 + Math.random() * (Game.CONFIG.WORLD_W - 400);
-        creature.y = 200 + Math.random() * (Game.CONFIG.WORLD_H - 400);
+        creature.y = 200 + Math.random() * (Game.CONFIG.BEACH_TOP - 350);
         creature.ctx = null;
     }, 10000);
 };

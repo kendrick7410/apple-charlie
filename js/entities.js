@@ -17,18 +17,26 @@ Game.entities.init = function() {
 };
 
 function validSpawnPos(x, y) {
-    // Avoid center village and river
+    // Avoid center village and river ; reste sur la terre (pas sur la plage/mer)
     if (Math.hypot(x - 1000, y - 1000) < 400) return false;
     if (x > 450 && x < 750) return false;
+    if (y > Game.CONFIG.BEACH_TOP - 150) return false;
     return true;
+}
+
+// Zone de spawn sur la terre (toute la carte sauf plage/mer)
+function landSpawn() {
+    return {
+        x: 200 + Math.random() * (Game.CONFIG.WORLD_W - 400),
+        y: 200 + Math.random() * (Game.CONFIG.BEACH_TOP - 350)
+    };
 }
 
 Game.entities.spawnTree = function(season) {
     season = season || Game.state.season;
-    var x, y;
+    var x, y, pos;
     do {
-        x = 200 + Math.random() * 2600;
-        y = 200 + Math.random() * 2600;
+        pos = landSpawn(); x = pos.x; y = pos.y;
     } while (!validSpawnPos(x, y));
 
     var tree = document.createElement('div');
@@ -42,10 +50,9 @@ Game.entities.spawnTree = function(season) {
 };
 
 Game.entities.spawnStone = function() {
-    var x, y;
+    var x, y, pos;
     do {
-        x = 200 + Math.random() * 2600;
-        y = 200 + Math.random() * 2600;
+        pos = landSpawn(); x = pos.x; y = pos.y;
     } while (!validSpawnPos(x, y));
 
     var stone = document.createElement('div');
@@ -62,9 +69,9 @@ Game.entities.spawnFlower = function(season) {
     if (season === 'winter') return; // No flowers in winter
     var x, y;
     do {
-        x = 100 + Math.random() * 2800;
-        y = 100 + Math.random() * 2800;
-    } while (x > 450 && x < 750);
+        x = 100 + Math.random() * (Game.CONFIG.WORLD_W - 200);
+        y = 100 + Math.random() * (Game.CONFIG.BEACH_TOP - 250);
+    } while ((x > 450 && x < 750) || y > Game.CONFIG.BEACH_TOP - 150);
 
     Game.entities.createFlowerEl(x, y, Game.FLOWER_TYPES[Math.floor(Math.random() * Game.FLOWER_TYPES.length)], false);
 };
