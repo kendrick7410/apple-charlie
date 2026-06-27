@@ -30,14 +30,16 @@ Game.mountain.start = function() {
     if (M.active) return;
     var m = peak();
 
-    // Disperse les edelweiss autour du Cervin
+    // Disperse les edelweiss en cercle AUTOUR DU JOUEUR (pas loin, faciles à trouver)
     M.flowers = [];
     M.remaining = M.TOTAL;
+    var s = Game.state;
+    var center = { x: s.charlie.x, y: s.charlie.y };
     for (var i = 0; i < M.TOTAL; i++) {
-        var angle = (i / M.TOTAL) * Math.PI * 2 + Math.random() * 0.8;
-        var dist = 220 + Math.random() * (M.SPREAD - 220);
-        var fx = Math.max(120, Math.min(Game.CONFIG.WORLD_W - 120, m.x + Math.cos(angle) * dist));
-        var fy = Math.max(120, Math.min(Game.CONFIG.WORLD_H - 120, m.y + Math.sin(angle) * dist));
+        var angle = (i / M.TOTAL) * Math.PI * 2 + Math.random() * 0.5;
+        var dist = 160 + Math.random() * 180; // entre 160 et 340 px → toujours visibles
+        var fx = Math.max(120, Math.min(Game.CONFIG.WORLD_W - 120, center.x + Math.cos(angle) * dist));
+        var fy = Math.max(120, Math.min(Game.CONFIG.WORLD_H - 120, center.y + Math.sin(angle) * dist));
         var el = document.createElement('div');
         el.className = 'entity mountain-edelweiss';
         el.style.cssText = 'position:absolute;font-size:2rem;z-index:14;filter:drop-shadow(0 0 6px #fff);';

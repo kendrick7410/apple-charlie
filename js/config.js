@@ -118,18 +118,36 @@ Game.HOUSES = [
 ];
 
 // ── Shops with walk-in interiors ──
-// loc   : key into CONFIG.LOCATIONS for the building position
-// panel : id of the floating action panel shown inside the shop
-// theme : CSS class suffix (.room.theme-<theme>) for floor/wall colors
-// decor : decorative (non-draggable) furniture placed in the room [emoji, x, y]
+// loc     : key into CONFIG.LOCATIONS for the building position
+// panel   : id of the floating action panel shown inside the shop
+// theme   : CSS class suffix (.room.theme-<theme>) for floor/wall colors
+// decor   : decorative (non-draggable) furniture placed in the room [emoji, x, y]
+// npc     : shopkeeper emoji standing behind the counter
+// purpose : short text explaining what you do in this shop
+// nightOnly: if true, only enterable at night (the museum)
 Game.SHOPS = [
     { id: 'bakery', name: 'Boulangerie', sign: '🍞', loc: 'bakery', panel: 'action-bakery', theme: 'bakery',
-      decor: [['🥖',70,110],['🥐',150,90],['🧁',460,120],['🍰',250,70],['🔥',110,430],['🪵',440,440],['🌾',60,300],['🛒',460,300]] },
+      npc: '👩‍🍳', purpose: "Ici tu cuis du pain 🍞 et tu cuisines des plats (tartes, sushis...) à revendre.",
+      decor: [['🥖',70,140],['🥐',150,130],['🧁',460,150],['🍰',250,110],['🔥',110,430],['🪵',440,440],['🌾',60,310],['🛒',460,310]] },
     { id: 'shop', name: 'Magasin', sign: '🏪', loc: 'shop', panel: 'action-shop', theme: 'shop',
-      decor: [['📦',70,110],['🧺',460,110],['🪜',250,70],['🏷️',60,300],['🛒',460,300],['💰',110,440],['🧱',440,440],['🪴',250,440]] },
+      npc: '🧓', purpose: "Achète des outils 🪓, des graines 🌱 et des matériaux 🧱 avec tes clochettes.",
+      decor: [['📦',70,140],['🧺',460,140],['🪜',250,110],['🏷️',60,310],['🛒',460,310],['💰',110,440],['🧱',440,440],['🪴',250,440]] },
     { id: 'fishShop', name: 'Poissonnerie', sign: '🐟', loc: 'fishShop', panel: 'action-fishShop', theme: 'fishShop',
-      decor: [['🐠',70,110],['🦀',460,120],['🐙',250,70],['🦐',150,90],['🧊',110,440],['⚖️',440,440],['🐟',60,300],['🪣',460,300]] }
+      npc: '🧑‍🍳', purpose: "Dépose tes poissons 🐟 : ils se vendent tout seuls, reviens collecter tes clochettes 💰.",
+      decor: [['🐠',70,140],['🦀',460,150],['🐙',250,110],['🦐',150,130],['🧊',110,440],['⚖️',440,440],['🐟',60,310],['🪣',460,310]] },
+    { id: 'museum', name: 'Musée', sign: '🏛️', loc: 'museum', panel: 'action-museum', theme: 'museum', nightOnly: true,
+      npc: '🦉', purpose: "Le hibou t'achète tes ressources 🍎🪵🧱🌻 contre des clochettes. Donne aussi tes spécimens !",
+      decor: [['🖼️',70,140],['🗿',460,140],['🏺',250,110],['🦴',60,310],['💎',460,310],['🕯️',110,440],['📜',440,440],['🔭',250,440]] }
 ];
+
+// Prix d'achat du hibou (clochettes par ressource) — il achète ce que tu récoltes
+Game.OWL_PRICES = {
+    apples:      { emoji: '🍎', label: 'Pommes',   price: 3 },
+    wood:        { emoji: '🪵', label: 'Bois',     price: 4 },
+    stone:       { emoji: '🧱', label: 'Pierre',   price: 4 },
+    flowers:     { emoji: '🌻', label: 'Fleurs',   price: 5 },
+    butterflies: { emoji: '🦋', label: 'Papillons',price: 8 }
+};
 
 Game.VILLAGER_DATA = {
     'Eloise 🐰':  { emoji: '🐰', home: { x: 850,  y: 1200 }, greetings: ["Salut Charlie !", "Tu as des fleurs ?", "J'adore peindre !"],

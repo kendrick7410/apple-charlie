@@ -17,8 +17,8 @@ Game.buildings.checkProximity = function() {
     var fountainPanel = document.getElementById('action-fountain');
     if (fountainPanel) fountainPanel.style.display = Math.hypot(cx - loc.fountain.x, cy - loc.fountain.y) < (120 * proximityMult) ? 'flex' : 'none';
 
-    // Shops (bakery / shop / fishShop): show an "Entrer" prompt instead of the
-    // floating action panel. The actual shop actions live inside the interior.
+    // Shops + Musée : on s'approche → bouton "Entrer". Les actions sont à l'intérieur.
+    // Le musée (nightOnly) ne s'ouvre que la nuit ; le hibou y reste enfermé.
     var nearShop = null;
     Game.SHOPS.forEach(function(shop) {
         var l = loc[shop.loc];
@@ -29,19 +29,16 @@ Game.buildings.checkProximity = function() {
     if (enterPanel && enterBtn) {
         if (nearShop && s.currentView === 'world') {
             enterPanel.style.display = 'flex';
-            enterBtn.textContent = '🚪 Entrer — ' + nearShop.sign + ' ' + nearShop.name;
-            enterBtn.onclick = function() { Game.buildings.enterShop(nearShop.id); };
+            if (nearShop.nightOnly && !Game.time.isNight()) {
+                enterBtn.textContent = '🌙 ' + nearShop.sign + ' ' + nearShop.name + ' — ouvre la nuit';
+                enterBtn.onclick = function() { Game.ui.notify("Le musée du hibou ouvre seulement la nuit ! 🌙🦉"); };
+            } else {
+                enterBtn.textContent = '🚪 Entrer — ' + nearShop.sign + ' ' + nearShop.name;
+                enterBtn.onclick = (function(id){ return function() { Game.buildings.enterShop(id); }; })(nearShop.id);
+            }
         } else {
             enterPanel.style.display = 'none';
         }
-    }
-
-    // Museum
-    var museumPanel = document.getElementById('action-museum');
-    if (museumPanel) {
-        var nearMuseum = Math.hypot(cx - loc.museum.x, cy - loc.museum.y) < (100 * proximityMult);
-        museumPanel.style.display = nearMuseum ? 'flex' : 'none';
-        if (nearMuseum) Game.ui.updateMuseum();
     }
 
     // River fishing - wider zone on mobile
@@ -77,10 +74,14 @@ Game.buildings.enterHouse = function(house) {
     s.interiorCharlie = { x: 280, y: 450 };
 
     var room = document.getElementById('current-room');
-    // Drop any shop theme/sign left over from a previous shop visit
-    room.classList.remove('theme-bakery', 'theme-shop', 'theme-fishShop');
+    // Drop any shop theme/sign/npc left over from a previous shop visit
+    room.classList.remove('theme-bakery', 'theme-shop', 'theme-fishShop', 'theme-museum');
     var leftoverSign = document.getElementById('shop-sign');
     if (leftoverSign) leftoverSign.style.display = 'none';
+    var leftoverPurpose = document.getElementById('shop-purpose');
+    if (leftoverPurpose) leftoverPurpose.style.display = 'none';
+    var leftoverNpc = document.getElementById('shop-npc');
+    if (leftoverNpc) { leftoverNpc.style.display = 'none'; leftoverNpc.onclick = null; }
     // Clear old furniture
     var old = room.querySelectorAll('.furniture');
     for (var i = 0; i < old.length; i++) old[i].remove();
@@ -121,6 +122,11 @@ Game.buildings.enterShop = function(shopId) {
     if (s.currentView === 'interior') return;
     var shop = Game.SHOPS.find(function(sh){ return sh.id === shopId; });
     if (!shop) return;
+    // Le musée ne s'ouvre que la nuit
+    if (shop.nightOnly && !Game.time.isNight()) {
+        Game.ui.notify("Le musée du hibou ouvre seulement la nuit ! 🌙🦉");
+        return;
+    }
 
     s.currentView = 'interior';
     s.activeShop = shop;
@@ -130,7 +136,7 @@ Game.buildings.enterShop = function(shopId) {
     var room = document.getElementById('current-room');
 
     // Apply shop theme (floor / wall colors)
-    room.classList.remove('theme-bakery', 'theme-shop', 'theme-fishShop');
+    room.classList.remove('theme-bakery', 'theme-shop', 'theme-fishShop', 'theme-museum');
     room.classList.add('theme-' + shop.theme);
 
     // Shop sign banner
@@ -143,6 +149,16 @@ Game.buildings.enterShop = function(shopId) {
     sign.textContent = shop.sign + ' ' + shop.name;
     sign.style.display = 'block';
 
+    // Purpose banner — explains clearly what you do in this shop
+    var purpose = document.getElementById('shop-purpose');
+    if (!purpose) {
+        purpose = document.createElement('div');
+        purpose.id = 'shop-purpose';
+        room.appendChild(purpose);
+    }
+    purpose.textContent = shop.purpose || '';
+    purpose.style.display = shop.purpose ? 'block' : 'none';
+
     // Clear any furniture / decor then place this shop's decor (non-draggable)
     var old = room.querySelectorAll('.furniture');
     for (var i = 0; i < old.length; i++) old[i].remove();
@@ -154,6 +170,25 @@ Game.buildings.enterShop = function(shopId) {
         div.style.top = f[2] + 'px';
         room.appendChild(div);
     });
+
+    // Shopkeeper NPC behind the counter (clickable for the museum owl's quests)
+    var npc = document.getElementById('shop-npc');
+    if (!npc) {
+        npc = document.createElement('div');
+        npc.id = 'shop-npc';
+        room.appendChild(npc);
+    }
+    if (shop.npc) {
+        npc.textContent = shop.npc;
+        npc.style.display = 'block';
+        npc.onclick = (shop.id === 'museum')
+            ? function(e){ e.stopPropagation(); Game.buildings.talkToOwl(); }
+            : null;
+        npc.style.cursor = (shop.id === 'museum') ? 'pointer' : 'default';
+    } else {
+        npc.style.display = 'none';
+        npc.onclick = null;
+    }
 
     // Hide the furniture-crafting bar (houses only)
     var craftBar = document.getElementById('interior-craft-bar');
@@ -177,6 +212,10 @@ Game.buildings.enterShop = function(shopId) {
         if (cookPanel) cookPanel.style.display = 'block';
         if (Game.ui.updateCooking) Game.ui.updateCooking();
     }
+    if (shop.id === 'museum') {
+        Game.ui.updateMuseum();
+        if (Game.ui.updateOwlShop) Game.ui.updateOwlShop();
+    }
     Game.ui.update();
 
     document.getElementById('action-enter').style.display = 'none';
@@ -187,7 +226,17 @@ Game.buildings.enterShop = function(shopId) {
         ic.style.top = s.interiorCharlie.y + 'px';
     }
 
-    Game.ui.notify("Bienvenue à la " + shop.name + " " + shop.sign);
+    Game.ui.notify("Bienvenue : " + shop.sign + " " + shop.name);
+};
+
+// Le hibou du musée : termine ses quêtes ou raconte un dialogue (il ne sort jamais)
+Game.buildings.talkToOwl = function() {
+    var name = 'Pedro 🦉';
+    if (Game.quests.canComplete(name)) {
+        Game.quests.complete(name);
+    } else {
+        Game.villagers.showDialogue(name, null);
+    }
 };
 
 Game.buildings.exitHouse = function() {
@@ -198,9 +247,13 @@ Game.buildings.exitHouse = function() {
     // Clean up shop interior if we were in one
     if (s.activeShop) {
         var room = document.getElementById('current-room');
-        room.classList.remove('theme-bakery', 'theme-shop', 'theme-fishShop');
+        room.classList.remove('theme-bakery', 'theme-shop', 'theme-fishShop', 'theme-museum');
         var sign = document.getElementById('shop-sign');
         if (sign) sign.style.display = 'none';
+        var purpose = document.getElementById('shop-purpose');
+        if (purpose) purpose.style.display = 'none';
+        var npc = document.getElementById('shop-npc');
+        if (npc) { npc.style.display = 'none'; npc.onclick = null; }
         var decor = room.querySelectorAll('.shop-decor');
         for (var i = 0; i < decor.length; i++) decor[i].remove();
         var panel = document.getElementById(s.activeShop.panel);

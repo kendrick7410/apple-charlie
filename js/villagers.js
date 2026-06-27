@@ -15,6 +15,9 @@ Game.villagers.init = function() {
     Game.state.villagers = [];
 
     for (var name in Game.VILLAGER_DATA) {
+        // Le hibou Pedro ne sort jamais de son musée : pas de sprite qui se balade.
+        // On le rencontre uniquement à l'intérieur du musée (la nuit).
+        if (name === 'Pedro 🦉') continue;
         var data = Game.VILLAGER_DATA[name];
         var v = document.createElement('div');
         v.className = 'entity villager-sprite';

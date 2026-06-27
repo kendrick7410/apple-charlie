@@ -78,6 +78,10 @@ Game.ui.update = function() {
     if (Game.state.activeShop && Game.state.activeShop.id === 'bakery') {
         Game.ui.updateCooking();
     }
+    // Refresh the owl's buy prices while inside the museum
+    if (Game.state.activeShop && Game.state.activeShop.id === 'museum') {
+        Game.ui.updateOwlShop();
+    }
 };
 
 Game.ui.updateXP = function() {
@@ -142,6 +146,21 @@ Game.ui.updateShop = function() {
                 '🧱 Matériaux (' + item.price + '💰)</button>';
         }
     });
+    panel.innerHTML = html;
+};
+
+Game.ui.updateOwlShop = function() {
+    var panel = document.getElementById('owl-shop-items');
+    if (!panel) return;
+    var s = Game.state;
+    var html = '';
+    for (var type in Game.OWL_PRICES) {
+        var info = Game.OWL_PRICES[type];
+        var have = s.inventory[type] || 0;
+        var total = have * info.price;
+        html += '<button class="shop-btn' + (have <= 0 ? ' owned' : '') + '" onclick="Game.inventory.sellToOwl(\'' + type + '\')">' +
+            info.emoji + ' Vendre ' + info.label + ' (' + have + ') → ' + total + '💰</button>';
+    }
     panel.innerHTML = html;
 };
 

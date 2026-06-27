@@ -117,6 +117,42 @@ html, body {
 .room.theme-bakery   { --floor: #f3d9a8; background-color: #f3d9a8; border-color: #bf8c3e; }
 .room.theme-shop     { --floor: #cfe8d8; background-color: #cfe8d8; border-color: #3e9e6a; }
 .room.theme-fishShop { --floor: #bfe3f0; background-color: #bfe3f0; border-color: #2a8bbf; }
+.room.theme-museum   { --floor: #2b2545; background-color: #2b2545; border-color: #5a4b8a; }
+.room.theme-museum #shop-purpose { background: rgba(255,255,255,0.12); color: #f0eaff; }
+
+#shop-purpose {
+    position: absolute;
+    top: 38px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 480px;
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    padding: 5px 14px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    text-align: center;
+    z-index: 119;
+    pointer-events: none;
+    display: none;
+}
+
+#shop-npc {
+    position: absolute;
+    top: 95px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3.4rem;
+    z-index: 110;
+    filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));
+    display: none;
+}
+
+.mountain-edelweiss { animation: edelweiss-bob 1.4s ease-in-out infinite; }
+@keyframes edelweiss-bob {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%      { transform: translateY(-8px) scale(1.12); }
+}
 
 #shop-sign {
     position: absolute;

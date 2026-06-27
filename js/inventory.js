@@ -197,6 +197,28 @@ Game.inventory.donateToMuseum = function(type, speciesId) {
     Game.ui.notify(sp.name + " donné au musée ! +" + reward + "💰");
 };
 
+// Le hibou achète une ressource : vend TOUT le stock de ce type contre des clochettes
+Game.inventory.sellToOwl = function(type) {
+    var s = Game.state;
+    var info = Game.OWL_PRICES[type];
+    if (!info) return;
+    var n = s.inventory[type] || 0;
+    if (n <= 0) {
+        Game.ui.notify("Tu n'as pas de " + info.label.toLowerCase() + " à vendre ! " + info.emoji);
+        Game.audio.play('error');
+        return;
+    }
+    var gain = n * info.price;
+    s.inventory[type] = 0;
+    s.inventory.money += gain;
+    Game.xp.add(Math.max(1, Math.floor(gain / 10)));
+    Game.audio.playCoin();
+    Game.particles.spawn('💰', window.innerWidth / 2, window.innerHeight / 2, { count: 5, spread: 60, vy: -80 });
+    Game.ui.update();
+    if (Game.ui.updateOwlShop) Game.ui.updateOwlShop();
+    Game.ui.notify("Le hibou t'achète " + n + " " + info.label.toLowerCase() + " pour +" + gain + "💰 🦉");
+};
+
 Game.inventory.collectVillageRevenue = function() {
     var s = Game.state;
     if (s.villageRevenue <= 0) {

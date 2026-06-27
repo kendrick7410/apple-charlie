@@ -83,9 +83,9 @@ Game.creatures.update = function(dt) {
                     } else {
                         c.el.style.filter = '';
                     }
-                    // Bigger + slower butterflies = much easier to tap and catch
-                    c.el.style.fontSize = '1.9rem';
-                    c.speedMul = 0.5;
+                    // Bigger + STATIONARY butterflies = very easy to tap and catch
+                    c.el.style.fontSize = '2rem';
+                    c.speedMul = 0;   // les papillons restent fixes (ne s'envolent plus)
                     c.el.style.pointerEvents = 'auto';
                     c.el.style.cursor = 'pointer';
                     c.el.onclick = (function(creature) { return function(e) {
@@ -114,7 +114,7 @@ Game.creatures.update = function(dt) {
             c.vy = (Math.random() - 0.5) * 2;
         }
 
-        var sm = c.speedMul || 1;
+        var sm = (c.speedMul == null) ? 1 : c.speedMul;  // 0 = fixe (papillons)
         c.x += c.vx * sm;
         c.y += c.vy * sm;
 
@@ -251,7 +251,7 @@ function getCreatureType(season, isNight) {
     if (isNight) {
         // Night creatures: fireflies, hedgehogs, and owls
         var r = Math.random();
-        if (r > 0.7) return '🦉'; // Owls
+        if (r > 0.7) return '🦇'; // Chauves-souris (le seul hibou est Pedro, au musée)
         if (r > 0.3) return '✨'; // Fireflies
         return '🦔'; // Hedgehogs
     }
