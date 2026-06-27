@@ -92,8 +92,8 @@ Game.engine.initJoystick = function() {
             if (Game.state.currentView === 'world') {
                 // Direct position update for joystick - smoother movement
                 var hungerMul = Game.state.hunger <= 0 ? 0.55 : 1;  // affamé = plus lent
-                Game.state.charlie.x += dir.dx * (Game.CONFIG.TILE * 0.5) * hungerMul;
-                Game.state.charlie.y += dir.dy * (Game.CONFIG.TILE * 0.5) * hungerMul;
+                Game.state.charlie.x += dir.dx * (Game.CONFIG.TILE * 0.72) * hungerMul;
+                Game.state.charlie.y += dir.dy * (Game.CONFIG.TILE * 0.72) * hungerMul;
 
                 // IMPORTANT: Check for collectibles and building proximity after moving
                 Game.buildings.checkProximity();

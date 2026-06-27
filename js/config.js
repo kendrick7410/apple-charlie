@@ -8,8 +8,8 @@ Game.CONFIG = {
     WORLD_W: 6000,
     WORLD_H: 6000,
     TILE: 60,
-    LERP_SPEED: 0.18,
-    PLAYER_SPEED: 4,
+    LERP_SPEED: 0.22,
+    PLAYER_SPEED: 6,
 
     // Time
     REAL_MS_PER_GAME_HOUR: 60000,   // 1 min réelle = 1h jeu
