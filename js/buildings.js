@@ -17,13 +17,26 @@ Game.buildings.checkProximity = function() {
     var fountainPanel = document.getElementById('action-fountain');
     if (fountainPanel) fountainPanel.style.display = Math.hypot(cx - loc.fountain.x, cy - loc.fountain.y) < (120 * proximityMult) ? 'flex' : 'none';
 
-    // Shops + Musée : on s'approche → bouton "Entrer". Les actions sont à l'intérieur.
+    // Boutiques, Musée ET maisons : on s'approche → bouton "Entrer" en bas à droite.
     // Le musée (nightOnly) ne s'ouvre que la nuit ; le hibou y reste enfermé.
     var nearShop = null;
     Game.SHOPS.forEach(function(shop) {
         var l = loc[shop.loc];
         if (Math.hypot(cx - l.x, cy - l.y) < (100 * proximityMult)) nearShop = shop;
     });
+
+    // Maisons des villageois + maison de Charlie : même bouton "Entrer" que les boutiques
+    var nearHouse = null;
+    if (!nearShop) {
+        if (Math.hypot(cx - loc.charlieHouse.x, cy - loc.charlieHouse.y) < (100 * proximityMult)) {
+            nearHouse = Game.HOUSES.find(function(h){ return h.id === 'charlie'; });
+        } else {
+            Game.HOUSES.forEach(function(h) {
+                if (h.id !== 'charlie' && Math.hypot(cx - h.x, cy - (h.y + 50)) < (80 * proximityMult)) nearHouse = h;
+            });
+        }
+    }
+
     var enterPanel = document.getElementById('action-enter');
     var enterBtn = document.getElementById('enter-shop-btn');
     if (enterPanel && enterBtn) {
@@ -36,6 +49,23 @@ Game.buildings.checkProximity = function() {
                 enterBtn.textContent = '🚪 Entrer — ' + nearShop.sign + ' ' + nearShop.name;
                 enterBtn.onclick = (function(id){ return function() { Game.buildings.enterShop(id); }; })(nearShop.id);
             }
+        } else if (nearHouse && s.currentView === 'world') {
+            enterPanel.style.display = 'flex';
+            var isCharlie = nearHouse.id === 'charlie';
+            if (isCharlie && s.houseLevel < 4) {
+                // Maison en construction : on la bâtit avec des matériaux
+                if (s.inventory.materials > 0) {
+                    enterBtn.textContent = '🔨 Construire ma maison';
+                    enterBtn.onclick = function() { Game.buildings.buildHouse(); };
+                } else {
+                    enterBtn.textContent = '🔨 Ma maison — il faut des matériaux 🧱';
+                    enterBtn.onclick = function() { Game.ui.notify("Il te faut des matériaux pour construire ta maison ! 🧱"); };
+                }
+            } else {
+                var houseLabel = isCharlie ? '🏡 Ma maison' : ('🏠 Chez ' + nearHouse.name.split(' ')[0]);
+                enterBtn.textContent = '🚪 Entrer — ' + houseLabel;
+                enterBtn.onclick = (function(house){ return function() { Game.buildings.enterHouse(house); }; })(nearHouse);
+            }
         } else {
             enterPanel.style.display = 'none';
         }
@@ -44,25 +74,8 @@ Game.buildings.checkProximity = function() {
     // River fishing - wider zone on mobile
     var riverMargin = isMobile ? 100 : 0;
     var isNearRiver = cx > (450 - riverMargin) && cx < (750 + riverMargin);
-    var isNearBridge = (cy > 930 && cy < 1050) || (cy > 1780 && cy < 1900);
     var riverPanel = document.getElementById('action-river');
-    if (riverPanel) riverPanel.style.display = (isNearRiver && !isNearBridge && s.season !== 'winter') ? 'flex' : 'none';
-
-    // Charlie's house
-    if (Math.hypot(cx - loc.charlieHouse.x, cy - loc.charlieHouse.y) < (100 * proximityMult)) {
-        if (s.houseLevel < 4) {
-            if (s.inventory.materials > 0) Game.buildings.buildHouse();
-        } else {
-            Game.buildings.enterHouse(Game.HOUSES.find(function(h){ return h.id === 'charlie'; }));
-        }
-    }
-
-    // NPC houses
-    Game.HOUSES.forEach(function(h) {
-        if (h.id !== 'charlie' && Math.hypot(cx - h.x, cy - (h.y + 50)) < (60 * proximityMult)) {
-            Game.buildings.enterHouse(h);
-        }
-    });
+    if (riverPanel) riverPanel.style.display = (isNearRiver && s.season !== 'winter') ? 'flex' : 'none';
 };
 
 Game.buildings.enterHouse = function(house) {
@@ -72,6 +85,9 @@ Game.buildings.enterHouse = function(house) {
     s.activeHouse = house;
     s.activeShop = null;
     s.interiorCharlie = { x: 280, y: 450 };
+
+    var enterPanel = document.getElementById('action-enter');
+    if (enterPanel) enterPanel.style.display = 'none';
 
     var room = document.getElementById('current-room');
     // Drop any shop theme/sign/npc left over from a previous shop visit

@@ -177,6 +177,11 @@ Game.inventory.buyPizza = function(id) {
         Game.audio.play('error');
         return;
     }
+    // On mange la pizza directement, comme les autres aliments : inutile si déjà rassasié
+    if (s.hunger >= Game.CONFIG.HUNGER_MAX) {
+        Game.ui.notify("Tu es déjà rassasié ! 😋");
+        return;
+    }
     s.inventory.money -= pz.price;
     var isNew = !s.pizzasTasted[pz.id];
     s.pizzasTasted[pz.id] = (s.pizzasTasted[pz.id] || 0) + 1;

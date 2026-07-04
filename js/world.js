@@ -10,12 +10,6 @@ Game.world.init = function() {
     // River (bras ouest + division vers le milieu de la carte jusqu'à la mer)
     Game.world.createRiver();
 
-    // Prairie fleurie de l'autre côté de la rivière (là où mène le pont)
-    Game.world.createMeadow();
-
-    // Pont : relie le village à la prairie fleurie en traversant la rivière
-    Game.world.createBridge(400, 950, 210, 90);
-
     // Paths (réseau centralisé, cf. Game.PATHS)
     Game.PATHS.forEach(function(p) {
         Game.world.createPath(p.x, p.y, p.w, p.h);
@@ -109,35 +103,6 @@ Game.world.createRiver = function() {
         seg.style.height = s.h + 'px';
         world.appendChild(seg);
     });
-};
-
-// Petite prairie fleurie de l'autre côté de la rivière (destination du pont)
-Game.world.createMeadow = function() {
-    var world = document.getElementById('game-world');
-    var m = document.createElement('div');
-    m.className = 'entity';
-    m.style.left = '150px';
-    m.style.top = '900px';
-    m.style.fontSize = '2.4rem';
-    m.style.textAlign = 'center';
-    m.style.lineHeight = '1.1';
-    m.innerHTML =
-        '<div>🧺</div>' +
-        '<div style="font-size:1.8rem;">🌷🌼🌻<br>🌸🌷🌺</div>' +
-        '<div class="building-label">🌷 Prairie fleurie</div>';
-    world.appendChild(m);
-};
-
-Game.world.createBridge = function(x, y, w, h) {
-    var b = document.createElement('div');
-    b.className = 'bridge';
-    b.style.left = x + 'px';
-    b.style.top = y + 'px';
-    b.style.width = w + 'px';
-    b.style.height = h + 'px';
-    // Plank lines (opaque, no transparent gaps)
-    b.style.backgroundImage = "repeating-linear-gradient(90deg, #a67c52, #a67c52 18px, #8b6544 18px, #8b6544 20px)";
-    document.getElementById('game-world').appendChild(b);
 };
 
 Game.world.createPath = function(x, y, w, h) {

@@ -97,12 +97,10 @@ Game.HOUSE_STAGES = ["🏗️", "🧱", "🏠", "🏘️", "🏡"];
 Game.PATHS = [
     { x: 700,  y: 700,  w: 600,  h: 600 },   // place centrale du village
     { x: 700,  y: 970,  w: 2680, h: 60  },   // grande route Est-Ouest : village → Refuge du Cervin
-    { x: 970,  y: 400,  w: 60,   h: 1180 },  // route Nord-Sud (celle "qui monte")
-    { x: 970,  y: 420,  w: 930,  h: 50  },   // branche vers la forêt (nord)
+    { x: 970,  y: 970,  w: 60,   h: 610 },   // route Nord-Sud : place → musée
     { x: 1010, y: 1530, w: 340,  h: 50  },   // branche vers le musée (sud)
     { x: 1400, y: 1260, w: 250,  h: 40  },   // vers le jardin
-    { x: 1550, y: 1300, w: 40,   h: 100 },
-    { x: 180,  y: 985,  w: 590,  h: 45  }    // vers la prairie fleurie (traverse le pont)
+    { x: 1550, y: 1300, w: 40,   h: 100 }
 ];
 
 // ── Rivière : bras ouest qui se divise, part au milieu de la carte et rejoint la mer ──
