@@ -42,7 +42,7 @@ Game.world.init = function() {
     });
 
     // Charlie's house
-    var houseEmoji = Game.HOUSE_STAGES[Game.state.houseLevel];
+    var houseEmoji = Game.HOUSE_STAGES[Math.min(Game.state.houseLevel, Game.HOUSE_STAGES.length - 1)];
     var site = document.createElement('div');
     site.id = 'house-site';
     site.className = 'entity house-exterior';
@@ -547,8 +547,10 @@ Game.world.createPort = function() {
 
 Game.world.updateHouseSite = function() {
     var s = Game.state;
-    var hLabel = s.houseLevel < 4 ? 'Maison de Charlie' : 'Chez Charlie';
-    var hEmoji = Game.HOUSE_STAGES[s.houseLevel];
+    var maxLvl = Game.HOUSE_STAGES.length - 1;
+    var lvl = Math.min(s.houseLevel, maxLvl);
+    var hLabel = lvl < maxLvl ? 'Maison de Charlie' : 'Chez Charlie';
+    var hEmoji = Game.HOUSE_STAGES[lvl];
     var site = document.getElementById('house-site');
     if (site) {
         site.innerHTML = hEmoji + '<div class="building-label">' + hLabel + '</div>';

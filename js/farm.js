@@ -28,15 +28,42 @@ Game.farm.init = function() {
     F.pens = penDefs();
     F.active = false; F.escaped = []; F.remaining = 0;
 
-    // Grange + panneau du nom
+    // Grange rouge (décor) + panneau du nom
     var barn = document.createElement('div');
-    barn.className = 'entity';
-    barn.style.left = L.x + 'px';
-    barn.style.top = (L.y - 170) + 'px';
-    barn.style.fontSize = '5rem';
-    barn.style.zIndex = 8;
-    barn.innerHTML = '<div>🛖</div><div class="building-label">🚜 La Ferme</div>';
+    barn.style.cssText = 'position:absolute;left:' + (L.x - 80) + 'px;top:' + (L.y - 240) + 'px;width:160px;z-index:8;';
+    barn.innerHTML =
+        // Toit
+        '<div style="width:0;height:0;margin:0 auto;border-left:80px solid transparent;border-right:80px solid transparent;border-bottom:52px solid #7b2d2d;"></div>' +
+        // Corps de la grange
+        '<div style="width:160px;height:92px;box-sizing:border-box;background:linear-gradient(#c0392b,#9c2418);border:5px solid #f5f0e6;border-top:none;border-radius:0 0 6px 6px;position:relative;box-shadow:0 5px 8px rgba(0,0,0,0.2);">' +
+            // Porte + croix blanche
+            '<div style="position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:56px;height:66px;background:#8a4b2a;border:4px solid #f5f0e6;border-bottom:none;border-radius:5px 5px 0 0;"></div>' +
+            '<div style="position:absolute;left:50%;bottom:30px;transform:translate(-50%,50%) rotate(45deg);width:56px;height:4px;background:#f5f0e6;"></div>' +
+            '<div style="position:absolute;left:50%;bottom:30px;transform:translate(-50%,50%) rotate(-45deg);width:56px;height:4px;background:#f5f0e6;"></div>' +
+        '</div>' +
+        '<div class="building-label" style="position:absolute;left:50%;top:158px;transform:translateX(-50%);">🚜 La Ferme</div>';
     world.appendChild(barn);
+
+    // Tracteur (décor)
+    var tractor = document.createElement('div');
+    tractor.style.cssText = 'position:absolute;left:' + (L.x - 185) + 'px;top:' + (L.y - 150) +
+        'px;font-size:3.2rem;z-index:8;filter:drop-shadow(0 3px 2px rgba(0,0,0,0.25));';
+    tractor.textContent = '🚜';
+    world.appendChild(tractor);
+
+    // Bottes de foin (décor)
+    function hayBale(x, y, size) {
+        var h = document.createElement('div');
+        h.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + size +
+            'px;height:' + Math.round(size * 0.82) + 'px;border-radius:50%;' +
+            'background:repeating-linear-gradient(95deg,#e6bd52,#e6bd52 6px,#cb9f37 6px,#cb9f37 11px);' +
+            'border:3px solid #b3862a;box-shadow:0 3px 4px rgba(0,0,0,0.2);z-index:7;';
+        world.appendChild(h);
+    }
+    hayBale(L.x + 120, L.y - 150, 60);
+    hayBale(L.x + 170, L.y - 118, 54);
+    hayBale(L.x + 138, L.y - 100, 48);
+    hayBale(L.x - 250, L.y + 30, 56);
 
     // Enclos (clôtures) avec animaux
     F.pens.forEach(function(pen) {

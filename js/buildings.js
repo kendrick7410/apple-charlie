@@ -356,6 +356,15 @@ Game.buildings.makeDraggable = function(el, houseId, fIdx) {
 
 Game.buildings.buildHouse = function() {
     var s = Game.state;
+    var MAX = Game.HOUSE_STAGES.length - 1;   // dernier niveau = maison terminée
+    if (s.houseLevel >= MAX) {                 // déjà finie : on n'ajoute rien
+        Game.ui.notify("🏡 Ta maison est déjà construite !");
+        return;
+    }
+    if (s.inventory.materials <= 0) {
+        Game.ui.notify("Il te faut des matériaux 🧱");
+        return;
+    }
     s.inventory.materials--;
     s.houseLevel++;
     Game.xp.add(15);
@@ -363,7 +372,13 @@ Game.buildings.buildHouse = function() {
     Game.audio.play('craft');
     Game.particles.spawnWorld('🔨', Game.CONFIG.LOCATIONS.charlieHouse.x, Game.CONFIG.LOCATIONS.charlieHouse.y, { count: 3, spread: 30 });
     Game.ui.update();
-    Game.ui.notify("🔨 Construction niveau " + s.houseLevel + " !");
+    if (s.houseLevel >= MAX) {
+        Game.ui.notify("🎉 Bravo ! Ta maison est enfin terminée ! 🏡");
+    } else {
+        Game.ui.notify("🔨 Construction niveau " + s.houseLevel + "/" + MAX + " !");
+    }
+    // Rafraîchit tout de suite le bouton (Construire → Entrer) sans attendre un déplacement
+    Game.buildings.checkProximity();
 };
 
 })();
