@@ -364,12 +364,20 @@ Game.ui.updateCooking = function() {
     if (!panel) return;
     var s = Game.state;
 
+    // Noms des ingrédients en français (les clés internes sont en anglais), au singulier
+    var ING_FR = { apples: 'pomme', fish: 'poisson', flowers: 'fleur', bread: 'pain', wood: 'bois', stone: 'pierre' };
+
     var html = '';
     for (var key in Game.COOKING_RECIPES) {
         var r = Game.COOKING_RECIPES[key];
-        // Build the ingredient list label
+        // Build the ingredient list label (accord singulier/pluriel)
         var needTxt = [];
-        for (var ing in r.need) needTxt.push(r.need[ing] + ' ' + ing);
+        for (var ing in r.need) {
+            var n = r.need[ing];
+            var word = ING_FR[ing] || ing;
+            if (n > 1 && word !== 'bois') word += 's';   // "bois" invariable
+            needTxt.push(n + ' ' + word);
+        }
         var locked = s.level < r.level;
         html += '<button class="shop-btn' + (locked ? ' owned' : '') + '" onclick="Game.crafting.cook(\'' + key + '\')" title="' + needTxt.join(', ') + '">' +
             r.emoji + ' ' + r.label + (locked ? ' 🔒 Niv.' + r.level : ' (' + needTxt.join(', ') + ')') + '</button>';
