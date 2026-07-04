@@ -33,19 +33,17 @@ Game.minimap.update = function() {
     ctxM.fillStyle = '#2f9fd0';
     ctxM.fillRect(0, Game.CONFIG.SEA_TOP * SCALE, W, (Game.CONFIG.WORLD_H - Game.CONFIG.SEA_TOP) * SCALE);
 
-    // River
+    // River (bras ouest + bras central, géométrie partagée)
     ctxM.fillStyle = '#5ba3ff';
-    var baseX = Game.CONFIG.LOCATIONS.riverBaseX;
-    for (var y = 0; y < Game.CONFIG.WORLD_H; y += 80) {
-        var rx = (baseX + Math.sin(y / 250) * 80) * SCALE;
-        ctxM.fillRect(rx, y * SCALE, 150 * SCALE, 100 * SCALE);
-    }
+    Game.buildRiverSegments().forEach(function(seg) {
+        ctxM.fillRect(seg.x * SCALE, seg.y * SCALE, seg.w * SCALE, seg.h * SCALE);
+    });
 
-    // Paths
+    // Paths (réseau partagé)
     ctxM.fillStyle = '#f3e5ab';
-    ctxM.fillRect(700 * SCALE, 700 * SCALE, 600 * SCALE, 600 * SCALE);
-    ctxM.fillRect(400 * SCALE, 970 * SCALE, 1800 * SCALE, 60 * SCALE);
-    ctxM.fillRect(970 * SCALE, 400 * SCALE, 60 * SCALE, 2000 * SCALE);
+    Game.PATHS.forEach(function(p) {
+        ctxM.fillRect(p.x * SCALE, p.y * SCALE, p.w * SCALE, p.h * SCALE);
+    });
 
     // Buildings
     ctxM.fillStyle = '#d4a574';

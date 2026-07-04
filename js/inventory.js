@@ -180,13 +180,18 @@ Game.inventory.buyPizza = function(id) {
     s.inventory.money -= pz.price;
     var isNew = !s.pizzasTasted[pz.id];
     s.pizzasTasted[pz.id] = (s.pizzasTasted[pz.id] || 0) + 1;
+    // On mange la pizza : elle remplit aussi la barre de faim
+    var before = s.hunger;
+    s.hunger = Math.min(Game.CONFIG.HUNGER_MAX, s.hunger + (pz.hunger || 0));
+    var gained = Math.round(s.hunger - before);
     Game.xp.add(pz.xp);
     Game.audio.playCoin();
     Game.particles.spawn('🍕', window.innerWidth / 2, window.innerHeight / 2, { count: 5, spread: 60, vy: -70 });
     Game.ui.update();
     if (Game.ui.updatePizzeria) Game.ui.updatePizzeria();
     if (Game.ui.updateCollections) Game.ui.updateCollections();
-    Game.ui.notify((isNew ? "NOUVEAU ! " : "") + "Miam, " + pz.name + " ! " + pz.emoji + " +" + pz.xp + "XP");
+    Game.ui.notify((isNew ? "NOUVEAU ! " : "") + "Miam, " + pz.name + " ! " + pz.emoji +
+        " +" + pz.xp + "XP" + (gained > 0 ? " +" + gained + " faim" : ""));
 };
 
 Game.inventory.startFishing = function() {

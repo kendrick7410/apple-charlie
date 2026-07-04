@@ -176,7 +176,7 @@ Game.ui.updatePizzeria = function() {
     Game.PIZZAS.forEach(function(pz) {
         var tasted = s.pizzasTasted[pz.id];
         html += '<button class="shop-btn" onclick="Game.inventory.buyPizza(\'' + pz.id + '\')">' +
-            pz.emoji + ' ' + pz.name + ' (' + pz.price + '💰)' + (tasted ? ' ✅' : '') + '</button>';
+            pz.emoji + ' ' + pz.name + ' (' + pz.price + '💰, +' + pz.hunger + ' faim)' + (tasted ? ' ✅' : '') + '</button>';
     });
     panel.innerHTML = html;
 };

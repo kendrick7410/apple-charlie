@@ -92,6 +92,51 @@ Game.CONFIG = {
 
 Game.HOUSE_STAGES = ["🏗️", "🧱", "🏠", "🏘️", "🏡"];
 
+// ── Réseau de chemins (partagé entre la carte et la minimap) ──
+// Chaque chemin relie de vrais lieux : aucun ne se termine dans le vide.
+Game.PATHS = [
+    { x: 700,  y: 700,  w: 600,  h: 600 },   // place centrale du village
+    { x: 700,  y: 970,  w: 2680, h: 60  },   // grande route Est-Ouest : village → Refuge du Cervin
+    { x: 970,  y: 400,  w: 60,   h: 1180 },  // route Nord-Sud (celle "qui monte")
+    { x: 970,  y: 420,  w: 930,  h: 50  },   // branche vers la forêt (nord)
+    { x: 1010, y: 1530, w: 340,  h: 50  },   // branche vers le musée (sud)
+    { x: 1400, y: 1260, w: 250,  h: 40  },   // vers le jardin
+    { x: 1550, y: 1300, w: 40,   h: 100 },
+    { x: 180,  y: 985,  w: 590,  h: 45  }    // vers la prairie fleurie (traverse le pont)
+];
+
+// ── Rivière : bras ouest qui se divise, part au milieu de la carte et rejoint la mer ──
+// Renvoie la liste des segments {x,y,w,h}. Utilisé par la carte ET la minimap.
+Game.buildRiverSegments = function() {
+    var segs = [];
+    var baseX = Game.CONFIG.LOCATIONS.riverBaseX;   // 550
+    var seaY  = Game.CONFIG.SEA_TOP + 120;           // on plonge un peu dans la mer
+
+    // Bras ouest : longe le village et descend jusqu'à la mer
+    for (var y = 0; y < seaY; y += 80) {
+        segs.push({ x: baseX + Math.sin(y / 250) * 80, y: y, w: 150, h: 100 });
+    }
+
+    // Point de division (au sud du village, en terrain dégagé)
+    var splitY = 2500;
+    var splitX = baseX + Math.sin(splitY / 250) * 80;
+
+    // Bras central : diagonale vers le milieu de la carte
+    var midX = 2850, midY = 3300;
+    var steps = 28;
+    for (var i = 1; i <= steps; i++) {
+        var t = i / steps;
+        segs.push({ x: splitX + (midX - splitX) * t, y: splitY + (midY - splitY) * t, w: 150, h: 110 });
+    }
+
+    // Bras central : descend au milieu jusqu'à la mer
+    for (var y2 = midY; y2 < seaY; y2 += 80) {
+        segs.push({ x: midX + Math.sin(y2 / 260) * 70, y: y2, w: 150, h: 100 });
+    }
+
+    return segs;
+};
+
 Game.FLOWER_TYPES = ["🌸", "🌻", "🌷", "🌹", "💐", "🪻"];
 
 Game.SEASONS = ["spring", "summer", "autumn", "winter"];
@@ -180,14 +225,14 @@ Game.FOODS = [
 
 // Les pizzas de David (à acheter et goûter toutes → collection)
 Game.PIZZAS = [
-    { id: 'margherita',   name: 'Margherita',        emoji: '🍕', price: 15, xp: 10 },
-    { id: 'reine',        name: 'La Reine',          emoji: '🍕', price: 20, xp: 14 },
-    { id: 'fromages',     name: '4 Fromages',        emoji: '🧀', price: 25, xp: 18 },
-    { id: 'pepperoni',    name: 'Pepperoni',         emoji: '🍕', price: 25, xp: 18 },
-    { id: 'hawaii',       name: 'Hawaïenne',         emoji: '🍍', price: 28, xp: 20 },
-    { id: 'vegetarienne', name: 'Végétarienne',      emoji: '🥦', price: 22, xp: 16 },
-    { id: 'calzone',      name: 'Calzone',           emoji: '🥟', price: 30, xp: 22 },
-    { id: 'david',        name: 'La Spéciale David', emoji: '🦏', price: 50, xp: 45 }
+    { id: 'margherita',   name: 'Margherita',        emoji: '🍕', price: 15, xp: 10, hunger: 25 },
+    { id: 'reine',        name: 'La Reine',          emoji: '🍕', price: 20, xp: 14, hunger: 28 },
+    { id: 'fromages',     name: '4 Fromages',        emoji: '🧀', price: 25, xp: 18, hunger: 32 },
+    { id: 'pepperoni',    name: 'Pepperoni',         emoji: '🍕', price: 25, xp: 18, hunger: 32 },
+    { id: 'hawaii',       name: 'Hawaïenne',         emoji: '🍍', price: 28, xp: 20, hunger: 30 },
+    { id: 'vegetarienne', name: 'Végétarienne',      emoji: '🥦', price: 22, xp: 16, hunger: 28 },
+    { id: 'calzone',      name: 'Calzone',           emoji: '🥟', price: 30, xp: 22, hunger: 35 },
+    { id: 'david',        name: 'La Spéciale David', emoji: '🦏', price: 50, xp: 45, hunger: 45 }
 ];
 
 // Animaux de la mer (à collectionner sur la plage, en marchant dessus)

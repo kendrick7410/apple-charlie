@@ -7,20 +7,19 @@ Game.world = {};
 Game.world.init = function() {
     var world = document.getElementById('game-world');
 
-    // River
-    Game.world.createRiver(Game.CONFIG.LOCATIONS.riverBaseX, 0, Game.CONFIG.WORLD_H);
+    // River (bras ouest + division vers le milieu de la carte jusqu'à la mer)
+    Game.world.createRiver();
 
-    // Bridges (wider, better positioned to span river)
-    Game.world.createBridge(Game.CONFIG.LOCATIONS.riverBaseX - 40, 940, 260, 90);
-    Game.world.createBridge(Game.CONFIG.LOCATIONS.riverBaseX - 40, 1790, 260, 90);
+    // Prairie fleurie de l'autre côté de la rivière (là où mène le pont)
+    Game.world.createMeadow();
 
-    // Paths
-    Game.world.createPath(700, 700, 600, 600);
-    Game.world.createPath(400, 970, 1800, 60);
-    Game.world.createPath(970, 400, 60, 2000);
-    // Path to garden
-    Game.world.createPath(1400, 1260, 250, 40);
-    Game.world.createPath(1550, 1300, 40, 100);
+    // Pont : relie le village à la prairie fleurie en traversant la rivière
+    Game.world.createBridge(400, 950, 210, 90);
+
+    // Paths (réseau centralisé, cf. Game.PATHS)
+    Game.PATHS.forEach(function(p) {
+        Game.world.createPath(p.x, p.y, p.w, p.h);
+    });
 
     // Central fountain
     Game.world.createBuilding(Game.CONFIG.LOCATIONS.fountain.x, Game.CONFIG.LOCATIONS.fountain.y, "", "", "fountain-anchor", "fountain");
@@ -99,17 +98,34 @@ Game.world.init = function() {
     document.documentElement.style.setProperty('--grass', Game.SEASON_GRASS[Game.state.season]);
 };
 
-Game.world.createRiver = function(baseX, startY, totalHeight) {
+Game.world.createRiver = function() {
     var world = document.getElementById('game-world');
-    for (var y = 0; y < totalHeight; y += 80) {
+    Game.buildRiverSegments().forEach(function(s) {
         var seg = document.createElement('div');
         seg.className = 'river-segment';
-        seg.style.left = (baseX + Math.sin(y / 250) * 80) + 'px';
-        seg.style.top = y + 'px';
-        seg.style.width = '150px';
-        seg.style.height = '100px';
+        seg.style.left = s.x + 'px';
+        seg.style.top = s.y + 'px';
+        seg.style.width = s.w + 'px';
+        seg.style.height = s.h + 'px';
         world.appendChild(seg);
-    }
+    });
+};
+
+// Petite prairie fleurie de l'autre côté de la rivière (destination du pont)
+Game.world.createMeadow = function() {
+    var world = document.getElementById('game-world');
+    var m = document.createElement('div');
+    m.className = 'entity';
+    m.style.left = '150px';
+    m.style.top = '900px';
+    m.style.fontSize = '2.4rem';
+    m.style.textAlign = 'center';
+    m.style.lineHeight = '1.1';
+    m.innerHTML =
+        '<div>🧺</div>' +
+        '<div style="font-size:1.8rem;">🌷🌼🌻<br>🌸🌷🌺</div>' +
+        '<div class="building-label">🌷 Prairie fleurie</div>';
+    world.appendChild(m);
 };
 
 Game.world.createBridge = function(x, y, w, h) {
