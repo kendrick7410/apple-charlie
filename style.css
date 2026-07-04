@@ -245,6 +245,16 @@ html, body {
     50% { opacity: 0.85; }
 }
 
+@keyframes farm-bob {
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50%      { transform: translateY(-7px) rotate(4deg); }
+}
+.farm-escaped {
+    animation: farm-bob 0.7s infinite ease-in-out;
+    cursor: pointer;
+    filter: drop-shadow(0 3px 2px rgba(0,0,0,0.25));
+}
+
 .bridge {
     position: absolute;
     background: #a67c52;

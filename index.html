@@ -211,6 +211,21 @@
     </div>
 </div>
 
+<div id="action-farm" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
+    <div class="ui-card" style="padding:10px;max-width:240px;">
+        <div style="font-size:0.8rem;font-weight:bold;color:#6d4c41;margin-bottom:4px;">🚜 La Ferme</div>
+        <div style="font-size:0.7rem;margin-bottom:6px;">Les animaux se sont échappés de leurs enclos ! Marche sur eux pour les ramener. Récompense : <b>60 à 100 clochettes</b>.</div>
+        <button onclick="Game.farm.startEscape()" class="btn-animal" style="background:#8d6e63;box-shadow:0 4px 0 #5d4037;width:100%;">Rassembler les animaux 🐮</button>
+    </div>
+</div>
+
+<div id="farm-hud" style="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:2000;display:none;">
+    <div class="ui-card" style="padding:8px 20px;text-align:center;">
+        <div style="font-size:0.8rem;font-weight:bold;color:#6d4c41;">🐮 Rattrape les animaux !</div>
+        <div id="farm-count" style="font-size:1rem;font-weight:bold;">0 à ramener</div>
+    </div>
+</div>
+
 <div id="action-museum" style="position:fixed;bottom:80px;right:10px;z-index:1000;display:none;flex-direction:column;gap:6px;">
     <div class="ui-card" style="padding:10px;max-width:280px;max-height:70vh;overflow-y:auto;">
         <div style="font-size:0.8rem;font-weight:bold;color:#7c4dff;margin-bottom:4px;">🦉 Le hibou t'achète</div>
@@ -275,6 +290,7 @@
             <button class="btn-animal" style="width:100%;background:#42a5f5;box-shadow:0 4px 0 #1e88e5;" onclick="Game.ui.teleportTo('fountain')">⛲ La Place (Fontaine)</button>
             <button class="btn-animal" style="width:100%;background:#a1887f;box-shadow:0 4px 0 #795548;" onclick="Game.ui.teleportTo('refuge')">🏚️ Le Refuge du Cervin</button>
             <button class="btn-animal" style="width:100%;background:#26a69a;box-shadow:0 4px 0 #00897b;" onclick="Game.ui.teleportTo('souvenir')">🎁 La Boutique Souvenir</button>
+            <button class="btn-animal" style="width:100%;background:#8d6e63;box-shadow:0 4px 0 #5d4037;" onclick="Game.ui.teleportTo('farm')">🚜 La Ferme</button>
             <button class="btn-animal" style="width:100%;background:#66bb6a;box-shadow:0 4px 0 #43a047;" onclick="Game.ui.teleportTo('house')">🏡 Ma Maison</button>
         </div>
     </div>
@@ -329,6 +345,7 @@
 <script src="js/coast.js"></script>
 <script src="js/forest.js"></script>
 <script src="js/beach.js"></script>
+<script src="js/farm.js"></script>
 <script src="js/titlescreen.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/ui.js"></script>
@@ -391,6 +408,7 @@ Game.startGame = function() {
 
     // Build world
     Game.world.init();
+    Game.farm.init();
     Game.player.init();
     Game.entities.init();
     Game.villagers.init();
@@ -399,6 +417,7 @@ Game.startGame = function() {
     Game.coast.init();
     Game.forest.init();
     Game.beach.reset();
+    Game.farm.reset();
     Game.minimap.init();
 
     // Init UI

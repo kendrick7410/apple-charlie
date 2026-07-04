@@ -321,6 +321,7 @@ Game.ui.teleportTo = function(key) {
         refuge:   { x: L.mountain.x - 200, y: L.mountain.y + 230 },
         beach:    { x: L.beach.x, y: L.beach.y - 80 },
         souvenir: { x: L.souvenirShop.x, y: L.souvenirShop.y + 90 },
+        farm:     { x: L.farm.x, y: L.farm.y - 200 },
         house:    { x: L.charlieHouse.x, y: L.charlieHouse.y + 90 }
     };
     var d = dests[key];

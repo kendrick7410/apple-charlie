@@ -10,9 +10,6 @@ Game.world.init = function() {
     // River (bras ouest + division vers le milieu de la carte jusqu'à la mer)
     Game.world.createRiver();
 
-    // Lieux à découvrir qui remplissent l'espace vide
-    Game.world.createLandmarks();
-
     // Paths (réseau centralisé, cf. Game.PATHS)
     Game.PATHS.forEach(function(p) {
         Game.world.createPath(p.x, p.y, p.w, p.h);
@@ -105,44 +102,6 @@ Game.world.createRiver = function() {
         seg.style.width = s.w + 'px';
         seg.style.height = s.h + 'px';
         world.appendChild(seg);
-    });
-};
-
-// Petites scènes décoratives (verger, ferme, étang, campement...) réparties sur la carte
-Game.world.createLandmarks = function() {
-    var world = document.getElementById('game-world');
-    (Game.LANDMARKS || []).forEach(function(L) {
-        var c = document.createElement('div');
-        c.className = 'entity landmark';
-        c.style.left = L.x + 'px';
-        c.style.top = L.y + 'px';
-        c.style.zIndex = 6;
-
-        // Fond optionnel (eau des étangs / sources)
-        if (L.bg) {
-            var water = document.createElement('div');
-            water.style.cssText = 'position:absolute;left:' + L.bg.dx + 'px;top:' + L.bg.dy +
-                'px;width:' + L.bg.w + 'px;height:' + L.bg.h + 'px;background:' + L.bg.color +
-                ';border-radius:50%;box-shadow:inset 0 4px 10px rgba(0,0,0,0.15);opacity:0.9;';
-            c.appendChild(water);
-        }
-
-        L.items.forEach(function(it) {
-            var sp = document.createElement('div');
-            sp.style.cssText = 'position:absolute;left:' + it[1] + 'px;top:' + it[2] +
-                'px;font-size:' + it[3] + 'rem;transform:translate(-50%,-50%);' +
-                'filter:drop-shadow(0 3px 2px rgba(0,0,0,0.18));';
-            sp.textContent = it[0];
-            c.appendChild(sp);
-        });
-
-        var lb = document.createElement('div');
-        lb.className = 'building-label';
-        lb.textContent = L.label;
-        lb.style.cssText += 'position:absolute;left:0;top:60px;transform:translateX(-50%);';
-        c.appendChild(lb);
-
-        world.appendChild(c);
     });
 };
 
