@@ -48,34 +48,51 @@ Game.villagers.init = function() {
     }
 };
 
-Game.villagers.update = function(dt) {
-    updateTimer += dt;
-    if (updateTimer < UPDATE_INTERVAL) return;
-    updateTimer = 0;
+var WALK_SPEED = 42;   // pixels par seconde (marche tranquille)
 
+Game.villagers.update = function(dt) {
     var isNight = Game.time.isNight();
+
+    // Toutes les UPDATE_INTERVAL : nouvelle destination + petite phrase (le jour)
+    updateTimer += dt;
+    var pickNew = updateTimer >= UPDATE_INTERVAL;
+    if (pickNew) updateTimer = 0;
+
+    var step = WALK_SPEED * (dt / 1000);   // distance parcourue cette frame
 
     Game.state.villagers.forEach(function(v) {
         if (isNight) {
-            // La nuit : le villageois est rentré se coucher chez lui → on le cache dehors
-            v.x = v.homeX;
-            v.y = v.homeY;
-            v.el.style.display = 'none';
+            // La nuit : rentré se coucher → caché dehors
+            v.x = v.homeX; v.y = v.homeY;
+            v.tx = v.homeX; v.ty = v.homeY;
+            if (v.el.style.display !== 'none') v.el.style.display = 'none';
             return;
         }
 
-        // Le jour : il ressort et se balade
-        v.el.style.display = '';
-        v.x += (Math.random() - 0.5) * 100;
-        v.y += (Math.random() - 0.5) * 100;
-        v.x = Math.max(550, Math.min(1700, v.x));
-        v.y = Math.max(700, Math.min(1700, v.y));
+        if (v.el.style.display === 'none') v.el.style.display = '';
 
-        v.el.style.left = v.x + 'px';
-        v.el.style.top = v.y + 'px';
+        // Cible de marche : au départ, ou renouvelée toutes les UPDATE_INTERVAL
+        if (v.tx === undefined || pickNew) {
+            v.tx = Math.max(550, Math.min(1700, v.x + (Math.random() - 0.5) * 260));
+            v.ty = Math.max(700, Math.min(1700, v.y + (Math.random() - 0.5) * 260));
+        }
 
-        // Random speech
-        if (Math.random() > 0.75) {
+        // Avance doucement vers la cible (mouvement fluide chaque frame)
+        var dx = v.tx - v.x, dy = v.ty - v.y;
+        var dist = Math.hypot(dx, dy);
+        if (dist > 1) {
+            var mv = Math.min(step, dist);
+            v.x += (dx / dist) * mv;
+            v.y += (dy / dist) * mv;
+            v.el.style.left = v.x + 'px';
+            v.el.style.top = v.y + 'px';
+            // Regarde dans le sens de la marche
+            var em = v.el.querySelector('.villager-emoji');
+            if (em) em.style.transform = (dx < 0 ? 'scaleX(-1)' : 'scaleX(1)');
+        }
+
+        // Petite phrase de temps en temps (au moment du changement de cible)
+        if (pickNew && Math.random() > 0.75) {
             var data = Game.VILLAGER_DATA[v.name];
             var msg = data.greetings[Math.floor(Math.random() * data.greetings.length)];
             Game.villagers.showBubble(v, msg);
