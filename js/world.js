@@ -204,16 +204,24 @@ Game.world.createMountainTerrain = function() {
     var region = { x1: 2650, y1: 300, x2: 4400, y2: 1750 };
     var w = region.x2 - region.x1, h = region.y2 - region.y1;
 
-    // Sol d'altitude : neige en haut → roche grise → prairie alpine en bas
-    var ground = document.createElement('div');
-    ground.style.cssText = 'position:absolute;left:' + region.x1 + 'px;top:' + region.y1 + 'px;width:' + w + 'px;height:' + h +
-        'px;z-index:0;pointer-events:none;border-radius:44% 48% 46% 50% / 40% 42% 46% 44%;' +
-        'background:' +
-            'radial-gradient(circle at 30% 16%, rgba(255,255,255,0.6), rgba(255,255,255,0) 32%),' +
-            'radial-gradient(circle at 72% 82%, rgba(120,140,90,0.32), rgba(120,140,90,0) 46%),' +
-            'linear-gradient(180deg,#e9eef2 0%,#cdd4d8 20%,#b7b1a6 44%,#aeb391 70%,#a2b487 100%);' +
-        'box-shadow:inset 0 0 70px rgba(90,90,110,0.16);';
-    world.appendChild(ground);
+    // Sol d'altitude : neige en haut → roche grise → prairie alpine en bas.
+    // Les bords sont fondus (masque radial) pour se mélanger naturellement à l'herbe,
+    // sans contour d'ovale visible. On superpose 2 taches décalées pour une forme irrégulière.
+    function alpinePatch(cx, cy, pw, ph) {
+        var g = document.createElement('div');
+        g.style.cssText = 'position:absolute;left:' + (cx - pw / 2) + 'px;top:' + (cy - ph / 2) + 'px;width:' + pw + 'px;height:' + ph +
+            'px;z-index:0;pointer-events:none;' +
+            'background:' +
+                'radial-gradient(circle at 32% 15%, rgba(255,255,255,0.55), rgba(255,255,255,0) 34%),' +
+                'linear-gradient(180deg,#e9eef2 0%,#cdd4d8 22%,#b7b1a6 46%,#aeb391 72%,#a2b487 100%);' +
+            '-webkit-mask:radial-gradient(58% 60% at 50% 48%, #fff 48%, rgba(255,255,255,0.4) 72%, transparent 100%);' +
+            'mask:radial-gradient(58% 60% at 50% 48%, #fff 48%, rgba(255,255,255,0.4) 72%, transparent 100%);';
+        world.appendChild(g);
+    }
+    var rcx = (region.x1 + region.x2) / 2, rcy = (region.y1 + region.y2) / 2;
+    alpinePatch(rcx, rcy, w * 1.05, h * 1.05);
+    alpinePatch(region.x1 + w * 0.30, region.y1 + h * 0.62, w * 0.62, h * 0.7);
+    alpinePatch(region.x1 + w * 0.74, region.y1 + h * 0.40, w * 0.6, h * 0.66);
 
     // Zones à ne pas encombrer (lac, sommets, refuge)
     var avoid = [
@@ -227,18 +235,22 @@ Game.world.createMountainTerrain = function() {
         }
         return true;
     }
+    function pickPos() {
+        var x, y, ok = false;
+        for (var t = 0; t < 12 && !ok; t++) {
+            x = region.x1 + 30 + Math.random() * (w - 60);
+            y = region.y1 + 30 + Math.random() * (h - 60);
+            ok = free(x, y);
+        }
+        return ok ? { x: x, y: y } : null;
+    }
     function scatter(emoji, count, minR, maxR, opacity, z) {
         for (var i = 0; i < count; i++) {
-            var x, y, ok = false;
-            for (var t = 0; t < 12 && !ok; t++) {
-                x = region.x1 + 30 + Math.random() * (w - 60);
-                y = region.y1 + 30 + Math.random() * (h - 60);
-                ok = free(x, y);
-            }
-            if (!ok) continue;
+            var p = pickPos();
+            if (!p) continue;
             var d = document.createElement('div');
             d.className = 'entity';
-            d.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y + 'px;font-size:' +
+            d.style.cssText = 'position:absolute;left:' + p.x + 'px;top:' + p.y + 'px;font-size:' +
                 (minR + Math.random() * (maxR - minR)).toFixed(2) + 'rem;z-index:' + (z || 4) +
                 ';pointer-events:none;' + (opacity ? 'opacity:' + opacity + ';' : '') +
                 'filter:drop-shadow(0 3px 3px rgba(0,0,0,0.22));';
@@ -246,9 +258,23 @@ Game.world.createMountainTerrain = function() {
             world.appendChild(d);
         }
     }
+    // Sapin enneigé : un 🌲 recouvert de plaques de neige blanches
+    function snowyPines(count, minR, maxR) {
+        for (var i = 0; i < count; i++) {
+            var p = pickPos();
+            if (!p) continue;
+            var d = document.createElement('div');
+            d.className = 'entity snowy-pine';
+            d.style.cssText = 'position:absolute;left:' + p.x + 'px;top:' + p.y + 'px;font-size:' +
+                (minR + Math.random() * (maxR - minR)).toFixed(2) + 'rem;z-index:4;pointer-events:none;' +
+                'filter:drop-shadow(0 3px 3px rgba(0,0,0,0.22));';
+            d.innerHTML = '🌲<span class="pine-snow"></span>';
+            world.appendChild(d);
+        }
+    }
     scatter('🗻', 4,  3.6, 5.2, 0.9, 2);   // sommets enneigés au loin
-    scatter('🌲', 30, 2.2, 4.2);           // grands sapins
-    scatter('🌲', 14, 1.5, 2.3);           // petits sapins
+    snowyPines(34, 2.2, 4.2);              // grands sapins enneigés
+    snowyPines(16, 1.5, 2.3);              // petits sapins enneigés
     scatter('🪨', 18, 1.4, 3.0);           // rochers
     scatter('❄️', 12, 1.0, 2.0, 0.85);     // plaques de neige
 };
@@ -471,15 +497,20 @@ Game.world.createSeaAndBeach = function() {
     var grassLine = function(x) { return beachTop + coast(x, 155, 0.4); };
     var seaLine = Game.world.shorelineY;
 
-    // Polygone : suit la courbe du haut (gauche→droite) puis descend jusqu'en bas
+    // Le sable et la mer débordent largement hors de la carte pour qu'on ne voie jamais
+    // de bord vert coupé quand la caméra montre au-delà de la zone jouable.
+    var EXT = 2600;        // débordement gauche/droite
+    var EXTB = 2600;       // débordement vers le bas
+
+    // Polygone : suit la courbe du haut (gauche→droite) puis descend tout en bas
     function fillPath(yFn) {
-        var d = 'M 0 ' + yFn(0).toFixed(1);
-        for (var x = 0; x <= W; x += 36) d += ' L ' + x + ' ' + yFn(x).toFixed(1);
-        return d + ' L ' + W + ' ' + H + ' L 0 ' + H + ' Z';
+        var d = 'M ' + (-EXT) + ' ' + yFn(-EXT).toFixed(1);
+        for (var x = -EXT; x <= W + EXT; x += 36) d += ' L ' + x + ' ' + yFn(x).toFixed(1);
+        return d + ' L ' + (W + EXT) + ' ' + (H + EXTB) + ' L ' + (-EXT) + ' ' + (H + EXTB) + ' Z';
     }
     function linePath(yFn) {
-        var d = 'M 0 ' + yFn(0).toFixed(1);
-        for (var x = 0; x <= W; x += 36) d += ' L ' + x + ' ' + yFn(x).toFixed(1);
+        var d = 'M ' + (-EXT) + ' ' + yFn(-EXT).toFixed(1);
+        for (var x = -EXT; x <= W + EXT; x += 36) d += ' L ' + x + ' ' + yFn(x).toFixed(1);
         return d;
     }
 

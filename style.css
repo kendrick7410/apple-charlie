@@ -45,8 +45,8 @@ html, body {
 
 #game-world {
     position: absolute;
-    width: 3000px;
-    height: 3000px;
+    width: 6000px;
+    height: 6000px;
     background: var(--grass);
     background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px);
     background-size: 60px 60px;
@@ -253,6 +253,32 @@ html, body {
     animation: farm-bob 0.7s infinite ease-in-out;
     cursor: pointer;
     filter: drop-shadow(0 3px 2px rgba(0,0,0,0.25));
+}
+
+/* ── Sapin enneigé (zone montagne) ── */
+.snowy-pine {
+    position: absolute;
+    display: inline-block;
+    line-height: 1;
+}
+.snowy-pine .pine-snow {
+    position: absolute;
+    top: 0.2em;
+    left: 0.5em;
+    width: 0.15em;
+    height: 0.15em;
+    margin-left: -0.075em;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow:
+        -0.02em 0.04em 0 0 #ffffff,
+        -0.22em 0.34em 0 -0.01em #ffffff,
+         0.20em 0.36em 0 -0.02em #f3f8fd,
+        -0.30em 0.66em 0 -0.03em #ffffff,
+         0.28em 0.68em 0 -0.03em #eef5fb,
+        -0.02em 0.54em 0 -0.02em #ffffff;
+    filter: drop-shadow(0 0.03em 0.02em rgba(120,140,160,0.35));
+    pointer-events: none;
 }
 
 /* ── Lit du villageois (intérieur des maisons) ── */
