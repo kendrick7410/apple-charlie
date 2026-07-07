@@ -55,8 +55,8 @@ Game.time.getPhase = function() {
 };
 
 Game.time.isNight = function() {
-    var phase = Game.time.getPhase();
-    return phase === 'night' || phase === 'dusk';
+    // Nuit = 18h→6h (12h), exactement l'inverse du jour (12h). Le crépuscule reste "jour".
+    return Game.time.getPhase() === 'night';
 };
 
 Game.time.getOverlayColor = function() {

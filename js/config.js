@@ -12,7 +12,7 @@ Game.CONFIG = {
     PLAYER_SPEED: 6,
 
     // Time
-    REAL_MS_PER_GAME_HOUR: 60000,   // 1 min réelle = 1h jeu
+    REAL_MS_PER_GAME_HOUR: 30000,   // 30 s réelles = 1h jeu (donc 2h jeu = 1 min réelle)
     SEASON_DURATION_MS: 7 * 60000,  // 7 min par saison
 
     // Spawn counts (carte plus grande → plus de nature)
@@ -164,11 +164,13 @@ Game.SEASON_HARVESTED_TREE = {
     winter:  "🌲"
 };
 
+// Jour = 6h→18h (12h), Nuit = 18h→6h (12h) : durées égales.
+// L'aube et le crépuscule sont de courtes transitions à l'intérieur de la journée.
 Game.TIME_PHASES = {
-    dawn:     { start: 5,  end: 7,  overlay: "rgba(255,180,100,0.15)", label: "Aube 🌅"        },
-    day:      { start: 7,  end: 18, overlay: "rgba(0,0,0,0)",          label: "Jour ☀️"         },
-    dusk:     { start: 18, end: 20, overlay: "rgba(200,100,50,0.2)",   label: "Crépuscule 🌇"  },
-    night:    { start: 20, end: 5,  overlay: "rgba(20,20,80,0.45)",    label: "Nuit 🌙"         }
+    dawn:     { start: 6,  end: 7,  overlay: "rgba(255,180,100,0.15)", label: "Aube 🌅"        },
+    day:      { start: 7,  end: 17, overlay: "rgba(0,0,0,0)",          label: "Jour ☀️"         },
+    dusk:     { start: 17, end: 18, overlay: "rgba(200,100,50,0.2)",   label: "Crépuscule 🌇"  },
+    night:    { start: 18, end: 6,  overlay: "rgba(20,20,80,0.45)",    label: "Nuit 🌙"         }
 };
 
 Game.HOUSES = [
