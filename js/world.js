@@ -61,6 +61,9 @@ Game.world.init = function() {
     // Mini-forest
     Game.world.createForest();
 
+    // Terrain alpin distinct autour des montagnes (neige, roche, sapins)
+    Game.world.createMountainTerrain();
+
     // Mountain (Le Cervin)
     Game.world.createMountain();
 
@@ -193,6 +196,61 @@ Game.world.createForest = function() {
         tree.dataset.hasApple = (season !== 'winter') ? 'true' : 'false';
         world.appendChild(tree);
     }
+};
+
+// ── Paysage alpin : recouvre la zone des montagnes d'un sol neige/roche + sapins & rochers ──
+Game.world.createMountainTerrain = function() {
+    var world = document.getElementById('game-world');
+    var region = { x1: 2650, y1: 300, x2: 4400, y2: 1750 };
+    var w = region.x2 - region.x1, h = region.y2 - region.y1;
+
+    // Sol d'altitude : neige en haut → roche grise → prairie alpine en bas
+    var ground = document.createElement('div');
+    ground.style.cssText = 'position:absolute;left:' + region.x1 + 'px;top:' + region.y1 + 'px;width:' + w + 'px;height:' + h +
+        'px;z-index:0;pointer-events:none;border-radius:44% 48% 46% 50% / 40% 42% 46% 44%;' +
+        'background:' +
+            'radial-gradient(circle at 30% 16%, rgba(255,255,255,0.6), rgba(255,255,255,0) 32%),' +
+            'radial-gradient(circle at 72% 82%, rgba(120,140,90,0.32), rgba(120,140,90,0) 46%),' +
+            'linear-gradient(180deg,#e9eef2 0%,#cdd4d8 20%,#b7b1a6 44%,#aeb391 70%,#a2b487 100%);' +
+        'box-shadow:inset 0 0 70px rgba(90,90,110,0.16);';
+    world.appendChild(ground);
+
+    // Zones à ne pas encombrer (lac, sommets, refuge)
+    var avoid = [
+        { x: 3200, y: 600,  r: 270 }, { x: 3500, y: 800,  r: 180 },
+        { x: 3980, y: 1080, r: 150 }, { x: 3020, y: 1080, r: 150 },
+        { x: 3500, y: 1420, r: 150 }, { x: 3300, y: 950,  r: 140 }
+    ];
+    function free(x, y) {
+        for (var i = 0; i < avoid.length; i++) {
+            if (Math.hypot(x - avoid[i].x, y - avoid[i].y) < avoid[i].r) return false;
+        }
+        return true;
+    }
+    function scatter(emoji, count, minR, maxR, opacity, z) {
+        for (var i = 0; i < count; i++) {
+            var x, y, ok = false;
+            for (var t = 0; t < 12 && !ok; t++) {
+                x = region.x1 + 30 + Math.random() * (w - 60);
+                y = region.y1 + 30 + Math.random() * (h - 60);
+                ok = free(x, y);
+            }
+            if (!ok) continue;
+            var d = document.createElement('div');
+            d.className = 'entity';
+            d.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y + 'px;font-size:' +
+                (minR + Math.random() * (maxR - minR)).toFixed(2) + 'rem;z-index:' + (z || 4) +
+                ';pointer-events:none;' + (opacity ? 'opacity:' + opacity + ';' : '') +
+                'filter:drop-shadow(0 3px 3px rgba(0,0,0,0.22));';
+            d.textContent = emoji;
+            world.appendChild(d);
+        }
+    }
+    scatter('🗻', 4,  3.6, 5.2, 0.9, 2);   // sommets enneigés au loin
+    scatter('🌲', 30, 2.2, 4.2);           // grands sapins
+    scatter('🌲', 14, 1.5, 2.3);           // petits sapins
+    scatter('🪨', 18, 1.4, 3.0);           // rochers
+    scatter('❄️', 12, 1.0, 2.0, 0.85);     // plaques de neige
 };
 
 Game.world.createMountain = function() {

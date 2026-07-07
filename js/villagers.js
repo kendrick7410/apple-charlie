@@ -57,22 +57,25 @@ Game.villagers.update = function(dt) {
 
     Game.state.villagers.forEach(function(v) {
         if (isNight) {
-            // Go home at night
-            v.x += (v.homeX - v.x) * 0.3;
-            v.y += (v.homeY - v.y) * 0.3;
-        } else {
-            // Wander
-            v.x += (Math.random() - 0.5) * 100;
-            v.y += (Math.random() - 0.5) * 100;
-            v.x = Math.max(550, Math.min(1700, v.x));
-            v.y = Math.max(700, Math.min(1700, v.y));
+            // La nuit : le villageois est rentré se coucher chez lui → on le cache dehors
+            v.x = v.homeX;
+            v.y = v.homeY;
+            v.el.style.display = 'none';
+            return;
         }
+
+        // Le jour : il ressort et se balade
+        v.el.style.display = '';
+        v.x += (Math.random() - 0.5) * 100;
+        v.y += (Math.random() - 0.5) * 100;
+        v.x = Math.max(550, Math.min(1700, v.x));
+        v.y = Math.max(700, Math.min(1700, v.y));
 
         v.el.style.left = v.x + 'px';
         v.el.style.top = v.y + 'px';
 
         // Random speech
-        if (!isNight && Math.random() > 0.75) {
+        if (Math.random() > 0.75) {
             var data = Game.VILLAGER_DATA[v.name];
             var msg = data.greetings[Math.floor(Math.random() * data.greetings.length)];
             Game.villagers.showBubble(v, msg);

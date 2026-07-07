@@ -134,6 +134,33 @@ Game.buildings.enterHouse = function(house) {
         });
     }
 
+    // Lit du villageois : chaque maison en a un ; la nuit son habitant y dort
+    var oldBeds = room.querySelectorAll('.house-bed');
+    for (var b = 0; b < oldBeds.length; b++) oldBeds[b].remove();
+    if (house.id !== 'charlie') {
+        var bed = document.createElement('div');
+        bed.className = 'house-bed';
+        bed.style.left = '360px';
+        bed.style.top = '60px';
+        bed.innerHTML =
+            '<div class="bed-frame"></div>' +
+            '<div class="bed-mattress"></div>' +
+            '<div class="bed-pillow"></div>' +
+            '<div class="bed-blanket"></div>';
+        var villager = Game.VILLAGER_DATA[house.name];
+        if (Game.time.isNight() && villager) {
+            var sleeper = document.createElement('div');
+            sleeper.className = 'house-sleeper';
+            sleeper.innerHTML = '<span class="sleeper-emoji">' + villager.emoji + '</span>' +
+                '<span class="zzz">💤</span>';
+            bed.appendChild(sleeper);
+        }
+        room.appendChild(bed);
+        if (Game.time.isNight() && villager) {
+            Game.ui.notify(house.name.split(' ')[0] + " dort profondément 😴");
+        }
+    }
+
     document.getElementById('interior-view').style.display = 'flex';
     // Show cooking panel only when entering from bakery proximity
     var cookPanel = document.getElementById('cooking-panel');
