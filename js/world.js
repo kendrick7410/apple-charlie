@@ -207,15 +207,14 @@ Game.world.createMountainTerrain = function() {
     // Sol d'altitude : neige en haut → roche grise → prairie alpine en bas.
     // Les bords sont fondus (masque radial) pour se mélanger naturellement à l'herbe,
     // sans contour d'ovale visible. On superpose 2 taches décalées pour une forme irrégulière.
+    // Bords fondus sans masque CSS (moins coûteux) : dégradés qui deviennent transparents aux bords
     function alpinePatch(cx, cy, pw, ph) {
         var g = document.createElement('div');
         g.style.cssText = 'position:absolute;left:' + (cx - pw / 2) + 'px;top:' + (cy - ph / 2) + 'px;width:' + pw + 'px;height:' + ph +
             'px;z-index:0;pointer-events:none;' +
             'background:' +
-                'radial-gradient(circle at 32% 15%, rgba(255,255,255,0.55), rgba(255,255,255,0) 34%),' +
-                'linear-gradient(180deg,#e9eef2 0%,#cdd4d8 22%,#b7b1a6 46%,#aeb391 72%,#a2b487 100%);' +
-            '-webkit-mask:radial-gradient(58% 60% at 50% 48%, #fff 48%, rgba(255,255,255,0.4) 72%, transparent 100%);' +
-            'mask:radial-gradient(58% 60% at 50% 48%, #fff 48%, rgba(255,255,255,0.4) 72%, transparent 100%);';
+                'radial-gradient(ellipse 42% 30% at 50% 14%, rgba(238,244,248,0.9), rgba(238,244,248,0) 72%),' +           // neige en haut
+                'radial-gradient(ellipse 56% 60% at 50% 50%, rgba(189,193,189,0.85) 0%, rgba(184,190,168,0.6) 46%, rgba(175,190,150,0.32) 70%, rgba(175,190,150,0) 100%);'; // roche→prairie fondue
         world.appendChild(g);
     }
     var rcx = (region.x1 + region.x2) / 2, rcy = (region.y1 + region.y2) / 2;
@@ -253,12 +252,12 @@ Game.world.createMountainTerrain = function() {
             d.style.cssText = 'position:absolute;left:' + p.x + 'px;top:' + p.y + 'px;font-size:' +
                 (minR + Math.random() * (maxR - minR)).toFixed(2) + 'rem;z-index:' + (z || 4) +
                 ';pointer-events:none;' + (opacity ? 'opacity:' + opacity + ';' : '') +
-                'filter:drop-shadow(0 3px 3px rgba(0,0,0,0.22));';
+                'text-shadow:0 2px 2px rgba(0,0,0,0.2);';
             d.textContent = emoji;
             world.appendChild(d);
         }
     }
-    // Sapin enneigé : un 🌲 recouvert de plaques de neige blanches
+    // Sapin enneigé : un 🌲 recouvert de plaques de neige blanches (sans filtre coûteux)
     function snowyPines(count, minR, maxR) {
         for (var i = 0; i < count; i++) {
             var p = pickPos();
@@ -267,7 +266,7 @@ Game.world.createMountainTerrain = function() {
             d.className = 'entity snowy-pine';
             d.style.cssText = 'position:absolute;left:' + p.x + 'px;top:' + p.y + 'px;font-size:' +
                 (minR + Math.random() * (maxR - minR)).toFixed(2) + 'rem;z-index:4;pointer-events:none;' +
-                'filter:drop-shadow(0 3px 3px rgba(0,0,0,0.22));';
+                'text-shadow:0 2px 2px rgba(0,0,0,0.2);';
             d.innerHTML = '🌲<span class="pine-snow"></span>';
             world.appendChild(d);
         }
@@ -499,8 +498,8 @@ Game.world.createSeaAndBeach = function() {
 
     // Le sable et la mer débordent largement hors de la carte pour qu'on ne voie jamais
     // de bord vert coupé quand la caméra montre au-delà de la zone jouable.
-    var EXT = 2600;        // débordement gauche/droite
-    var EXTB = 2600;       // débordement vers le bas
+    var EXT = 1000;        // débordement gauche/droite (assez pour couvrir l'écran, sans dépasser la limite de texture GPU)
+    var EXTB = 1600;       // débordement vers le bas
 
     // Polygone : suit la courbe du haut (gauche→droite) puis descend tout en bas
     function fillPath(yFn) {

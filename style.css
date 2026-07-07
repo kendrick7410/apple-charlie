@@ -45,8 +45,8 @@ html, body {
 
 #game-world {
     position: absolute;
-    width: 6000px;
-    height: 6000px;
+    width: 3000px;
+    height: 3000px;
     background: var(--grass);
     background-image: radial-gradient(rgba(0,0,0,0.05) 2px, transparent 2px);
     background-size: 60px 60px;
@@ -277,7 +277,6 @@ html, body {
         -0.30em 0.66em 0 -0.03em #ffffff,
          0.28em 0.68em 0 -0.03em #eef5fb,
         -0.02em 0.54em 0 -0.02em #ffffff;
-    filter: drop-shadow(0 0.03em 0.02em rgba(120,140,160,0.35));
     pointer-events: none;
 }
 
