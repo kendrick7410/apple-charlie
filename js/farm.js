@@ -68,9 +68,12 @@ Game.farm.init = function() {
     // Enclos (clôtures) avec animaux
     F.pens.forEach(function(pen) {
         var w = 210, h = 150;
+        pen.boxLeft = pen.cx - w/2;
+        pen.boxTop = pen.cy - h/2;
+        pen.animalEls = [];
         var box = document.createElement('div');
         box.className = 'farm-pen';
-        box.style.cssText = 'position:absolute;left:' + (pen.cx - w/2) + 'px;top:' + (pen.cy - h/2) +
+        box.style.cssText = 'position:absolute;left:' + pen.boxLeft + 'px;top:' + pen.boxTop +
             'px;width:' + w + 'px;height:' + h + 'px;z-index:5;' +
             'border:6px solid #a1724b;border-radius:10px;background:rgba(150,110,60,0.14);' +
             'box-shadow:inset 0 0 0 3px rgba(255,255,255,0.15);';
@@ -82,7 +85,10 @@ Game.farm.init = function() {
             a.style.cssText = 'position:absolute;left:' + pos[0] + 'px;top:' + pos[1] +
                 'px;font-size:2.2rem;filter:drop-shadow(0 2px 1px rgba(0,0,0,0.2));';
             a.textContent = em;
+            a.dataset.px = pos[0];
+            a.dataset.py = pos[1];
             box.appendChild(a);
+            pen.animalEls.push(a);
         });
         // Étiquette de l'enclos
         var lb = document.createElement('div');
@@ -136,22 +142,32 @@ Game.farm.startEscape = function() {
     var L = Game.CONFIG.LOCATIONS.farm;
     var world = document.getElementById('game-world');
 
-    // 2 animaux par enclos sortent et se dispersent autour de la ferme (faciles à retrouver)
+    // 2 animaux par enclos sortent EN COURANT de leur enclos et se baladent autour de la ferme
     F.escaped = [];
     F.pens.forEach(function(pen, pi) {
+        pen.hidden = [];   // les animaux figés cachés pendant qu'ils sont dehors
         for (var k = 0; k < 2; k++) {
+            // Position de départ : à l'intérieur de l'enclos (là où l'animal était dessiné)
+            var src = pen.animalEls[k];
+            var sx = pen.boxLeft + (src ? +src.dataset.px : 60) + 16;
+            var sy = pen.boxTop  + (src ? +src.dataset.py : 60) + 16;
+            if (src) { src.style.display = 'none'; pen.hidden.push(src); }
+
+            // Cible : un point dispersé autour de la ferme (pas trop loin, facile à retrouver)
             var angle = Math.random() * Math.PI * 2;
-            var dist = 180 + Math.random() * 200;   // pas trop loin
-            var x = L.x + Math.cos(angle) * dist;
-            var y = L.y + 40 + Math.sin(angle) * dist;
+            var dist = 180 + Math.random() * 200;
+            var tx = L.x + Math.cos(angle) * dist;
+            var ty = L.y + 40 + Math.sin(angle) * dist;
+
             var el = document.createElement('div');
             el.className = 'entity farm-escaped';
             el.style.cssText = 'position:absolute;font-size:2.4rem;z-index:15;';
-            el.style.left = x + 'px';
-            el.style.top = y + 'px';
+            el.style.left = sx + 'px';
+            el.style.top = sy + 'px';
             el.textContent = pen.emoji;
             world.appendChild(el);
-            F.escaped.push({ el: el, x: x, y: y, pen: pi, returned: false });
+            // mode 'run' : ils foncent hors de l'enclos, puis 'wander' : ils trottinent doucement
+            F.escaped.push({ el: el, x: sx, y: sy, tx: tx, ty: ty, pen: pi, returned: false, mode: 'run', pauseUntil: 0 });
         }
     });
 
@@ -187,6 +203,7 @@ Game.farm.update = function(dt, now) {
         for (var i = 0; i < F.escaped.length; i++) {
             var a = F.escaped[i];
             if (a.returned) continue;
+            moveEscaped(a, dt, now);
             if (Math.hypot(s.charlie.x - a.x, s.charlie.y - a.y) < 85) {
                 returnAnimal(a);
             }
@@ -205,11 +222,43 @@ Game.farm.update = function(dt, now) {
     panel.style.display = (near && now >= F.cooldownUntil && !enterShown) ? 'flex' : 'none';
 };
 
+// Déplace un animal échappé : d'abord il court hors de l'enclos ('run'),
+// puis il trottine tranquillement d'un point à l'autre ('wander'). Jamais trop vite.
+function moveEscaped(a, dt, now) {
+    var F = Game.farm;
+    var L = Game.CONFIG.LOCATIONS.farm;
+    var step = dt / 16;   // ~1 à 60 fps
+
+    if (a.mode === 'wander' && now < a.pauseUntil) { return; }  // petite pause entre deux trajets
+
+    var dx = a.tx - a.x, dy = a.ty - a.y;
+    var d = Math.hypot(dx, dy);
+    var sp = (a.mode === 'run' ? 1.15 : 0.55) * step;   // course puis balade lente
+
+    if (d > sp) {
+        a.x += (dx / d) * sp;
+        a.y += (dy / d) * sp;
+    } else {
+        a.x = a.tx; a.y = a.ty;
+        // Arrivé : il repart flâner vers un nouveau point autour de la ferme
+        a.mode = 'wander';
+        a.pauseUntil = now + 400 + Math.random() * 900;
+        var angle = Math.random() * Math.PI * 2;
+        var dist = 120 + Math.random() * 220;
+        a.tx = L.x + Math.cos(angle) * dist;
+        a.ty = L.y + 40 + Math.sin(angle) * dist;
+    }
+    a.el.style.left = a.x + 'px';
+    a.el.style.top = a.y + 'px';
+}
+
 function returnAnimal(a) {
     var F = Game.farm;
     a.returned = true;
     F.remaining--;
     var pen = F.pens[a.pen];
+    // Un animal réapparaît dans son enclos
+    if (pen.hidden && pen.hidden.length) { pen.hidden.pop().style.display = ''; }
     Game.audio.play('collect');
     if (Game.particles && Game.particles.spawnWorld) {
         Game.particles.spawnWorld('❤️', a.x, a.y, { count: 2, spread: 30, vy: -40 });
@@ -242,6 +291,11 @@ Game.farm.reset = function() {
     F.active = false; F.remaining = 0; F.cooldownUntil = 0;
     F.escaped.forEach(function(a){ if (a.el && a.el.parentNode) a.el.parentNode.removeChild(a.el); });
     F.escaped = [];
+    // Réaffiche les animaux qui étaient sortis de leur enclos
+    (F.pens || []).forEach(function(pen){
+        (pen.hidden || []).forEach(function(el){ el.style.display = ''; });
+        pen.hidden = [];
+    });
     var hud = document.getElementById('farm-hud');
     if (hud) hud.style.display = 'none';
     var p = document.getElementById('action-farm');
