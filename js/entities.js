@@ -16,11 +16,40 @@ Game.entities.init = function() {
     });
 };
 
+// Cercles à éviter : bâtiments et maisons (rien ne doit pousser dessus)
+var _blockPts = null;
+function blockPoints() {
+    if (_blockPts) return _blockPts;
+    var L = Game.CONFIG.LOCATIONS;
+    var pts = [];
+    ['fountain','bakery','shop','charlieHouse','garden','fishShop','museum','pizzeria','souvenirShop','port']
+        .forEach(function(k){ if (L[k]) pts.push({ x: L[k].x, y: L[k].y, r: 150 }); });
+    (Game.HOUSES || []).forEach(function(h){ pts.push({ x: h.x, y: h.y, r: 150 }); });
+    if (L.farm) pts.push({ x: L.farm.x, y: L.farm.y, r: 480 });   // grande ferme (grange, enclos, champs)
+    _blockPts = pts;
+    return pts;
+}
+
+// Segments de la rivière à éviter (géométrie partagée avec la carte)
+var _riverRects = null;
+function riverRects() {
+    if (!_riverRects) _riverRects = Game.buildRiverSegments();
+    return _riverRects;
+}
+
 function validSpawnPos(x, y) {
-    // Avoid center village and river ; reste sur la terre (pas sur la plage/mer)
-    if (Math.hypot(x - 1000, y - 1000) < 400) return false;
-    if (x > 450 && x < 750) return false;
-    if (y > Game.CONFIG.BEACH_TOP - 150) return false;
+    if (y > Game.CONFIG.BEACH_TOP - 150) return false;           // pas sur la plage/mer
+    // pas sur un bâtiment ou une maison
+    var pts = blockPoints();
+    for (var i = 0; i < pts.length; i++) {
+        if (Math.hypot(x - pts[i].x, y - pts[i].y) < pts[i].r) return false;
+    }
+    // pas dans la rivière
+    var rr = riverRects(), pad = 45;
+    for (var j = 0; j < rr.length; j++) {
+        var s = rr[j];
+        if (x > s.x - pad && x < s.x + s.w + pad && y > s.y - pad && y < s.y + s.h + pad) return false;
+    }
     return true;
 }
 
@@ -32,12 +61,19 @@ function landSpawn() {
     };
 }
 
+// Cherche une position libre (bâtiments + rivière évités), avec garde-fou anti-boucle
+function freeSpawn() {
+    var pos;
+    for (var tries = 0; tries < 60; tries++) {
+        pos = landSpawn();
+        if (validSpawnPos(pos.x, pos.y)) return pos;
+    }
+    return pos;   // au pire, la dernière position tirée
+}
+
 Game.entities.spawnTree = function(season) {
     season = season || Game.state.season;
-    var x, y, pos;
-    do {
-        pos = landSpawn(); x = pos.x; y = pos.y;
-    } while (!validSpawnPos(x, y));
+    var pos = freeSpawn(), x = pos.x, y = pos.y;
 
     var tree = document.createElement('div');
     tree.className = 'entity tree';
@@ -50,10 +86,7 @@ Game.entities.spawnTree = function(season) {
 };
 
 Game.entities.spawnStone = function() {
-    var x, y, pos;
-    do {
-        pos = landSpawn(); x = pos.x; y = pos.y;
-    } while (!validSpawnPos(x, y));
+    var pos = freeSpawn(), x = pos.x, y = pos.y;
 
     var stone = document.createElement('div');
     stone.className = 'entity stone';
@@ -67,13 +100,8 @@ Game.entities.spawnStone = function() {
 Game.entities.spawnFlower = function(season) {
     season = season || Game.state.season;
     if (season === 'winter') return; // No flowers in winter
-    var x, y;
-    do {
-        x = 100 + Math.random() * (Game.CONFIG.WORLD_W - 200);
-        y = 100 + Math.random() * (Game.CONFIG.BEACH_TOP - 250);
-    } while ((x > 450 && x < 750) || y > Game.CONFIG.BEACH_TOP - 150);
-
-    Game.entities.createFlowerEl(x, y, Game.FLOWER_TYPES[Math.floor(Math.random() * Game.FLOWER_TYPES.length)], false);
+    var pos = freeSpawn();
+    Game.entities.createFlowerEl(pos.x, pos.y, Game.FLOWER_TYPES[Math.floor(Math.random() * Game.FLOWER_TYPES.length)], false);
 };
 
 Game.entities.createFlowerEl = function(x, y, emoji, isPlaced) {

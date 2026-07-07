@@ -249,9 +249,36 @@ Game.SEA_SPECIES = {
     seahorse: { name: 'Poisson tropical',emoji: '🐠', rarity: 'legendary',value: 80, weight: 2  }
 };
 
+// Sprite dessiné d'une marmotte (mignonne, debout) : plus ressemblant qu'un emoji hamster
+Game.MARMOT_SPRITE =
+    '<svg viewBox="0 0 64 78" style="width:1.15em;height:1.4em;display:inline-block;vertical-align:middle;overflow:visible">' +
+        '<ellipse cx="13" cy="60" rx="7" ry="12" fill="#7d5330"/>' +               // petite queue
+        '<ellipse cx="32" cy="54" rx="19" ry="22" fill="#a9743f"/>' +              // corps
+        '<ellipse cx="32" cy="58" rx="12" ry="16" fill="#ecd6ab"/>' +              // ventre clair
+        '<ellipse cx="24" cy="74" rx="6" ry="4" fill="#6f4a29"/>' +                // pattes
+        '<ellipse cx="40" cy="74" rx="6" ry="4" fill="#6f4a29"/>' +
+        '<ellipse cx="20" cy="52" rx="5" ry="8" fill="#a9743f"/>' +                // petits bras
+        '<ellipse cx="44" cy="52" rx="5" ry="8" fill="#a9743f"/>' +
+        '<circle cx="32" cy="24" r="17" fill="#a9743f"/>' +                        // tête
+        '<circle cx="19" cy="11" r="6" fill="#8a5d31"/>' +                         // oreilles
+        '<circle cx="45" cy="11" r="6" fill="#8a5d31"/>' +
+        '<circle cx="19" cy="11" r="2.6" fill="#d99f98"/>' +
+        '<circle cx="45" cy="11" r="2.6" fill="#d99f98"/>' +
+        '<ellipse cx="32" cy="30" rx="11" ry="9" fill="#ecd6ab"/>' +               // museau
+        '<circle cx="20" cy="30" r="4" fill="#f2a7a0" opacity="0.75"/>' +          // joues roses
+        '<circle cx="44" cy="30" r="4" fill="#f2a7a0" opacity="0.75"/>' +
+        '<circle cx="25" cy="22" r="4.2" fill="#2a1c12"/>' +                       // grands yeux
+        '<circle cx="39" cy="22" r="4.2" fill="#2a1c12"/>' +
+        '<circle cx="26.6" cy="20.4" r="1.5" fill="#fff"/>' +                      // reflets
+        '<circle cx="40.6" cy="20.4" r="1.5" fill="#fff"/>' +
+        '<ellipse cx="32" cy="28.5" rx="2.6" ry="2" fill="#4a2f1e"/>' +            // nez
+        '<rect x="30" y="30.5" width="4" height="5" rx="1.2" fill="#fff"/>' +      // 2 dents
+        '<line x1="32" y1="30.5" x2="32" y2="35.5" stroke="#e6d4ad" stroke-width="0.6"/>' +
+    '</svg>';
+
 // Animaux de la montagne (à collectionner en marchant dessus, près des sommets)
 Game.MOUNTAIN_SPECIES = {
-    marmot:  { name: 'Marmotte',      emoji: '🐹', rarity: 'common',    value: 10, weight: 34 },
+    marmot:  { name: 'Marmotte',      emoji: '🐿️', rarity: 'common',    value: 10, weight: 34, sprite: Game.MARMOT_SPRITE },
     ibex:    { name: 'Bouquetin',     emoji: '🐐', rarity: 'common',    value: 12, weight: 28 },
     hare:    { name: 'Lièvre',        emoji: '🐇', rarity: 'uncommon',  value: 16, weight: 20 },
     fox:     { name: 'Renard',        emoji: '🦊', rarity: 'uncommon',  value: 18, weight: 15 },

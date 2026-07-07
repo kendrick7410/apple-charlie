@@ -51,19 +51,20 @@ Game.farm.init = function() {
     tractor.textContent = '🚜';
     world.appendChild(tractor);
 
-    // Bottes de foin (décor)
+    // Bottes de foin rondes (décor) : paille enroulée en spirale, avec reflet et ombre
     function hayBale(x, y, size) {
         var h = document.createElement('div');
         h.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + size +
-            'px;height:' + Math.round(size * 0.82) + 'px;border-radius:50%;' +
-            'background:repeating-linear-gradient(95deg,#e6bd52,#e6bd52 6px,#cb9f37 6px,#cb9f37 11px);' +
-            'border:3px solid #b3862a;box-shadow:0 3px 4px rgba(0,0,0,0.2);z-index:7;';
+            'px;height:' + size + 'px;border-radius:50%;z-index:7;' +
+            'background:' +
+                'radial-gradient(circle at 38% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0) 42%),' +
+                'repeating-radial-gradient(circle at 50% 50%, #e8c25e 0 4px, #d6a63f 4px 7px, #c2912f 7px 9px);' +
+            'border:3px solid #a8781f;box-shadow:0 4px 5px rgba(0,0,0,0.22), inset 0 -6px 11px rgba(0,0,0,0.14);';
         world.appendChild(h);
     }
-    hayBale(L.x + 120, L.y - 150, 60);
-    hayBale(L.x + 170, L.y - 118, 54);
-    hayBale(L.x + 138, L.y - 100, 48);
-    hayBale(L.x - 250, L.y + 30, 56);
+    hayBale(L.x + 120, L.y - 152, 62);
+    hayBale(L.x + 168, L.y - 118, 54);
+    hayBale(L.x - 252, L.y + 26, 58);
 
     // Deux champs cultivés derrière la grange (au nord)
     function cropField(x, y, w, h, crop) {

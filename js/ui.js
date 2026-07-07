@@ -208,7 +208,7 @@ Game.ui.updateCollections = function() {
             var got = coll[id] || 0;
             var rc = Game.RARITY_COLORS[sp.rarity] || '#8bc34a';
             if (got > 0) {
-                html += '<span class="museum-item donated" style="border-color:' + rc + '">' + sp.emoji + '<small>' + sp.name + ' x' + got + '</small></span>';
+                html += '<span class="museum-item donated" style="border-color:' + rc + '">' + (sp.sprite || sp.emoji) + '<small>' + sp.name + ' x' + got + '</small></span>';
             } else {
                 html += '<span class="museum-item empty">?</span>';
             }

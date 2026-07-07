@@ -62,6 +62,7 @@ function spawnMtnAnimal() {
     var x = Math.max(2700, Math.min(Game.CONFIG.WORLD_W - 100, c.x + (Math.random() - 0.5) * 520));
     var y = Math.max(280, Math.min(2050, c.y + (Math.random() - 0.5) * 420));
     var el = makeEntity(sp.emoji, x, y, 'mtn-animal', '2.4rem', sp.rarity);
+    if (sp.sprite) { el.textContent = ''; el.innerHTML = sp.sprite; }
     mtn.push({ el: el, x: x, y: y, id: id, vx: (Math.random() - 0.5) * 1.1, vy: (Math.random() - 0.5) * 1.1, t: 0 });
 }
 
