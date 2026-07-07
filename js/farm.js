@@ -65,6 +65,29 @@ Game.farm.init = function() {
     hayBale(L.x + 138, L.y - 100, 48);
     hayBale(L.x - 250, L.y + 30, 56);
 
+    // Deux champs cultivés derrière la grange (au nord)
+    function cropField(x, y, w, h, crop) {
+        var f = document.createElement('div');
+        f.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h +
+            'px;z-index:3;border:7px solid #7a5a37;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.18);' +
+            // rangées de cultures (bandes vertes) sur terre labourée
+            'background:repeating-linear-gradient(96deg,#8faa3d 0 16px,#6f8a2c 16px 20px,#8a6a43 20px 24px);';
+        // quelques plants qui dépassent
+        var cols = Math.floor(w / 46), rows = Math.floor(h / 46);
+        for (var r = 0; r < rows; r++) {
+            for (var c = 0; c < cols; c++) {
+                var p = document.createElement('div');
+                p.style.cssText = 'position:absolute;left:' + (14 + c * 46) + 'px;top:' + (10 + r * 44) +
+                    'px;font-size:1.5rem;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.2));';
+                p.textContent = crop;
+                f.appendChild(p);
+            }
+        }
+        world.appendChild(f);
+    }
+    cropField(L.x - 230, L.y - 430, 200, 150, '🌽');   // champ de maïs
+    cropField(L.x + 30,  L.y - 430, 200, 150, '🌾');   // champ de blé
+
     // Enclos (clôtures) avec animaux
     F.pens.forEach(function(pen) {
         var w = 210, h = 150;
