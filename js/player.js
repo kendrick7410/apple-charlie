@@ -16,6 +16,23 @@ Game.player.init = function() {
     p.className = 'entity charlie-sprite';
     p.innerHTML = '🤠';
     world.appendChild(p);
+    Game.player.applySkin();
+};
+
+// Bonus du skin équipé (valeurs neutres si aucun pouvoir)
+Game.player.skinBonus = function() {
+    var pw = (Game.getSkin ? (Game.getSkin(Game.state.skin) || {}).power : null) || {};
+    return { speed: pw.speed || 1, xp: pw.xp || 1, hunger: pw.hunger || 1, fish: pw.fish || 1, radius: pw.radius || 0 };
+};
+
+// Applique l'apparence du skin équipé à Charlie (monde + intérieur)
+Game.player.applySkin = function() {
+    var sk = Game.getSkin ? Game.getSkin(Game.state.skin) : null;
+    var emoji = (sk && sk.emoji) || '🤠';
+    var p = document.getElementById('player');
+    if (p) p.innerHTML = emoji;
+    var ic = document.getElementById('interior-charlie');
+    if (ic) ic.textContent = emoji;
 };
 
 Game.player.update = function(dt, now) {
@@ -27,7 +44,7 @@ Game.player.update = function(dt, now) {
     if (Game.forest && Game.forest.inZone && Game.forest.inZone(s.charlie.x, s.charlie.y)) {
         speed = Game.forest.WOLF_SPEED;
     } else {
-        speed = Game.CONFIG.PLAYER_SPEED * (s.hunger <= 0 ? 0.55 : 1);  // affamé = plus lent
+        speed = Game.CONFIG.PLAYER_SPEED * (s.hunger <= 0 ? 0.55 : 1) * Game.player.skinBonus().speed;  // affamé = plus lent, skin = bonus vitesse
     }
     var moved = false;
     var keys = s.keysDown;

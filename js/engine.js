@@ -94,8 +94,9 @@ Game.engine.initJoystick = function() {
                 var step = Game.CONFIG.TILE * 0.72;
                 if (Game.forest && Game.forest.inZone && Game.forest.inZone(Game.state.charlie.x, Game.state.charlie.y)) {
                     step *= Game.forest.WOLF_SPEED / Game.CONFIG.PLAYER_SPEED;  // vitesse du loup dans sa zone
-                } else if (Game.state.hunger <= 0) {
-                    step *= 0.55;  // affamé = plus lent
+                } else {
+                    if (Game.state.hunger <= 0) step *= 0.55;  // affamé = plus lent
+                    step *= Game.player.skinBonus().speed;     // bonus vitesse du skin
                 }
                 Game.state.charlie.x += dir.dx * step;
                 Game.state.charlie.y += dir.dy * step;
@@ -176,7 +177,8 @@ Game.engine.loop = function(now) {
 
     // Faim qui se vide lentement
     hungerTimer += dt;
-    if (hungerTimer >= Game.CONFIG.HUNGER_DRAIN_MS) {
+    var hungerInterval = Game.CONFIG.HUNGER_DRAIN_MS * (Game.player.skinBonus ? Game.player.skinBonus().hunger : 1);
+    if (hungerTimer >= hungerInterval) {
         hungerTimer = 0;
         if (Game.state.hunger > 0) {
             Game.state.hunger = Math.max(0, Game.state.hunger - 1);

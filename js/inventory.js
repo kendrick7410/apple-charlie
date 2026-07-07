@@ -222,6 +222,41 @@ Game.inventory.eatPizza = function(id) {
         " +" + pz.xp + "XP" + (gained > 0 ? " +" + gained + " faim" : ""));
 };
 
+// Acheter un skin : exige le bon niveau et le prix, puis l'équipe automatiquement
+Game.inventory.buySkin = function(id) {
+    var s = Game.state, sk = Game.getSkin(id);
+    if (!sk || sk.id === Game.SKIN_DEFAULT.id) return;
+    if (s.skinsOwned.indexOf(id) !== -1) { Game.inventory.equipSkin(id); return; }
+    if (s.level < sk.level) {
+        Game.ui.notify("Niveau " + sk.level + " requis pour " + sk.name + " ! " + sk.emoji);
+        Game.audio.play('error');
+        return;
+    }
+    if (s.inventory.money < sk.price) {
+        Game.ui.notify("Il te faut " + sk.price + "💰 pour " + sk.name + " " + sk.emoji);
+        Game.audio.play('error');
+        return;
+    }
+    s.inventory.money -= sk.price;
+    s.skinsOwned.push(id);
+    Game.audio.playCoin();
+    Game.particles.spawn(sk.emoji, window.innerWidth / 2, window.innerHeight / 2, { count: 6, spread: 70, vy: -80 });
+    Game.inventory.equipSkin(id);
+    Game.ui.update();
+    Game.ui.notify("Skin débloqué : " + sk.name + " " + sk.emoji + " ! " + sk.desc);
+};
+
+// Équiper un skin déjà possédé (ou le look par défaut)
+Game.inventory.equipSkin = function(id) {
+    var s = Game.state, sk = Game.getSkin(id);
+    if (sk.id !== Game.SKIN_DEFAULT.id && s.skinsOwned.indexOf(sk.id) === -1) return;   // pas possédé
+    s.skin = sk.id;
+    if (Game.player.applySkin) Game.player.applySkin();
+    Game.audio.playChime();
+    if (Game.ui.updateSkinsMenu) Game.ui.updateSkinsMenu();
+    Game.ui.notify("Skin équipé : " + sk.name + " " + sk.emoji);
+};
+
 Game.inventory.startFishing = function() {
     var s = Game.state;
     if (s.isFishing) return;
@@ -237,6 +272,8 @@ Game.inventory.startFishing = function() {
     var fishTime = s.tools.rod ? Game.CONFIG.FISH_TIME_ROD : Game.CONFIG.FISH_TIME;
     // Rain bonus
     if (Game.weather.isRaining()) fishTime *= 0.7;
+    // Bonus de pêche du skin
+    if (Game.player && Game.player.skinBonus) fishTime *= Game.player.skinBonus().fish;
 
     setTimeout(function() {
         s.inventory.fish++;

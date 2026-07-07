@@ -120,9 +120,10 @@ Game.entities.checkCollect = function() {
 
     // Larger collection radius on mobile for easier gameplay
     var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-    var stoneRadius = isMobile ? 80 : 40;
-    var flowerRadius = isMobile ? 80 : 40;
-    var treeRadius = isMobile ? 100 : 50;
+    var rb = (Game.player && Game.player.skinBonus) ? Game.player.skinBonus().radius : 0;  // aimant du skin
+    var stoneRadius = (isMobile ? 80 : 40) + rb;
+    var flowerRadius = (isMobile ? 80 : 40) + rb;
+    var treeRadius = (isMobile ? 100 : 50) + rb;
 
     // Stones
     var stones = document.querySelectorAll('.stone');

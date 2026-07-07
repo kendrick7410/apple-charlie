@@ -308,6 +308,40 @@ Game.ui.updateEatMenu = function() {
         '<div style="font-size:0.72rem;color:#777;">Tu n\'as rien à manger ! Cuisine à la boulangerie 🍞 ou cultive ton jardin 🌱.</div>';
 };
 
+// Menu des skins : liste le look par défaut + les 10 skins (niveau/prix/pouvoir)
+Game.ui.updateSkinsMenu = function() {
+    var panel = document.getElementById('skins-items');
+    if (!panel) return;
+    var s = Game.state;
+    var all = [Game.SKIN_DEFAULT].concat(Game.SKINS);
+    var html = '';
+    all.forEach(function(sk) {
+        var owned = sk.id === Game.SKIN_DEFAULT.id || s.skinsOwned.indexOf(sk.id) !== -1;
+        var equipped = (s.skin || Game.SKIN_DEFAULT.id) === sk.id;
+        var act;
+        if (equipped)        act = '<span class="skin-tag on">✅ Équipé</span>';
+        else if (owned)      act = '<button class="shop-btn" onclick="Game.inventory.equipSkin(\'' + sk.id + '\')">Équiper</button>';
+        else if (s.level < sk.level) act = '<span class="skin-tag lock">🔒 Niveau ' + sk.level + '</span>';
+        else                 act = '<button class="shop-btn" onclick="Game.inventory.buySkin(\'' + sk.id + '\')">' + sk.price + '💰</button>';
+        html += '<div class="skin-row' + (equipped ? ' equipped' : '') + '">' +
+            '<div class="skin-emoji">' + sk.emoji + '</div>' +
+            '<div class="skin-info"><div class="skin-name">' + sk.name +
+                (sk.level > 1 ? ' <small>niv ' + sk.level + '</small>' : '') + '</div>' +
+            '<div class="skin-desc">' + (sk.desc || '') + '</div></div>' +
+            '<div class="skin-act">' + act + '</div>' +
+        '</div>';
+    });
+    panel.innerHTML = html;
+};
+
+Game.ui.toggleSkins = function() {
+    var p = document.getElementById('panel-skins');
+    if (!p) return;
+    var show = p.style.display === 'none' || !p.style.display;
+    p.style.display = show ? 'block' : 'none';
+    if (show) Game.ui.updateSkinsMenu();
+};
+
 Game.ui.toggleEat = function() {
     var p = document.getElementById('panel-eat');
     if (!p) return;

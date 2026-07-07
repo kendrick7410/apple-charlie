@@ -6,6 +6,8 @@ Game.xp = {};
 
 Game.xp.add = function(amount) {
     var s = Game.state;
+    // Bonus d'XP du skin équipé
+    if (Game.player && Game.player.skinBonus) amount = Math.max(1, Math.round(amount * Game.player.skinBonus().xp));
     s.xp += amount;
     var needed = Game.xp.toNext();
     while (s.xp >= needed && s.level < Game.CONFIG.MAX_LEVEL) {

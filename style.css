@@ -255,6 +255,27 @@ html, body {
     filter: drop-shadow(0 3px 2px rgba(0,0,0,0.25));
 }
 
+/* ── Menu des skins ── */
+.skin-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 9px;
+    border-radius: 12px;
+    background: rgba(255,248,230,0.85);
+    border: 2px solid #eadfc0;
+}
+.skin-row.equipped { border-color: #8bc34a; background: rgba(220,240,200,0.9); }
+.skin-emoji { font-size: 2rem; width: 40px; text-align: center; flex: 0 0 auto; }
+.skin-info { flex: 1 1 auto; min-width: 0; }
+.skin-name { font-weight: bold; font-size: 0.82rem; color: #5d4037; }
+.skin-name small { color: #b08a3a; font-weight: bold; }
+.skin-desc { font-size: 0.64rem; color: #7a6a4a; line-height: 1.2; }
+.skin-act { flex: 0 0 auto; }
+.skin-tag { font-size: 0.66rem; font-weight: bold; padding: 4px 7px; border-radius: 8px; white-space: nowrap; }
+.skin-tag.on { background: #8bc34a; color: #fff; }
+.skin-tag.lock { background: #e0d6bd; color: #8a7a55; }
+
 .bridge {
     position: absolute;
     background: #a67c52;

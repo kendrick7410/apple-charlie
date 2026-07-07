@@ -35,6 +35,8 @@ Game.state = {
     snowGlobes: [],          // boules à neige possédées [id, ...]
     pizzasTasted: {},        // pizzas de David goûtées { id: count }
     pizzasOwned: {},         // pizzas achetées chez David, gardées pour manger { id: count }
+    skin: 'aventurier',      // skin équipé (voir Game.SKINS)
+    skinsOwned: [],          // skins débloqués [id, ...]
     hunger: 100,             // barre de faim (0-100)
     harvest: {},             // légumes/fruits récoltés au jardin { id: count }
     villageRevenue: 0,
@@ -102,6 +104,8 @@ Game.saveGame = function() {
         snowGlobes: s.snowGlobes.slice(),
         pizzasTasted: Object.assign({}, s.pizzasTasted),
         pizzasOwned: Object.assign({}, s.pizzasOwned),
+        skin: s.skin,
+        skinsOwned: s.skinsOwned.slice(),
         hunger: s.hunger,
         harvest: Object.assign({}, s.harvest),
         villageRevenue: s.villageRevenue,
@@ -148,6 +152,8 @@ Game.loadGame = function() {
         if (data.snowGlobes) s.snowGlobes = data.snowGlobes;
         if (data.pizzasTasted) s.pizzasTasted = data.pizzasTasted;
         if (data.pizzasOwned) s.pizzasOwned = data.pizzasOwned;
+        if (data.skin) s.skin = data.skin;
+        if (data.skinsOwned) s.skinsOwned = data.skinsOwned;
         if (data.hunger !== undefined) s.hunger = data.hunger;
         if (data.harvest) s.harvest = data.harvest;
         if (data.villageRevenue !== undefined) s.villageRevenue = data.villageRevenue;

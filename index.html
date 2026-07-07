@@ -102,6 +102,7 @@
             <button id="shovel-toggle" onclick="Game.tools.toggleShovel()">⛏️ Pelle OFF</button>
             <button onclick="Game.ui.toggleCollections()">📖 Collection</button>
             <button onclick="Game.ui.toggleTeleport()">🗺️ Voyage</button>
+            <button onclick="Game.ui.toggleSkins()">🎭 Skins</button>
         </div>
     </div>
 
@@ -276,6 +277,18 @@
         </div>
         <div style="font-size:0.68rem;color:#777;margin-bottom:8px;">Mange ce que tu as cuisiné 🍞 ou cultivé 🌱 pour remplir ta faim.</div>
         <div id="eat-items" style="display:flex;flex-direction:column;gap:5px;"></div>
+    </div>
+</div>
+
+<!-- Menu des skins -->
+<div id="panel-skins" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5800;width:92%;max-width:340px;max-height:82vh;overflow-y:auto;">
+    <div class="ui-card" style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="font-weight:bold;font-size:1rem;color:#5d4037;">🎭 Skins de Charlie</div>
+            <button onclick="Game.ui.toggleSkins()" style="border:none;background:#ef9a9a;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-weight:bold;">✕</button>
+        </div>
+        <div style="font-size:0.66rem;color:#777;margin-bottom:8px;">Chaque skin demande un niveau et des clochettes, et donne un pouvoir de plus en plus fort !</div>
+        <div id="skins-items" style="display:flex;flex-direction:column;gap:6px;"></div>
     </div>
 </div>
 

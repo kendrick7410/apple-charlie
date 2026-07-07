@@ -51,20 +51,27 @@ Game.farm.init = function() {
     tractor.textContent = '🚜';
     world.appendChild(tractor);
 
-    // Bottes de foin rondes (décor) : paille enroulée en spirale, avec reflet et ombre
+    // Bottes de foin en rouleau (décor) : cylindre couché, brins de paille + bout enroulé visible
     function hayBale(x, y, size) {
-        var h = document.createElement('div');
-        h.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + size +
-            'px;height:' + size + 'px;border-radius:50%;z-index:7;' +
+        var w = size, h = Math.round(size * 0.7);
+        var b = document.createElement('div');
+        b.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h +
+            'px;z-index:7;border-radius:' + Math.round(h / 2) + 'px;border:3px solid #9c6f1c;' +
             'background:' +
-                'radial-gradient(circle at 38% 30%, rgba(255,255,255,0.4), rgba(255,255,255,0) 42%),' +
-                'repeating-radial-gradient(circle at 50% 50%, #e8c25e 0 4px, #d6a63f 4px 7px, #c2912f 7px 9px);' +
-            'border:3px solid #a8781f;box-shadow:0 4px 5px rgba(0,0,0,0.22), inset 0 -6px 11px rgba(0,0,0,0.14);';
-        world.appendChild(h);
+                'repeating-linear-gradient(0deg, rgba(120,80,20,0.20) 0 2px, rgba(255,255,255,0) 2px 9px),' +   // brins
+                'linear-gradient(180deg,#f0cd6e,#d7a944 55%,#b9852c);' +                                        // volume
+            'box-shadow:0 4px 5px rgba(0,0,0,0.22), inset 0 -5px 9px rgba(0,0,0,0.13), inset 0 4px 6px rgba(255,255,255,0.25);';
+        // Bout enroulé (côté droit du rouleau) : anneaux concentriques de paille
+        var cap = document.createElement('div');
+        cap.style.cssText = 'position:absolute;right:-3px;top:-3px;width:' + Math.round(w * 0.42) + 'px;height:' + h +
+            'px;box-sizing:border-box;border-radius:50%;border:3px solid #9c6f1c;' +
+            'background:repeating-radial-gradient(circle at 52% 50%, #ecc86a 0 3px, #cb9d3a 3px 5px);';
+        b.appendChild(cap);
+        world.appendChild(b);
     }
-    hayBale(L.x + 120, L.y - 152, 62);
-    hayBale(L.x + 168, L.y - 118, 54);
-    hayBale(L.x - 252, L.y + 26, 58);
+    hayBale(L.x + 110, L.y - 150, 66);
+    hayBale(L.x + 170, L.y - 122, 56);
+    hayBale(L.x + 138, L.y - 92, 50);
 
     // Deux champs cultivés derrière la grange (au nord)
     function cropField(x, y, w, h, crop) {
