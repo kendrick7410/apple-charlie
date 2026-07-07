@@ -142,16 +142,16 @@ Game.farm.startEscape = function() {
     var L = Game.CONFIG.LOCATIONS.farm;
     var world = document.getElementById('game-world');
 
-    // 2 animaux par enclos sortent EN COURANT de leur enclos et se baladent autour de la ferme
+    // TOUS les animaux de chaque enclos sortent EN COURANT : l'enclos se vide vraiment
     F.escaped = [];
     F.pens.forEach(function(pen, pi) {
         pen.hidden = [];   // les animaux figés cachés pendant qu'ils sont dehors
-        for (var k = 0; k < 2; k++) {
+        pen.animalEls.forEach(function(src) {
             // Position de départ : à l'intérieur de l'enclos (là où l'animal était dessiné)
-            var src = pen.animalEls[k];
-            var sx = pen.boxLeft + (src ? +src.dataset.px : 60) + 16;
-            var sy = pen.boxTop  + (src ? +src.dataset.py : 60) + 16;
-            if (src) { src.style.display = 'none'; pen.hidden.push(src); }
+            var sx = pen.boxLeft + (+src.dataset.px) + 16;
+            var sy = pen.boxTop  + (+src.dataset.py) + 16;
+            src.style.display = 'none';
+            pen.hidden.push(src);
 
             // Cible : un point dispersé autour de la ferme (pas trop loin, facile à retrouver)
             var angle = Math.random() * Math.PI * 2;
@@ -164,11 +164,11 @@ Game.farm.startEscape = function() {
             el.style.cssText = 'position:absolute;font-size:2.4rem;z-index:15;';
             el.style.left = sx + 'px';
             el.style.top = sy + 'px';
-            el.textContent = pen.emoji;
+            el.textContent = src.textContent;   // le même animal que celui qui est parti
             world.appendChild(el);
             // mode 'run' : ils foncent hors de l'enclos, puis 'wander' : ils trottinent doucement
             F.escaped.push({ el: el, x: sx, y: sy, tx: tx, ty: ty, pen: pi, returned: false, mode: 'run', pauseUntil: 0 });
-        }
+        });
     });
 
     F.active = true;
