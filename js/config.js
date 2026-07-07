@@ -624,14 +624,14 @@ Game.VILLAGER_JOBS = {
 // ── Skins de Charlie ── boutique de skins : niveau requis + prix croissants, pouvoirs de mieux en mieux
 Game.SKIN_DEFAULT = { id: 'aventurier', name: 'Aventurier', emoji: '🤠', level: 1, price: 0, power: {}, desc: "Ton look de départ (aucun pouvoir)." };
 Game.SKINS = [
-    { id: 'ninja',      name: 'Ninja',       emoji: '🥷',    level: 2,  price: 150,   power: { speed: 1.15 },                                     desc: "Vitesse +15%" },
-    { id: 'astronaute', name: 'Astronaute',  emoji: '🧑‍🚀', level: 3,  price: 350,   power: { xp: 1.25 },                                        desc: "XP +25%" },
+    { id: 'ninja',      name: 'Ninja',       emoji: '🥋',    level: 2,  price: 150,   power: { speed: 1.15 },                                     desc: "Vitesse +15%" },
+    { id: 'astronaute', name: 'Alien',       emoji: '👽',    level: 3,  price: 350,   power: { xp: 1.25 },                                        desc: "XP +25%" },
     { id: 'magicien',   name: 'Magicien',    emoji: '🧙',    level: 4,  price: 600,   power: { hunger: 1.3 },                                     desc: "Faim -30% (tu manges moins souvent)" },
-    { id: 'pecheur',    name: 'Pêcheur',     emoji: '🧑‍🎣', level: 5,  price: 1000,  power: { fish: 0.65 },                                      desc: "Pêche 35% plus rapide" },
+    { id: 'pecheur',    name: 'Pêcheur',     emoji: '🎣',    level: 5,  price: 1000,  power: { fish: 0.65 },                                      desc: "Pêche 35% plus rapide" },
     { id: 'heros',      name: 'Super-héros', emoji: '🦸',    level: 6,  price: 1600,  power: { radius: 60, speed: 1.1 },                          desc: "Aimant à objets + vitesse +10%" },
     { id: 'prince',     name: 'Prince',      emoji: '🤴',    level: 8,  price: 2500,  power: { speed: 1.2, xp: 1.3 },                             desc: "Vitesse +20%, XP +30%" },
     { id: 'vampire',    name: 'Vampire',     emoji: '🧛',    level: 10, price: 4000,  power: { xp: 1.45, hunger: 1.4 },                           desc: "XP +45%, faim -40%" },
-    { id: 'triton',     name: 'Triton',      emoji: '🧜‍♂️', level: 12, price: 6000,  power: { speed: 1.3, fish: 0.5 },                           desc: "Vitesse +30%, pêche 50% plus rapide" },
+    { id: 'triton',     name: 'Triton',      emoji: '🧜',    level: 12, price: 6000,  power: { speed: 1.3, fish: 0.5 },                           desc: "Vitesse +30%, pêche 50% plus rapide" },
     { id: 'genie',      name: 'Génie',       emoji: '🧞',    level: 14, price: 9000,  power: { speed: 1.35, xp: 1.6, hunger: 1.4 },               desc: "Vitesse +35%, XP +60%, faim -40%" },
     { id: 'dragon',     name: 'Dragon',      emoji: '🐉',    level: 15, price: 15000, power: { speed: 1.55, xp: 2, hunger: 1.6, fish: 0.5, radius: 80 }, desc: "ULTIME : vitesse +55%, XP x2, faim -60%, pêche +50%, aimant" }
 ];
