@@ -37,8 +37,15 @@ function riverRects() {
     return _riverRects;
 }
 
-function validSpawnPos(x, y) {
+// Zone des montagnes (mêmes bornes que le terrain alpin de world.js)
+var MOUNTAIN_ZONE = { x1: 2650, y1: 300, x2: 4400, y2: 1750 };
+function inMountainZone(x, y) {
+    return x > MOUNTAIN_ZONE.x1 && x < MOUNTAIN_ZONE.x2 && y > MOUNTAIN_ZONE.y1 && y < MOUNTAIN_ZONE.y2;
+}
+
+function validSpawnPos(x, y, avoidMountain) {
     if (y > Game.CONFIG.BEACH_TOP - 150) return false;           // pas sur la plage/mer
+    if (avoidMountain && inMountainZone(x, y)) return false;      // pas de fleurs en montagne
     // pas sur un bâtiment ou une maison
     var pts = blockPoints();
     for (var i = 0; i < pts.length; i++) {
@@ -61,12 +68,13 @@ function landSpawn() {
     };
 }
 
-// Cherche une position libre (bâtiments + rivière évités), avec garde-fou anti-boucle
-function freeSpawn() {
+// Cherche une position libre (bâtiments + rivière évités), avec garde-fou anti-boucle.
+// avoidMountain = true pour aussi exclure la zone des montagnes (fleurs).
+function freeSpawn(avoidMountain) {
     var pos;
     for (var tries = 0; tries < 60; tries++) {
         pos = landSpawn();
-        if (validSpawnPos(pos.x, pos.y)) return pos;
+        if (validSpawnPos(pos.x, pos.y, avoidMountain)) return pos;
     }
     return pos;   // au pire, la dernière position tirée
 }
@@ -100,7 +108,7 @@ Game.entities.spawnStone = function() {
 Game.entities.spawnFlower = function(season) {
     season = season || Game.state.season;
     if (season === 'winter') return; // No flowers in winter
-    var pos = freeSpawn();
+    var pos = freeSpawn(true);   // les fleurs évitent aussi la zone des montagnes
     Game.entities.createFlowerEl(pos.x, pos.y, Game.FLOWER_TYPES[Math.floor(Math.random() * Game.FLOWER_TYPES.length)], false);
 };
 
