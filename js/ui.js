@@ -175,8 +175,10 @@ Game.ui.updatePizzeria = function() {
     var html = '';
     Game.PIZZAS.forEach(function(pz) {
         var tasted = s.pizzasTasted[pz.id];
+        var owned = s.pizzasOwned[pz.id] || 0;
         html += '<button class="shop-btn" onclick="Game.inventory.buyPizza(\'' + pz.id + '\')">' +
-            pz.emoji + ' ' + pz.name + ' (' + pz.price + '💰, +' + pz.hunger + ' faim)' + (tasted ? ' ✅' : '') + '</button>';
+            pz.emoji + ' ' + pz.name + ' (' + pz.price + '💰, +' + pz.hunger + ' faim)' +
+            (owned ? ' 🎒x' + owned : '') + (tasted ? ' ✅' : '') + '</button>';
     });
     panel.innerHTML = html;
 };
@@ -291,6 +293,15 @@ Game.ui.updateEatMenu = function() {
             any = true;
             html += '<button class="shop-btn" onclick="Game.inventory.eat(\'' + f.id + '\')">' +
                 f.emoji + ' ' + f.label + ' x' + n + ' (+' + f.hunger + ' faim)</button>';
+        }
+    });
+    // Pizzas achetées chez David, gardées pour plus tard
+    Game.PIZZAS.forEach(function(pz) {
+        var n = s.pizzasOwned[pz.id] || 0;
+        if (n > 0) {
+            any = true;
+            html += '<button class="shop-btn" onclick="Game.inventory.eatPizza(\'' + pz.id + '\')">' +
+                pz.emoji + ' ' + pz.name + ' x' + n + ' (+' + pz.hunger + ' faim)</button>';
         }
     });
     panel.innerHTML = any ? html :

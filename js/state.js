@@ -34,6 +34,7 @@ Game.state = {
     mountainCollection: {},  // animaux de la montagne trouvés { id: count }
     snowGlobes: [],          // boules à neige possédées [id, ...]
     pizzasTasted: {},        // pizzas de David goûtées { id: count }
+    pizzasOwned: {},         // pizzas achetées chez David, gardées pour manger { id: count }
     hunger: 100,             // barre de faim (0-100)
     harvest: {},             // légumes/fruits récoltés au jardin { id: count }
     villageRevenue: 0,
@@ -100,6 +101,7 @@ Game.saveGame = function() {
         mountainCollection: Object.assign({}, s.mountainCollection),
         snowGlobes: s.snowGlobes.slice(),
         pizzasTasted: Object.assign({}, s.pizzasTasted),
+        pizzasOwned: Object.assign({}, s.pizzasOwned),
         hunger: s.hunger,
         harvest: Object.assign({}, s.harvest),
         villageRevenue: s.villageRevenue,
@@ -145,6 +147,7 @@ Game.loadGame = function() {
         if (data.mountainCollection) s.mountainCollection = data.mountainCollection;
         if (data.snowGlobes) s.snowGlobes = data.snowGlobes;
         if (data.pizzasTasted) s.pizzasTasted = data.pizzasTasted;
+        if (data.pizzasOwned) s.pizzasOwned = data.pizzasOwned;
         if (data.hunger !== undefined) s.hunger = data.hunger;
         if (data.harvest) s.harvest = data.harvest;
         if (data.villageRevenue !== undefined) s.villageRevenue = data.villageRevenue;

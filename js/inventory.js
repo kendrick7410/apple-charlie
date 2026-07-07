@@ -166,33 +166,56 @@ Game.inventory.eat = function(id) {
     Game.ui.notify("Miam ! " + f.label + " " + f.emoji + " +" + f.hunger + " faim");
 };
 
-// Acheter une pizza chez David (donne de l'XP, et on garde en mémoire celles goûtées)
+function findPizza(id) {
+    for (var i = 0; i < Game.PIZZAS.length; i++) { if (Game.PIZZAS[i].id === id) return Game.PIZZAS[i]; }
+    return null;
+}
+
+// Acheter une pizza chez David : on la garde sur soi pour la manger plus tard (bouton 🍴 Manger)
 Game.inventory.buyPizza = function(id) {
     var s = Game.state;
-    var pz = null;
-    for (var i = 0; i < Game.PIZZAS.length; i++) { if (Game.PIZZAS[i].id === id) pz = Game.PIZZAS[i]; }
+    var pz = findPizza(id);
     if (!pz) return;
     if (s.inventory.money < pz.price) {
         Game.ui.notify("Il te faut " + pz.price + "💰");
         Game.audio.play('error');
         return;
     }
-    // On mange la pizza directement, comme les autres aliments : inutile si déjà rassasié
+    s.inventory.money -= pz.price;
+    s.pizzasOwned[pz.id] = (s.pizzasOwned[pz.id] || 0) + 1;
+    Game.audio.playCoin();
+    Game.particles.spawn('🍕', window.innerWidth / 2, window.innerHeight / 2, { count: 5, spread: 60, vy: -70 });
+    Game.ui.update();
+    if (Game.ui.updatePizzeria) Game.ui.updatePizzeria();
+    if (Game.ui.updateEatMenu) Game.ui.updateEatMenu();
+    Game.ui.notify(pz.name + " achetée ! " + pz.emoji + " Garde-la et mange-la quand tu as faim (🍴 Manger).");
+};
+
+// Manger une pizza qu'on possède : remplit la faim, donne l'XP et débloque la collection
+Game.inventory.eatPizza = function(id) {
+    var s = Game.state;
+    var pz = findPizza(id);
+    if (!pz) return;
+    if ((s.pizzasOwned[pz.id] || 0) <= 0) {
+        Game.ui.notify("Tu n'as pas de " + pz.name + " ! " + pz.emoji);
+        Game.audio.play('error');
+        return;
+    }
     if (s.hunger >= Game.CONFIG.HUNGER_MAX) {
         Game.ui.notify("Tu es déjà rassasié ! 😋");
         return;
     }
-    s.inventory.money -= pz.price;
+    s.pizzasOwned[pz.id]--;
     var isNew = !s.pizzasTasted[pz.id];
     s.pizzasTasted[pz.id] = (s.pizzasTasted[pz.id] || 0) + 1;
-    // On mange la pizza : elle remplit aussi la barre de faim
     var before = s.hunger;
     s.hunger = Math.min(Game.CONFIG.HUNGER_MAX, s.hunger + (pz.hunger || 0));
     var gained = Math.round(s.hunger - before);
     Game.xp.add(pz.xp);
-    Game.audio.playCoin();
-    Game.particles.spawn('🍕', window.innerWidth / 2, window.innerHeight / 2, { count: 5, spread: 60, vy: -70 });
+    Game.audio.playChime();
+    Game.particles.spawn(pz.emoji, window.innerWidth / 2, window.innerHeight / 2, { count: 4, spread: 40, vy: -60 });
     Game.ui.update();
+    if (Game.ui.updateEatMenu) Game.ui.updateEatMenu();
     if (Game.ui.updatePizzeria) Game.ui.updatePizzeria();
     if (Game.ui.updateCollections) Game.ui.updateCollections();
     Game.ui.notify((isNew ? "NOUVEAU ! " : "") + "Miam, " + pz.name + " ! " + pz.emoji +
