@@ -73,6 +73,17 @@ Game.inventory.buyFromShop = function(item) {
         Game.audio.playCoin();
         Game.ui.update();
         Game.ui.notify("Graine de " + crop.label + " ! " + crop.emoji);
+    } else if (item.type === 'swing') {
+        // UNE balançoire, à placer soi-même dehors
+        if (s.swing) { Game.ui.notify("Tu as déjà ta balançoire ! 🎠"); return; }
+        if (s.inventory.money < item.price) { Game.ui.notify("Il te faut " + item.price + "💰"); Game.audio.play('error'); return; }
+        s.inventory.money -= item.price;
+        s.swing = { x: null, y: null };
+        s.swingPlacing = true;
+        Game.audio.playCoin();
+        Game.ui.update();
+        if (Game.ui.updateShop) Game.ui.updateShop();
+        Game.ui.notify("🎠 Balançoire achetée ! Sors et clique sur l'herbe pour la placer où tu veux.", 'levelup');
     } else if (item.type === 'material') {
         if (s.inventory.money < item.price) {
             Game.ui.notify("Il te faut " + item.price + "💰");

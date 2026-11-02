@@ -29,8 +29,17 @@ Game.tools.toggleCrampons = function() {
     Game.tools.updateCramponsBtn();
     Game.ui.notify(s.cramponsOn ? "🥾 Crampons enfilés : tu peux escalader (avec le piolet) !" : "🥾 Crampons enlevés");
 };
+// Déplacer la balançoire : le prochain clic sur le sol (dehors) la pose
+Game.tools.moveSwing = function() {
+    var s = Game.state;
+    if (!s.swing) return;
+    s.swingPlacing = true;
+    Game.ui.notify("🎠 Clique sur l'herbe (dehors) pour placer ta balançoire");
+};
 Game.tools.updateCramponsBtn = function() {
-    var s = Game.state, btn = document.getElementById('crampons-toggle');
+    var s = Game.state, sw = document.getElementById('swing-move');
+    if (sw) sw.style.display = s.swing ? '' : 'none';
+    var btn = document.getElementById('crampons-toggle');
     if (!btn) return;
     btn.style.display = s.tools.crampons ? '' : 'none';
     var on = s.cramponsOn !== false;

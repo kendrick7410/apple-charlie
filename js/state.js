@@ -34,6 +34,8 @@ Game.state = {
     mountainCollection: {},  // animaux de la montagne trouvés { id: count }
     summits: {},             // sommets gravis (alpinisme) { 'Le Cervin': true }
     cramponsOn: true,        // crampons enfilés (quand on les a)
+    swing: null,             // balançoire achetée { x, y } (x null = pas encore placée)
+    swingPlacing: false,
     snowGlobes: [],          // boules à neige possédées [id, ...]
     pizzasTasted: {},        // pizzas de David goûtées { id: count }
     pizzasOwned: {},         // pizzas achetées chez David, gardées pour manger { id: count }
@@ -111,6 +113,7 @@ Game.saveGame = function() {
         mountainCollection: Object.assign({}, s.mountainCollection),
         summits: Object.assign({}, s.summits),
         cramponsOn: s.cramponsOn,
+        swing: s.swing,
         snowGlobes: s.snowGlobes.slice(),
         pizzasTasted: Object.assign({}, s.pizzasTasted),
         pizzasOwned: Object.assign({}, s.pizzasOwned),
@@ -163,6 +166,7 @@ Game.loadGame = function() {
         if (data.mountainCollection) s.mountainCollection = data.mountainCollection;
         if (data.summits) s.summits = data.summits;
         if (data.cramponsOn !== undefined) s.cramponsOn = data.cramponsOn;
+        if (data.swing) { s.swing = data.swing; s.swingPlacing = data.swing.x === null; }
         if (data.snowGlobes) s.snowGlobes = data.snowGlobes;
         if (data.pizzasTasted) s.pizzasTasted = data.pizzasTasted;
         if (data.pizzasOwned) s.pizzasOwned = data.pizzasOwned;

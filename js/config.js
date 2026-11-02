@@ -603,7 +603,8 @@ Game.SHOP_ITEMS = [
     { type: 'tool', id: 'shovel' },
     { type: 'tool', id: 'net' },
     { type: 'tool', id: 'piolet' },
-    { type: 'tool', id: 'crampons' }
+    { type: 'tool', id: 'crampons' },
+    { type: 'swing', id: 'swing', price: 200 }
 ];
 
 // ── Species data (fish & butterflies) ──

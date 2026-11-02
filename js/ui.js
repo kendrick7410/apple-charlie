@@ -161,6 +161,9 @@ Game.ui.updateShop = function() {
             var crop = Game.CROPS[item.id];
             html += '<button class="shop-btn" onclick="Game.inventory.buyFromShop({type:\'seed\',id:\'' + item.id + '\',price:' + item.price + '})">' +
                 crop.emoji + ' Graine ' + crop.label + ' (' + item.price + '💰)</button>';
+        } else if (item.type === 'swing') {
+            html += '<button class="shop-btn' + (s.swing ? ' owned' : '') + '" onclick="Game.inventory.buyFromShop({type:\'swing\',price:' + item.price + '})">' +
+                '🎠 Balançoire ' + (s.swing ? '✅' : '(' + item.price + '💰)') + '</button>';
         } else if (item.type === 'material') {
             html += '<button class="shop-btn" onclick="Game.inventory.buyFromShop({type:\'material\',id:\'materials\',price:' + item.price + '})">' +
                 '🧱 Matériaux (' + item.price + '💰)</button>';

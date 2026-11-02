@@ -382,6 +382,12 @@ function makeCharlie(skinId) {
         });
         var dt = put(body, new T.Mesh(capsuleGeo(0.12, 0.6), mat('#5fae47')), 0, 0.55, -0.55); dt.rotation.x = 1.1;
     }
+    // Grand sourire (balançoire) : bouche ouverte, caché par défaut
+    var big = new T.Group(); big.position.set(0, -0.17, 0.43); big.visible = false; head.add(big);
+    var mouth = new T.Mesh(geo('bigmouth', function() { return new T.CircleGeometry(0.12, 20, Math.PI, Math.PI); }), mat('#7a2a22')); big.add(mouth);
+    var tongue = new T.Mesh(geo('tongue', function() { return new T.CircleGeometry(0.06, 16, Math.PI, Math.PI); }), mat('#ff7a8a')); tongue.position.set(0, -0.05, 0.005); big.add(tongue);
+    ud.bigSmile = big;
+    head.traverse(function(o) { if (o.geometry && o.geometry === _geo.smile) ud.smile = o; });
     root.scale.setScalar(0.85);
     root.userData.skin = id;
     return root;
@@ -1603,6 +1609,78 @@ function plantFlag(rec) {
     rbox(f, 0.7, 0.45, 0.04, 0.03, '#e8443c', 0.36, 1.35, 0);
     f.position.set(0, h - 0.1, 0); rec.obj.add(f); rec.flag = f;
 }
+// ── Balançoire (achetée au Magasin, placée par Charlie) ──
+var swingObj = null, swingPivot = null, _swinging = false, _swingBtn = null, _swingT = 0;
+function makeSwing() {
+    var g = new T.Group(), WOOD = '#a0703f';
+    [-1, 1].forEach(function(sx) {
+        [-1, 1].forEach(function(sz) { var leg = rbox(g, 0.16, 3.4, 0.16, 0.05, WOOD, sx * 1.35, 1.6, sz * 0.55); leg.rotation.x = -sz * 0.3; });
+    });
+    rbox(g, 3.0, 0.2, 0.2, 0.06, WOOD, 0, 3.2, 0);
+    var piv = new T.Group(); piv.position.set(0, 3.1, 0); g.add(piv);
+    [-0.4, 0.4].forEach(function(x) { put(piv, new T.Mesh(geo('rope', function() { return new T.CylinderGeometry(0.025, 0.025, 2.3, 6); }), mat('#e8d9b0')), x, -1.15, 0); });
+    rbox(piv, 1.0, 0.1, 0.45, 0.04, '#d9443b', 0, -2.3, 0);
+    g.userData.pivot = piv;
+    return g;
+}
+function updateSwing(dt, time) {
+    var s = Game.state;
+    if (!s.swing) return;
+    // Placement : la balançoire suit le pointeur... ici on attend un clic sur le sol (handleClick3d)
+    if (s.swing.x !== null && !swingObj) {
+        swingObj = makeSwing(); scene.add(swingObj); swingPivot = swingObj.userData.pivot;
+    }
+    if (swingObj) {
+        swingObj.position.set(s.swing.x * U, heightAt(s.swing.x, s.swing.y), s.swing.y * U);
+        _swingT += dt;
+        swingPivot.rotation.x = _swinging ? Math.sin(_swingT * 2.4) * 0.75 : swingPivot.rotation.x * 0.95;
+    }
+    // Bouton « Se balancer » quand on est à côté
+    if (!_swingBtn) {
+        _swingBtn = document.createElement('button');
+        _swingBtn.id = 'swing-btn'; _swingBtn.className = 'btn-animal';
+        _swingBtn.onclick = function() { _swinging ? stopSwing() : startSwing(); };
+        document.body.appendChild(_swingBtn);
+    }
+    var near = swingObj && s.currentView === 'world' && Math.hypot(s.charlie.x - s.swing.x, s.charlie.y - s.swing.y) < 110;
+    _swingBtn.style.display = near || _swinging ? 'block' : 'none';
+    _swingBtn.textContent = _swinging ? '✋ Descendre' : '🎠 Se balancer';
+    if (_swinging) {
+        for (var k in s.keysDown) if (s.keysDown[k]) { stopSwing(); return; }
+        // Charlie assis sur le siège, les mains aux cordes, avec un grand sourire
+        var ud = charlie.userData, seat = new T.Vector3(0, -2.3, 0);
+        swingPivot.localToWorld(seat);
+        charlie.position.set(seat.x, seat.y - 0.55, seat.z + 0.05);
+        charlie.rotation.set(swingPivot.rotation.x * 0.9, 0, 0);
+        ud.legL.rotation.x = ud.legR.rotation.x = -1.4 + Math.sin(_swingT * 2.4) * 0.35;   // jambes qui poussent
+        ud.armL.rotation.x = ud.armR.rotation.x = -2.75;
+        ud.armL.rotation.z = -0.25; ud.armR.rotation.z = 0.25;
+        ud.body.rotation.x = 0; ud.body.position.y = 0;
+        s.charlie.visualX = seat.x / U; s.charlie.visualY = seat.z / U;
+    }
+}
+function startSwing() {
+    var s = Game.state, ud = charlie.userData;
+    _swinging = true; _swingT = 0;
+    s.charlie.x = s.swing.x; s.charlie.y = s.swing.y + 4;
+    if (ud.bigSmile) { ud.bigSmile.visible = true; if (ud.smile) ud.smile.visible = false; }
+    Game.audio.playChime && Game.audio.playChime();
+    if (Game.xp) Game.xp.add(2);
+}
+function stopSwing() {
+    var s = Game.state, ud = charlie.userData;
+    _swinging = false;
+    charlie.rotation.x = 0;
+    ud.armL.rotation.z = -0.12; ud.armR.rotation.z = 0.12;
+    if (ud.bigSmile) { ud.bigSmile.visible = false; if (ud.smile) ud.smile.visible = true; }
+    s.charlie.x = s.swing.x; s.charlie.y = s.swing.y + 70;
+}
+Game.r3d.isSwinging = function() { return _swinging; };
+// Une touche de déplacement fait descendre de la balançoire
+window.addEventListener('keydown', function(e) {
+    if (_swinging && /^(arrow|[zqsdwa]$)/i.test(e.key)) stopSwing();
+});
+
 // ── Nage : dans l'eau profonde (rivière, lacs), Charlie nage le crawl ou fait du sur-place ──
 var SWIM_DEPTH = -0.34, WATER_Y = -0.16, _swimK = 0, _ripples = [], _rippleT = 0;
 function swim(inWater, moving, dt, time) {
@@ -1771,6 +1849,15 @@ function handleClick3d(e) {
     if (!g) return;
     var px = g.point.x / U, py = g.point.z / U;
     if (s.shovelMode && s.tools.shovel) { Game.tools.placePath(px, py); return; }
+    if (s.swing && s.swingPlacing) {
+        if (rawHeightAt(px, py) < -0.1 || mountainHeight(px, py)) { Game.ui.notify("Pas ici ! Choisis un endroit sur l'herbe ou le sable 🎠"); return; }
+        s.swing.x = px; s.swing.y = py; s.swingPlacing = false;
+        if (swingObj) { scene.remove(swingObj); swingObj = null; }
+        Game.audio.play('craft');
+        Game.ui.notify("🎠 Balançoire installée ! Approche-toi et clique « Se balancer ».");
+        Game.saveGame();
+        return;
+    }
     _walkTarget = { x: px, y: py };
     _stuck = 0;
 }
@@ -2377,7 +2464,8 @@ function loop(now) {
     var gy = heightAt(cx, cy);
     var onMtn = mountainHeight(cx, cy);
     if (onMtn && onMtn.y > gy + 0.02) gy = onMtn.y; else onMtn = null;
-    if (!_exitHold) {   // pendant l'animation de porte, c'est elle qui place Charlie
+    updateSwing(dt, time);
+    if (!_exitHold && !_swinging) {   // pendant l'animation de porte (ou la balançoire), c'est elle qui place Charlie
         var moved = animateWalker(charlie, _prev ? cx - _prev.x : 0, _prev ? cy - _prev.y : 0, dt, time);
         charlie.position.set(cx * U, gy, cy * U);
         swim(!onMtn && rawHeightAt(cx, cy) < SWIM_DEPTH, moved, dt, time);
