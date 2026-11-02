@@ -39,13 +39,10 @@ Game.player.update = function(dt, now) {
     var s = Game.state;
     if (s.currentView !== 'world') return;
 
-    // Dans la zone du loup : Charlie va à la même vitesse que le loup. Sinon : normal (ralenti si affamé).
-    var speed;
-    if (Game.forest && Game.forest.inZone && Game.forest.inZone(s.charlie.x, s.charlie.y)) {
-        speed = Game.forest.WOLF_SPEED;
-    } else {
-        speed = Game.CONFIG.PLAYER_SPEED * (s.hunger <= 0 ? 0.55 : 1) * Game.player.skinBonus().speed;  // affamé = plus lent, skin = bonus vitesse
-    }
+    // Même vitesse partout sur la carte (seul le skin peut donner un bonus).
+    // PLAYER_SPEED est en pixels par image à 60 images/s : on le cale sur le temps réel (dt),
+    // sinon Charlie ralentit là où l'ordinateur affiche moins d'images (montagnes...).
+    var speed = Game.CONFIG.PLAYER_SPEED * Game.player.skinBonus().speed * (dt || 16.67) / 16.67;
     var moved = false;
     var keys = s.keysDown;
 
@@ -163,7 +160,7 @@ Game.player.updateInterior = function(dt) {
     if (s.currentView !== 'interior') return;
     Game.furniture.fitRoom();
 
-    var speed = Game.CONFIG.PLAYER_SPEED * 0.8;
+    var speed = Game.CONFIG.PLAYER_SPEED * 0.8 * (dt || 16.67) / 16.67;   // calé sur le temps réel
     var keys = s.keysDown;
     var dx = 0, dy = 0;
 

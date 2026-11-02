@@ -92,12 +92,7 @@ Game.engine.initJoystick = function() {
             if (Game.state.currentView === 'world') {
                 // Direct position update for joystick - smoother movement
                 var step = Game.CONFIG.TILE * 0.72;
-                if (Game.forest && Game.forest.inZone && Game.forest.inZone(Game.state.charlie.x, Game.state.charlie.y)) {
-                    step *= Game.forest.WOLF_SPEED / Game.CONFIG.PLAYER_SPEED;  // vitesse du loup dans sa zone
-                } else {
-                    if (Game.state.hunger <= 0) step *= 0.55;  // affamé = plus lent
-                    step *= Game.player.skinBonus().speed;     // bonus vitesse du skin
-                }
+                step *= Game.player.skinBonus().speed;     // même vitesse partout (bonus du skin seulement)
                 Game.state.charlie.x += dir.dx * step;
                 Game.state.charlie.y += dir.dy * step;
 
@@ -157,7 +152,7 @@ Game.engine.loop = function(now) {
     if (Game.state.currentView === 'title' || Game.state.paused) return;
 
     var dt = now - lastTime;
-    if (dt > 100) dt = 16; // Cap delta
+    if (dt > 100) dt = 100; // Cap delta (onglet en pause...) sans fausser les images lentes
     lastTime = now;
 
     // Update systems
@@ -169,7 +164,6 @@ Game.engine.loop = function(now) {
     Game.creatures.update(dt);
     Game.mountain.update(dt, now);
     Game.coast.update(dt);
-    Game.forest.update(dt);
     Game.beach.update(dt, now);
     Game.farm.update(dt, now);
     Game.particles.update(now);
