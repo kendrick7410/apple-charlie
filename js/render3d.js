@@ -20,7 +20,7 @@ document.documentElement.classList.add('mode-3d');
 
 var U = 1 / 40;                 // 40 px de la carte 2D = 1 unité 3D
 var T = null;                   // THREE, une fois chargé
-var renderer, scene, camera, sun, hemi, charlieLight, groundMesh;
+var renderer, scene, camera, sun, hemi, groundMesh;
 var started = false;
 
 // ── Chargement de Three.js (fichier local, même numéro de version que le jeu) ──
@@ -125,8 +125,12 @@ function labelTexture(text) {
     t.userData = { aspect: w / 56 };
     return (_tex['l' + text] = t);
 }
+var spriteMats = [];   // images (emoji) : assombries la nuit comme le reste du décor
 function emojiSprite(e, size) {
-    var s = new T.Sprite(new T.SpriteMaterial({ map: emojiTexture(e), transparent: true, alphaTest: 0.35 }));
+    var m = new T.SpriteMaterial({ map: emojiTexture(e), transparent: true, alphaTest: 0.35 });
+    m.color.setScalar(_spriteLight);
+    spriteMats.push(m);
+    var s = new T.Sprite(m);
     s.center.set(0.5, 0.08);
     s.scale.set(size, size, 1);
     return s;
@@ -205,6 +209,22 @@ function makeCharlie() {
     cowboyHat(head, '#b57a3e', '#5b3a1a');
     root.scale.setScalar(0.85);
     return root;
+}
+// Silhouette de Charlie visible à travers les murs : chaque morceau est doublé avec une matière
+// qui ne se dessine QUE là où quelque chose est devant lui (depthFunc GreaterDepth)
+// Ordre de dessin : décor (0), puis silhouette (20), puis Charlie lui-même (30) : ainsi la silhouette
+// n'apparaît que derrière le décor, jamais à travers ses propres bras ou son chapeau.
+function addGhost(root) {
+    var ghost = new T.MeshBasicMaterial({ color: lin('#e9c9a0'), depthWrite: false, depthFunc: T.GreaterDepth });
+    var meshes = [];
+    root.traverse(function(o) { if (o.isMesh) meshes.push(o); });
+    meshes.forEach(function(m) {
+        m.renderOrder = 30;
+        if (m.material.transparent) return;
+        var g = new T.Mesh(m.geometry, ghost);
+        g.renderOrder = 20;
+        m.add(g);
+    });
 }
 // Le fermier : même corps, chapeau de paille et salopette
 function makeFarmer() {
@@ -381,6 +401,7 @@ function makeFlower(e) {
 }
 function makeMountain(h) {
     var g = new T.Group(), pts = [], i, u;
+    g.userData.baseR = h * 0.75;
     for (i = 0; i <= 16; i++) { u = i / 16; pts.push(new T.Vector2(Math.max(0.001, (1 - Math.pow(u, 1.35)) * h * 0.75), u * h)); }
     put(g, new T.Mesh(new T.LatheGeometry(pts, 32), mat('#8d8f99', { roughness: 0.9 })), 0, 0, 0);
     var cap = [];
@@ -629,6 +650,13 @@ function buildFor(el, kind, e, label) {
             obj.userData.sprite = sp;
         }
     }
+    // La nuit, les maisons et boutiques construites éclairent autour d'elles par leurs fenêtres
+    if (kind === 'house' || kind === 'shop') {
+        var glow = new T.PointLight(lin('#ffb85c'), _windowLight, 11, 1.7);
+        glow.position.set(0, 1.8, 3.2);
+        obj.add(glow);
+        houseLights.push(glow);
+    }
     if (label && kind !== 'flower') {
         var top = { house: 4.6, shop: 5.6, construction: 3, plot: 2.2, fountain: 2.6, garden: 1.2, villager: 2.3, farmer: 2.3, barn: 4.8, mountain: Math.max(4, size * 1.4) + 0.5 }[kind] || (kind === 'sprite' ? size * 1.3 : 3.5);
         var lab = labelSprite(label, 0.55); lab.position.y = top; obj.add(lab);
@@ -674,12 +702,32 @@ function syncElement(el) {
         tracked.set(el, rec);
     }
     rec.seen = true;
+    if (rec.col === undefined) rec.col = colliderFor(el, kind, rec.obj);
     rec.obj.visible = el.style.display !== 'none';
     if (!rec.moving) placeRec(el, rec);
     if (kind === 'garden') syncGarden(el, rec.obj);
 }
+// Bâtiments : la porte du modèle 3D est placée pile sur le point où le jeu propose « Entrer »,
+// sinon les murs (collisions) empêcheraient d'y arriver. Retourne null si l'élément n'est pas un bâtiment.
+function doorPoint(el, kind) {
+    var L = Game.CONFIG.LOCATIONS;
+    if (el.id === 'house-site') return { x: L.charlieHouse.x, y: L.charlieHouse.y };
+    if (el.classList.contains('house-exterior')) {
+        var h = Game.HOUSES.find(function(hh) { return 'house-' + hh.id === el.id; });
+        return h ? { x: h.x, y: h.y + 50 } : null;
+    }
+    if (/-anchor$/.test(el.id) && el.id !== 'fountain-anchor') {
+        var shop = (Game.SHOPS || []).find(function(sh) { return sh.loc + '-anchor' === el.id; });
+        return shop && L[shop.loc] ? { x: L[shop.loc].x, y: L[shop.loc].y } : null;
+    }
+    return null;
+}
+// Profondeur (en px) entre la porte et le centre du modèle, selon sa taille
+var DOOR_BACK = { house: 62, shop: 74, construction: 55, plot: 0 };
 function placeRec(el, rec) {
     var p = groundPoint(el, rec.kind);
+    var door = DOOR_BACK[rec.kind] !== undefined ? doorPoint(el, rec.kind) : null;
+    if (door) p = { x: door.x, y: door.y - DOOR_BACK[rec.kind] };
     if (rec.px === p.x && rec.py === p.y) return;
     rec.px = p.x; rec.py = p.y;
     rec.obj.position.set(p.x * U, rec.kind === 'mountain' ? heightAt(p.x, p.y) - 0.5 : heightAt(p.x, p.y), p.y * U);
@@ -699,6 +747,73 @@ function syncGarden(el, g) {
     }
 }
 var _scanT = 0, _dtFrame = 0.016;
+
+// ═══════════════════════ Collisions ═══════════════════════
+// Ce qui bloque Charlie : bâtiments (rectangles), arbres, montagnes, villageois... (cercles).
+// Cailloux et fleurs ne bloquent pas (on les ramasse en marchant dessus), ni l'eau (on pêche au bord).
+var CHARLIE_R = 16;
+function colliderFor(el, kind, obj) {
+    var sc = obj.scale.x;
+    switch (kind) {
+        case 'house':        return { hw: 4.1 * 0.8 / 2 / U, hd: 3.3 * 0.8 / 2 / U };
+        case 'shop':         return { hw: 4.1 * 0.95 / 2 / U, hd: 3.3 * 0.95 / 2 / U };
+        case 'construction': return { hw: 4 * 0.8 / 2 / U, hd: 3.4 * 0.8 / 2 / U };
+        case 'barn':         return { hw: 2.5 / U, hd: 1.9 / U };
+        case 'field':        return { hw: el.offsetWidth / 2, hd: el.offsetHeight / 2 };
+        case 'fountain':     return { r: 2.3 / U };
+        case 'plot':         return { r: 8 };
+        case 'tree': case 'autumn': case 'pine': case 'snowpine': return { r: 0.45 * sc / U };
+        case 'palm':         return { r: 0.3 * sc / U };
+        case 'mountain':     return { r: obj.userData.baseR ? obj.userData.baseR / U * 0.8 : 60 };
+        case 'hay':          return { r: 0.55 * sc / U };
+        case 'villager': case 'farmer': return { r: 14 };
+        case 'rock':         return el.classList.contains('stone') ? null : { r: 0.45 * sc / U };
+        default:             return null;
+    }
+}
+function collide() {
+    var c = Game.state.charlie;
+    tracked.forEach(function(rec) {
+        var col = rec.col;
+        if (!col || !rec.obj.visible || rec.px === undefined) return;
+        var dx = c.x - rec.px, dy = c.y - rec.py;
+        if (Math.abs(dx) > 400 || Math.abs(dy) > 400) return;
+        if (col.r) {
+            var d = Math.hypot(dx, dy), min = col.r + CHARLIE_R;
+            if (d < min) {
+                if (d < 0.01) { dx = 0; dy = 1; d = 1; }
+                c.x = rec.px + dx / d * min; c.y = rec.py + dy / d * min;
+            }
+        } else {
+            // Rectangle : on repousse Charlie vers le côté le plus proche
+            var hw = col.hw + CHARLIE_R, hd = col.hd + CHARLIE_R;
+            if (Math.abs(dx) < hw && Math.abs(dy) < hd) {
+                var px = hw - Math.abs(dx), py = hd - Math.abs(dy);
+                if (px < py) c.x = rec.px + (dx < 0 ? -hw : hw);
+                else c.y = rec.py + (dy < 0 ? -hd : hd);
+            }
+        }
+    });
+}
+
+// Clic pour marcher : Charlie marche pas à pas vers le point (et glisse le long des obstacles)
+var _walkTarget = null, _stuck = 0;
+function walkToTarget(dt) {
+    var s = Game.state, k = s.keysDown;
+    if (!_walkTarget) return;
+    for (var key in k) { if (k[key]) { _walkTarget = null; return; } }   // le clavier reprend la main
+    var c = s.charlie, dx = _walkTarget.x - c.x, dy = _walkTarget.y - c.y, d = Math.hypot(dx, dy);
+    var step = Game.CONFIG.PLAYER_SPEED * Game.player.skinBonus().speed * dt * 60;
+    if (d <= step) { c.x = _walkTarget.x; c.y = _walkTarget.y; _walkTarget = null; return; }
+    var bx = c.x, by = c.y;
+    c.x += dx / d * step; c.y += dy / d * step;
+    collide();
+    // Bloqué contre un obstacle (aucun progrès) : on s'arrête
+    if (Math.hypot(c.x - bx, c.y - by) < step * 0.15) { if (++_stuck > 12) { _walkTarget = null; _stuck = 0; } }
+    else _stuck = 0;
+    if (Game.buildings) Game.buildings.checkProximity();
+    if (Game.entities) Game.entities.checkCollect();
+}
 function scan() {
     tracked.forEach(function(rec) { rec.seen = false; });
     var els = gameWorld.querySelectorAll(':scope > .entity, :scope > div:not([class]), .farm-pen > div:not(.building-label)');
@@ -751,22 +866,28 @@ function skyTexture(top, bottom) {
     var t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; return t;
 }
 var SKIES, _phase = null;
+var houseLights = [], _windowLight = 0, _spriteLight = 1;   // lumières des fenêtres (intensité selon l'heure)
 function applyPhase() {
     var ph = Game.time.getPhase();
     if (ph === _phase) return;
     _phase = ph;
     var P = {
-        day:   { sky: SKIES.day,   fog: '#bfe2f6', hemi: 0.7,  sun: 1.3, sunC: '#fff0d0', win: 0,   lamp: 0 },
-        dawn:  { sky: SKIES.dawn,  fog: '#f6d2b8', hemi: 0.5,  sun: 0.9, sunC: '#ffc89a', win: 0.4, lamp: 0 },
-        dusk:  { sky: SKIES.dusk,  fog: '#e7a98f', hemi: 0.45, sun: 0.8, sunC: '#ff9f6a', win: 0.8, lamp: 0.6 },
-        night: { sky: SKIES.night, fog: '#1d2550', hemi: 0.1,  sun: 0.1, sunC: '#8fa6ff', win: 1.3, lamp: 1.6 }
+        day:   { sky: SKIES.day,   fog: '#bfe2f6', hemi: 0.7,  sun: 1.3,  sunC: '#fff0d0', win: 0,   lamp: 0,   spr: 1 },
+        dawn:  { sky: SKIES.dawn,  fog: '#f6d2b8', hemi: 0.5,  sun: 0.9,  sunC: '#ffc89a', win: 0.4, lamp: 0.6, spr: 0.8 },
+        dusk:  { sky: SKIES.dusk,  fog: '#e7a98f', hemi: 0.4,  sun: 0.7,  sunC: '#ff9f6a', win: 0.9, lamp: 1.2, spr: 0.65 },
+        // Nuit noire : seules les fenêtres des maisons éclairent (Charlie ne porte plus de lumière)
+        night: { sky: SKIES.night, fog: '#05070f', hemi: 0.025, sun: 0.02, sunC: '#8fa6ff', win: 1.6, lamp: 2.6, spr: 0.12 }
     }[ph];
     scene.background = P.sky;
     scene.fog.color.copy(lin(P.fog));
     hemi.intensity = P.hemi;
     sun.intensity = P.sun; sun.color.copy(lin(P.sunC));
     windowGlass.forEach(function(g) { g.emissiveIntensity = P.win; });
-    charlieLight.intensity = P.lamp;
+    _windowLight = P.lamp;
+    houseLights = houseLights.filter(function(l) { return l.parent && l.parent.parent; });   // maisons encore là
+    houseLights.forEach(function(l) { l.intensity = P.lamp; });
+    _spriteLight = P.spr;
+    spriteMats.forEach(function(m) { m.color.setScalar(P.spr); });
 }
 
 // ═══════════════════════ Clics : villageois, papillons, jardin, ou marcher ═══════════════════════
@@ -797,8 +918,8 @@ function handleClick3d(e) {
     if (!g) return;
     var px = g.point.x / U, py = g.point.z / U;
     if (s.shovelMode && s.tools.shovel) { Game.tools.placePath(px, py); return; }
-    s.charlie.x = px;
-    s.charlie.y = py;
+    _walkTarget = { x: px, y: py };
+    _stuck = 0;
 }
 
 // ═══════════════════════ Démarrage et boucle ═══════════════════════
@@ -825,21 +946,21 @@ function init() {
         day: skyTexture('#5fb3ee', '#d3eefc'), dawn: skyTexture('#8fb4e8', '#ffd9bf'),
         dusk: skyTexture('#5a64b0', '#ffae86'), night: skyTexture('#070c26', '#25305e')
     };
-    scene.fog = new T.Fog(lin('#bfe2f6'), 38, 85);
+    scene.fog = new T.Fog(lin('#bfe2f6'), 48, 105);
     camera = new T.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 200);
 
     hemi = new T.HemisphereLight(lin('#cfe9ff'), lin('#4d6b2f'), 0.7); scene.add(hemi);
     sun = new T.DirectionalLight(lin('#fff0d0'), 1.3); sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03;
-    var sc = sun.shadow.camera; sc.left = -26; sc.right = 26; sc.top = 26; sc.bottom = -26; sc.near = 1; sc.far = 80;
+    var sc = sun.shadow.camera; sc.left = -34; sc.right = 34; sc.top = 34; sc.bottom = -34; sc.near = 1; sc.far = 90;
     scene.add(sun); scene.add(sun.target);
-    charlieLight = new T.PointLight(lin('#ffd08a'), 0, 9, 1.6); scene.add(charlieLight);
 
     _ray = new T.Raycaster(); _down = new T.Vector3(0, -1, 0); _from = new T.Vector3();
     _rc = new T.Raycaster(); _ndc = new T.Vector2();
 
     buildTerrain();
     charlie = makeCharlie(); scene.add(charlie);
+    addGhost(charlie);
     scan();
     applyPhase();
 
@@ -879,7 +1000,7 @@ function watchSlow(fps) {
     box.querySelector('button').onclick = function() { box.remove(); };
     document.body.appendChild(box);
 }
-var CAM_H = 11, CAM_D = 15.5;   // caméra : hauteur et recul derrière Charlie
+var CAM_H = 16, CAM_D = 18;   // vue plus haute et plus éloignée : Charlie reste visible derrière les maisons   // caméra : hauteur et recul derrière Charlie
 var _last = 0, _prev = null, _camTarget = null, _look = null;
 var _fpsEl = null, _frames = 0, _fpsT = 0;
 function loop(now) {
@@ -891,6 +1012,8 @@ function loop(now) {
     var time = now / 1000;
 
     _dtFrame = dt;
+    walkToTarget(dt);
+    collide();
     _scanT += dt;
     if (_scanT > 0.4) { _scanT = 0; scan(); applyPhase(); }
     syncMoving(time);
@@ -901,7 +1024,6 @@ function loop(now) {
     _prev = { x: cx, y: cy };
     var gy = heightAt(cx, cy);
     charlie.position.set(cx * U, gy, cy * U);
-    charlieLight.position.set(cx * U, gy + 2.2, cy * U + 0.5);
 
     // Caméra de biais qui suit Charlie ; le soleil (et ses ombres) suit aussi
     if (!_camTarget) { _camTarget = new T.Vector3(); _look = new T.Vector3(); }
