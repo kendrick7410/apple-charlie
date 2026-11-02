@@ -182,7 +182,8 @@ Game.HOUSES = [
     { id: 'jo',   name: 'Tom 🐶',   x: 1500, y: 900,  emoji: '🏘️', level: 3, cost: 5, furniture: [['🎸',50,400],['🍕',300,300],['🏆',50,50]] },
     { id: 'celestine', name: 'Lucie 🦊', x: 700, y: 1500, emoji: '🏡', level: 5, cost: 8, furniture: [['🔮',50,50],['📖',400,100],['🕯️',250,300]] },
     { id: 'ordra', name: 'Ordralfabétix 🐡', x: 1700, y: 1000, emoji: '🛖', level: 7, cost: 10, furniture: [['🐟',50,50],['🪣',400,100],['🎣',250,300]] },
-    { id: 'max',  name: 'Max 🐕', x: 3300, y: 950, emoji: '🏠', level: 9, cost: 12, furniture: [['🧗',50,50],['🎒',400,100],['🗺️',250,300]] },
+    // Max garde le refuge du Cervin : sa "maison", c'est le refuge en ruine à réparer
+    { id: 'max',  name: 'Max 🐕', x: 3300, y: 950, emoji: '🛖', label: '🔥 Refuge de Max', plotEmoji: '🏚️', plotLabel: 'Refuge en ruine', level: 9, cost: 12, furniture: [['🧗',50,50],['🎒',400,100],['🗺️',250,300]] },
     { id: 'charlie', name: 'Charlie 🤠', x: 1400, y: 1200, emoji: '🏗️', furniture: [] }
 ];
 

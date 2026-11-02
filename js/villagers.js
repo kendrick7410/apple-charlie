@@ -81,8 +81,9 @@ Game.villagers.update = function(dt) {
 
         // Cible de marche : au départ, ou renouvelée toutes les UPDATE_INTERVAL
         if (v.tx === undefined || pickNew) {
-            v.tx = Math.max(550, Math.min(1700, v.x + (Math.random() - 0.5) * 260));
-            v.ty = Math.max(700, Math.min(1700, v.y + (Math.random() - 0.5) * 260));
+            // Chaque villageois se promène autour de sa maison (Max reste près de son refuge)
+            v.tx = Math.max(v.homeX - 300, Math.min(v.homeX + 300, v.x + (Math.random() - 0.5) * 260));
+            v.ty = Math.max(v.homeY - 300, Math.min(v.homeY + 300, v.y + (Math.random() - 0.5) * 260));
         }
 
         // Avance doucement vers la cible (mouvement fluide chaque frame)

@@ -328,15 +328,8 @@ Game.world.createMountain = function() {
     goat.style.filter = 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))';
     world.appendChild(goat);
 
-    // Mountain Refuge
-    var refuge = document.createElement('div');
-    refuge.className = 'entity';
-    refuge.style.fontSize = '4rem';
-    refuge.style.left = (loc.x - 200) + 'px';
-    refuge.style.top = (loc.y + 150) + 'px';
-    refuge.style.cursor = 'pointer';
-    refuge.innerHTML = '<div style="font-size:4rem;">🏚️</div><div class="building-label">🔥 Refuge du Cervin</div>';
-    world.appendChild(refuge);
+    // Le refuge du Cervin est la maison de Max (Game.HOUSES, id 'max') :
+    // en ruine 🏚️ jusqu'à ce que Charlie le répare (voir renderVillagerHouse)
 };
 
 Game.world.createLake = function() {
@@ -638,10 +631,10 @@ Game.world.renderVillagerHouse = function(h) {
     var nameOnly = h.name.split(' ')[0];
     if (Game.buildings.isHouseBuilt(h.id)) {
         div.className = 'entity house-exterior';
-        div.innerHTML = '<div>' + h.emoji + '</div><div class="building-label">Chez ' + nameOnly + '</div>';
+        div.innerHTML = '<div>' + h.emoji + '</div><div class="building-label">' + (h.label || 'Chez ' + nameOnly) + '</div>';
     } else {
         div.className = 'entity house-exterior house-plot';
-        div.innerHTML = '<div>🪧</div><div class="building-label">Terrain à bâtir · niv. ' + h.level + ' · ' + h.cost + ' 🧱</div>';
+        div.innerHTML = '<div>' + (h.plotEmoji || '🪧') + '</div><div class="building-label">' + (h.plotLabel || 'Terrain à bâtir') + ' · niv. ' + h.level + ' · ' + h.cost + ' 🧱</div>';
     }
 };
 

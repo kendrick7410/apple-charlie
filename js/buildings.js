@@ -55,13 +55,14 @@ Game.buildings.checkProximity = function() {
             if (!isCharlie && !Game.buildings.isHouseBuilt(nearHouse.id)) {
                 // Terrain à bâtir : niveau requis puis matériaux
                 var who = nearHouse.name.split(' ')[0];
+                var what = nearHouse.plotEmoji ? 'Réparer le refuge de ' : 'Construire la maison de ';
                 if (s.level < nearHouse.level) {
-                    enterBtn.textContent = '🔒 Terrain à bâtir — niveau ' + nearHouse.level + ' requis';
+                    enterBtn.textContent = '🔒 ' + (nearHouse.plotLabel || 'Terrain à bâtir') + ' — niveau ' + nearHouse.level + ' requis';
                     enterBtn.onclick = (function(h){ return function() {
                         Game.ui.notify("Atteins le niveau " + h.level + " pour construire la maison de " + h.name.split(' ')[0] + " ⭐");
                     }; })(nearHouse);
                 } else {
-                    enterBtn.textContent = '🔨 Construire la maison de ' + who + ' (' + s.inventory.materials + '/' + nearHouse.cost + ' 🧱)';
+                    enterBtn.textContent = '🔨 ' + what + who + ' (' + s.inventory.materials + '/' + nearHouse.cost + ' 🧱)';
                     enterBtn.onclick = (function(h){ return function() { Game.buildings.buildVillagerHouse(h); }; })(nearHouse);
                 }
             } else if (isCharlie && s.houseLevel < 4) {
