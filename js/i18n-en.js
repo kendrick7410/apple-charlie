@@ -849,5 +849,14 @@ Game.I18N_EN = {
 "Oui": "Yes",
 "Non": "No",
 "Jouer": "Play",
-"Mon monde": "My world"
+"Mon monde": "My world",
+"🛒 Prends un objet sur une étagère et apporte-le à la caisse pour le payer.": "🛒 Take an item from a shelf and bring it to the checkout to pay.",
+"🛒 Caisse": "🛒 Checkout",
+"Tu l'as déjà !": "You already have it!",
+"Tu portes déjà": "You're already carrying",
+": va d'abord à la caisse 🛒": ": go to the checkout first 🛒",
+": apporte-le à la caisse 🛒": ": bring it to the checkout 🛒",
+"🛒 Merci et à bientôt !": "🛒 Thank you, see you soon!",
+"acheté.": "bought.",
+"Matériaux": "Materials"
 };

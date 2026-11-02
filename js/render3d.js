@@ -1721,6 +1721,11 @@ function stopSwing() {
     s.charlie.x = s.swing.x; s.charlie.y = s.swing.y + 70;
 }
 Game.r3d.isSwinging = function() { return _swinging; };
+Game.r3d.shopSlotScreen = function(i) {   // tests automatiques
+    var sl = shopSlots[i]; if (!sl || !room3d) return null;
+    var v = new T.Vector3(); sl.group.getWorldPosition(v); v.project(room3d.camera);
+    return { x: (v.x + 1) / 2 * window.innerWidth, y: (1 - v.y) / 2 * window.innerHeight, label: sl.info.label, checkout: shopSlots.checkout, carrying: carrying && carrying.info.label };
+};
 Game.r3d.furnitureAt = function(e) {
     if (!room3d) return false;
     var hits = roomPoint(e).intersectObjects(room3d.items.children, true);
@@ -2089,8 +2094,10 @@ function syncRoom() {
             items.add(o);
         });
     }
+    // Magasin : étagères avec chaque objet à vendre (à la place du décor posé par terre)
+    if (s.activeShop && s.activeShop.id === 'shop') buildShopShelves(items, R);
     // Décor de boutique (non déplaçable) + commerçant derrière son comptoir
-    document.querySelectorAll('#current-room .shop-decor').forEach(function(el) {
+    if (!(s.activeShop && s.activeShop.id === 'shop')) document.querySelectorAll('#current-room .shop-decor').forEach(function(el) {
         var p = roomPos(parseFloat(el.style.left), parseFloat(el.style.top));
         var sp = emojiSprite(el.textContent.trim(), 1.0); sp.position.set(p.x, 0.06, p.z); items.add(sp);
     });
@@ -2128,12 +2135,100 @@ function lightRoom() {
     room3d.glass.emissiveIntensity = night ? 0.6 : 0;
 }
 
+// ═══════════════════════ Magasin : étagères, porter l'objet, passer en caisse ═══════════════════════
+var shopSlots = [], carrying = null, pendingPick = null, carryObj = null;
+function shopItemInfo(item) {
+    var s = Game.state;
+    if (item.type === 'tool') { var t = Game.TOOLS[item.id]; return { emoji: t.emoji, label: t.label, price: t.price, owned: !!s.tools[item.id], buy: { type: 'tool', id: item.id } }; }
+    if (item.type === 'seed') { var c = Game.CROPS[item.id]; return { emoji: c.emoji, label: 'Graine ' + c.label, price: item.price, buy: { type: 'seed', id: item.id, price: item.price } }; }
+    if (item.type === 'swing') return { emoji: '🎠', label: 'Balançoire', price: item.price, owned: !!s.swing, buy: { type: 'swing', price: item.price } };
+    return { emoji: '🧱', label: 'Matériaux', price: item.price, buy: { type: 'material', id: 'materials', price: item.price } };
+}
+function pxOf(x, z) { var R = roomPx(); return { x: x / RU + R.w / 2 - 24, y: z / RU + R.h / 2 - 24 }; }
+function buildShopShelves(items, R) {
+    var W = R.w * RU, D = R.h * RU;
+    shopSlots = [];
+    var list = Game.SHOP_ITEMS, half = Math.ceil(list.length / 2);
+    [-1, 1].forEach(function(side) {
+        var n = side < 0 ? half : list.length - half, x = side * (W / 2 - 0.45);
+        var z0 = -D / 2 + 3.4, z1 = D / 2 - 1.6, len = z1 - z0;
+        // Meuble d'étagère : montants, trois planches, fond
+        var shelf = new T.Group(); shelf.position.set(x, 0, (z0 + z1) / 2); items.add(shelf);
+        rbox(shelf, 0.7, 2.2, len + 0.3, 0.05, '#c99a63', side * 0.3, 1.1, 0).scale.x = 0.15;
+        [0.15, 0.95, 1.75].forEach(function(y) { rbox(shelf, 0.75, 0.08, len + 0.3, 0.03, '#a0703f', 0, y, 0); });
+        [-1, 1].forEach(function(e) { rbox(shelf, 0.75, 2.2, 0.1, 0.03, '#8a5a3c', 0, 1.1, e * (len + 0.3) / 2); });
+        for (var i = 0; i < n; i++) {
+            var item = list[side < 0 ? i : half + i], info = shopItemInfo(item);
+            var z = z0 + (n === 1 ? len / 2 : i * len / (n - 1));
+            var g = new T.Group(); g.position.set(x, 1.0, z); items.add(g);
+            var sp = emojiSprite(info.emoji, 0.95); sp.position.x = -side * 0.12; g.add(sp);
+            var tag = labelSprite(info.owned ? '✅' : info.price + '💰', 0.4); tag.position.y = 1.0; g.add(tag);
+            if (info.owned) sp.material.opacity = 0.35;
+            var slot = { item: item, info: info, group: g, stand: pxOf(x - side * 1.2, z) };
+            g.traverse(function(o) { o.userData.shopSlot = slot; });
+            shopSlots.push(slot);
+        }
+    });
+    // Caisse : tapis roulant et tiroir-caisse sur le comptoir, panneau « Caisse »
+    var cz = -R.h / 2 * RU + 2.3;
+    rbox(items, 0.6, 0.35, 0.45, 0.05, '#e8443c', 1.0, 1.15, cz);
+    var sign = labelSprite('🛒 Caisse', 0.6); sign.position.set(0, 2.8, cz - 0.4); items.add(sign);
+    shopSlots.checkout = pxOf(0, cz + 1.2);
+    if (carrying) { carrying = null; }
+}
+function pickItem(slot) {
+    if (slot.info.owned) { Game.ui.notify(slot.info.emoji + ' Tu l\'as déjà !'); return; }
+    if (carrying) { Game.ui.notify('Tu portes déjà ' + carrying.info.emoji + ' : va d\'abord à la caisse 🛒'); return; }
+    carrying = slot;
+    slot.group.visible = false;
+    carryObj = emojiSprite(slot.info.emoji, 0.75);
+    room3d.scene.add(carryObj);
+    Game.audio.play('collect');
+    Game.ui.notify(slot.info.emoji + ' ' + slot.info.label + ' (' + slot.info.price + '💰) : apporte-le à la caisse 🛒');
+}
+function dropCarry(back) {
+    if (!carrying) return;
+    if (back) carrying.group.visible = true;
+    if (carryObj) room3d.scene.remove(carryObj);
+    carrying = null; carryObj = null;
+}
+function checkout() {
+    var s = Game.state, c = carrying, before = s.inventory.money;
+    Game.inventory.buyFromShop(c.info.buy);
+    if (s.inventory.money < before) {
+        Game.ui.notify('🛒 Merci et à bientôt ! ' + c.info.emoji + ' acheté.');
+        Game.particles.confetti();
+        dropCarry(false);
+        room3d.key = '';   // les étagères se remettent à jour (✅ pour les outils achetés)
+    } else {
+        dropCarry(true);   // pas assez d'argent : l'objet retourne sur l'étagère
+    }
+}
+function updateShop3d() {
+    var s = Game.state;
+    if (!s.activeShop || s.activeShop.id !== 'shop') { if (carrying) dropCarry(true); pendingPick = null; return; }
+    var ic = s.interiorCharlie;
+    if (pendingPick && Math.hypot(ic.x - pendingPick.stand.x, ic.y - pendingPick.stand.y) < 70) { pickItem(pendingPick); pendingPick = null; }
+    if (carrying && shopSlots.checkout && Math.hypot(ic.x - shopSlots.checkout.x, ic.y - shopSlots.checkout.y) < 80) checkout();
+    // L'objet porté : tenu des deux mains devant Charlie
+    if (carryObj) {
+        var c = room3d.charlie, v = new T.Vector3(0, 0.95, 0.55);
+        c.localToWorld(v);
+        carryObj.position.copy(v); carryObj.position.y -= 0.25;
+    }
+}
 function updateRoomCharlie(dt, time) {
     var s = Game.state, c = room3d.charlie, ic = document.getElementById('interior-charlie');
     var p = roomPos(s.interiorCharlie.x, s.interiorCharlie.y);
     var prev = c.userData.prev || p;
     animateWalker(c, (p.x - prev.x) * 40, (p.z - prev.z) * 40, dt, time);
     c.userData.prev = p;
+    if (carrying) {   // deux bras tendus vers le bas qui tiennent l'objet devant lui
+        var cu = c.userData;
+        cu.armL.rotation.x = cu.armR.rotation.x = -0.75;
+        cu.armL.rotation.z = 0.35; cu.armR.rotation.z = -0.35;
+    } else if (c.userData.armL.rotation.z > 0.2) { c.userData.armL.rotation.z = -0.12; c.userData.armR.rotation.z = 0.12; }
+    updateShop3d();
     var y = 0.06, lie = false;
     if (ic && ic.classList.contains('pose-sleep')) { y = 0.75; lie = true; }
     else if (ic && ic.classList.contains('pose-bath')) y = -0.15;
@@ -2177,10 +2272,16 @@ function onRoomDown(e) {
     }
     for (var i = 0; i < hits.length; i++) {
         var o = hits[i].object;
+        if (o.userData.shopSlot) {   // objet sur une étagère : Charlie va le prendre
+            var sl = o.userData.shopSlot;
+            if (sl.info.owned) { Game.ui.notify(sl.info.emoji + ' Tu l\'as déjà !'); return; }
+            pendingPick = sl; Game.furniture.floorClick(sl.stand.x, sl.stand.y); return;
+        }
         if (o.userData.f) { _drag = { f: o.userData.f, x: e.clientX, y: e.clientY, moved: false }; e.preventDefault(); return; }
         if (o.userData.el) { o.userData.el.click(); return; }
     }
     var p = floorToRoom(rc);
+    pendingPick = null;
     if (p) Game.furniture.floorClick(p.x, p.y);
 }
 function onRoomMove(e) {

@@ -151,6 +151,13 @@ Game.ui.updateShop = function() {
     var s = Game.state;
 
     var html = '';
+    // Vue 3D : on prend les objets sur les étagères et on les apporte à la caisse
+    if (Game.r3d && Game.r3d.renderer) {
+        panel.innerHTML = '<div class="shop-hint">🛒 Prends un objet sur une étagère et apporte-le à la caisse pour le payer.</div>' +
+            '<button class="shop-btn" onclick="Game.inventory.stoneToMaterial()">' +
+            '🪨' + Game.STONE_TO_MATERIAL.stone + ' + 🪵' + Game.STONE_TO_MATERIAL.wood + ' → 🧱1 (échanger)</button>';
+        return;
+    }
     Game.SHOP_ITEMS.forEach(function(item) {
         if (item.type === 'tool') {
             var tool = Game.TOOLS[item.id];

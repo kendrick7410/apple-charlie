@@ -1844,3 +1844,5 @@ body.no-touch #thumbstick { display: none; }
 .world-new input, .world-rename { flex: 1; min-width: 0; border: 3px solid #e8e2c8; border-radius: 12px; padding: 8px 12px; font-family: inherit; font-size: 1rem; color: #5d4037; }
 .world-create { border: none; background: #ff9d5c; color: #fff; border-radius: 12px; padding: 8px 14px; font-weight: bold; cursor: pointer; font-family: inherit; box-shadow: 0 3px 0 #d97d3e; }
 .world-hint { font-size: 0.72rem; color: #a1887f; margin-top: 6px; }
+
+.shop-hint { font-size: 0.8rem; color: #5d4037; margin-bottom: 6px; line-height: 1.3; }
