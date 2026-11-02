@@ -44,6 +44,7 @@ Game.state = {
     placedFlowers: [],   // [{x,y,emoji}]
     placedPaths: [],     // [{x,y}]
     houseFurniture: {},  // per-house id
+    builtHouses: [],     // maisons de villageois construites [id, ...] (voir Game.HOUSES)
     totalTimePlayed: 0,
     keysDown: {},
     paused: false,
@@ -76,6 +77,8 @@ Game.newGame = function() {
     Game.HOUSES.forEach(function(h) {
         Game.state.houseFurniture[h.id] = h.furniture.map(function(f){ return f.slice(); });
     });
+    // Nouvelle partie : une seule maison (et un seul villageois) au départ
+    Game.state.builtHouses = Game.HOUSES.filter(function(h){ return h.start; }).map(function(h){ return h.id; });
 };
 
 Game.saveGame = function() {
@@ -113,6 +116,7 @@ Game.saveGame = function() {
         placedFlowers: s.placedFlowers.slice(),
         placedPaths: s.placedPaths.slice(),
         houseFurniture: JSON.parse(JSON.stringify(s.houseFurniture)),
+        builtHouses: s.builtHouses.slice(),
         totalTimePlayed: s.totalTimePlayed
     };
     try {
@@ -161,6 +165,11 @@ Game.loadGame = function() {
         if (data.placedFlowers) s.placedFlowers = data.placedFlowers;
         if (data.placedPaths) s.placedPaths = data.placedPaths;
         if (data.houseFurniture) s.houseFurniture = data.houseFurniture;
+        // Ancienne sauvegarde (avant les terrains à bâtir) : on garde tout le village déjà là
+        s.builtHouses = data.builtHouses || Game.HOUSES.map(function(h){ return h.id; });
+        Game.HOUSES.forEach(function(h) {
+            if (!s.houseFurniture[h.id]) s.houseFurniture[h.id] = h.furniture.map(function(f){ return f.slice(); });
+        });
         if (data.totalTimePlayed) s.totalTimePlayed = data.totalTimePlayed;
         s.currentView = 'world';
         return true;

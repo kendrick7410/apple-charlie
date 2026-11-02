@@ -206,7 +206,8 @@ Game.engine.loop = function(now) {
         villageRevenueTimer = 0;
         var totalIncome = 0;
         for (var vn in Game.VILLAGER_JOBS) {
-            totalIncome += Game.VILLAGER_JOBS[vn].income;
+            // Seuls les villageois installés au village rapportent des clochettes
+            if (Game.buildings.isVillagerHere(vn)) totalIncome += Game.VILLAGER_JOBS[vn].income;
         }
         if (totalIncome > 0) {
             Game.state.villageRevenue += totalIncome;

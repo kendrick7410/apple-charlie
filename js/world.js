@@ -29,16 +29,7 @@ Game.world.init = function() {
 
     // NPC houses
     Game.HOUSES.forEach(function(h) {
-        if (h.id === 'charlie') return;
-        var div = document.createElement('div');
-        div.className = 'entity house-exterior';
-        div.style.left = h.x + 'px';
-        div.style.top = h.y + 'px';
-        div.dataset.houseId = h.id;
-        // Extract name without emoji
-        var nameOnly = h.name.split(' ')[0];
-        div.innerHTML = '<div>' + h.emoji + '</div><div class="building-label">Chez ' + nameOnly + '</div>';
-        world.appendChild(div);
+        if (h.id !== 'charlie') Game.world.renderVillagerHouse(h);
     });
 
     // Charlie's house
@@ -631,6 +622,27 @@ Game.world.createPort = function() {
     label.style.zIndex = '5';
     label.innerHTML = '<div>⚓</div><div class="building-label">Port de Charlie</div>';
     world.appendChild(label);
+};
+
+// Maison d'un villageois, ou terrain à bâtir 🪧 tant qu'elle n'est pas construite
+Game.world.renderVillagerHouse = function(h) {
+    var div = document.getElementById('house-' + h.id);
+    if (!div) {
+        div = document.createElement('div');
+        div.id = 'house-' + h.id;
+        div.style.left = h.x + 'px';
+        div.style.top = h.y + 'px';
+        div.dataset.houseId = h.id;
+        document.getElementById('game-world').appendChild(div);
+    }
+    var nameOnly = h.name.split(' ')[0];
+    if (Game.buildings.isHouseBuilt(h.id)) {
+        div.className = 'entity house-exterior';
+        div.innerHTML = '<div>' + h.emoji + '</div><div class="building-label">Chez ' + nameOnly + '</div>';
+    } else {
+        div.className = 'entity house-exterior house-plot';
+        div.innerHTML = '<div>🪧</div><div class="building-label">Terrain à bâtir · niv. ' + h.level + ' · ' + h.cost + ' 🧱</div>';
+    }
 };
 
 Game.world.updateHouseSite = function() {

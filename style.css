@@ -473,6 +473,12 @@ html, body {
     cursor: pointer;
 }
 
+/* Terrain à bâtir (maison de villageois pas encore construite) */
+.house-plot {
+    font-size: 3rem;
+    opacity: 0.85;
+}
+
 .house-door {
     width: 40px;
     height: 10px;

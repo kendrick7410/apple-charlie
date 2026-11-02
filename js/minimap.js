@@ -69,7 +69,7 @@ Game.minimap.update = function() {
     // Houses
     Game.HOUSES.forEach(function(h) {
         if (h.id === 'charlie') return;
-        ctxM.fillStyle = '#c0956e';
+        ctxM.fillStyle = Game.buildings.isHouseBuilt(h.id) ? '#c0956e' : 'rgba(192,149,110,0.35)';
         drawRect(h.x, h.y, 20);
     });
 

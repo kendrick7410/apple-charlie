@@ -52,7 +52,19 @@ Game.buildings.checkProximity = function() {
         } else if (nearHouse && s.currentView === 'world') {
             enterPanel.style.display = 'flex';
             var isCharlie = nearHouse.id === 'charlie';
-            if (isCharlie && s.houseLevel < 4) {
+            if (!isCharlie && !Game.buildings.isHouseBuilt(nearHouse.id)) {
+                // Terrain à bâtir : niveau requis puis matériaux
+                var who = nearHouse.name.split(' ')[0];
+                if (s.level < nearHouse.level) {
+                    enterBtn.textContent = '🔒 Terrain à bâtir — niveau ' + nearHouse.level + ' requis';
+                    enterBtn.onclick = (function(h){ return function() {
+                        Game.ui.notify("Atteins le niveau " + h.level + " pour construire la maison de " + h.name.split(' ')[0] + " ⭐");
+                    }; })(nearHouse);
+                } else {
+                    enterBtn.textContent = '🔨 Construire la maison de ' + who + ' (' + s.inventory.materials + '/' + nearHouse.cost + ' 🧱)';
+                    enterBtn.onclick = (function(h){ return function() { Game.buildings.buildVillagerHouse(h); }; })(nearHouse);
+                }
+            } else if (isCharlie && s.houseLevel < 4) {
                 // Maison en construction : on la bâtit avec des matériaux
                 if (s.inventory.materials > 0) {
                     enterBtn.textContent = '🔨 Construire ma maison';
@@ -406,6 +418,59 @@ Game.buildings.buildHouse = function() {
     }
     // Rafraîchit tout de suite le bouton (Construire → Entrer) sans attendre un déplacement
     Game.buildings.checkProximity();
+};
+
+// ── Terrains à bâtir : maisons des villageois débloquées par niveau + matériaux ──
+Game.buildings.isHouseBuilt = function(id) {
+    return Game.state.builtHouses.indexOf(id) !== -1;
+};
+
+// Maison d'un villageois (ou undefined s'il n'en a pas, comme Pedro au musée)
+Game.buildings.houseOf = function(villagerName) {
+    return Game.HOUSES.find(function(h){ return h.name === villagerName; });
+};
+
+// Un villageois habite au village si sa maison est construite (ou s'il n'a pas de maison)
+Game.buildings.isVillagerHere = function(villagerName) {
+    var h = Game.buildings.houseOf(villagerName);
+    return !h || Game.buildings.isHouseBuilt(h.id);
+};
+
+Game.buildings.buildVillagerHouse = function(house) {
+    var s = Game.state;
+    var who = house.name.split(' ')[0];
+    if (Game.buildings.isHouseBuilt(house.id)) return;
+    if (s.level < house.level) {
+        Game.ui.notify("Atteins le niveau " + house.level + " pour construire chez " + who + " ⭐");
+        return;
+    }
+    if (s.inventory.materials < house.cost) {
+        Game.ui.notify("Il te faut " + house.cost + " matériaux 🧱 (tu en as " + s.inventory.materials + "). Achète-en au Magasin 🏪 !");
+        Game.audio.play('error');
+        return;
+    }
+    s.inventory.materials -= house.cost;
+    s.builtHouses.push(house.id);
+    Game.world.renderVillagerHouse(house);
+    Game.villagers.spawn(house.name);
+    Game.xp.add(30);
+    Game.audio.play('craft');
+    Game.particles.spawnWorld('🔨', house.x, house.y, { count: 5, spread: 40 });
+    Game.particles.confetti();
+    Game.ui.notify("🏠 La maison est construite ! " + house.name + " emménage au village !", 'levelup');
+    Game.ui.update();
+    Game.quests.updateQuestTracker();
+    Game.saveGame();
+    Game.buildings.checkProximity();
+};
+
+// Au passage de niveau : prévient quand un nouveau terrain devient constructible
+Game.buildings.announceNewPlots = function(newLevel) {
+    Game.HOUSES.forEach(function(h) {
+        if (h.level === newLevel && !Game.buildings.isHouseBuilt(h.id)) {
+            Game.ui.notify("🪧 Nouveau terrain ! Tu peux construire la maison de " + h.name + " (" + h.cost + " 🧱)", 'info');
+        }
+    });
 };
 
 })();

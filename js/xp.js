@@ -39,6 +39,7 @@ Game.xp.onLevelUp = function(newLevel) {
     if (newLevel === 3) Game.ui.notify("Cuisine débloquée ! 🍳", 'info');
     if (newLevel === 5) Game.ui.notify("Jardin débloqué ! 🌱", 'info');
     if (newLevel === 7) Game.ui.notify("Recettes rares débloquées ! 🍱", 'info');
+    Game.buildings.announceNewPlots(newLevel);
 };
 
 Game.xp.canCook = function() { return Game.state.level >= 3; };

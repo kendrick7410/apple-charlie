@@ -23,6 +23,8 @@ Game.quests.totalCompleted = function() {
 Game.quests.isQuestUnlocked = function(villagerName, questIndex) {
     var data = Game.VILLAGER_DATA[villagerName];
     if (!data || questIndex >= data.quests.length) return false;
+    // Pas de quête tant que le villageois n'a pas emménagé (maison pas construite)
+    if (!Game.buildings.isVillagerHere(villagerName)) return false;
     var quest = data.quests[questIndex];
     if (!quest.unlock) return true; // no unlock condition = always available
     var total = Game.quests.totalCompleted();
@@ -128,6 +130,7 @@ Game.quests.updateQuestTracker = function() {
     for (var name in Game.VILLAGER_DATA) {
         var qi = Game.state.questProgress[name] || 0;
         var data = Game.VILLAGER_DATA[name];
+        if (!Game.buildings.isVillagerHere(name)) continue;   // pas encore au village
         if (qi < data.quests.length) {
             if (!Game.quests.isQuestUnlocked(name, qi)) {
                 // Quest exists but is locked

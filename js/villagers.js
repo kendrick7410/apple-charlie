@@ -11,41 +11,49 @@ Game.villagers = {};
 Game.villagers._dialogueIndex = {};
 
 Game.villagers.init = function() {
-    var world = document.getElementById('game-world');
     Game.state.villagers = [];
-
     for (var name in Game.VILLAGER_DATA) {
         // Le hibou Pedro ne sort jamais de son musée : pas de sprite qui se balade.
         // On le rencontre uniquement à l'intérieur du musée (la nuit).
         if (name === 'Pedro 🦉') continue;
-        var data = Game.VILLAGER_DATA[name];
-        var v = document.createElement('div');
-        v.className = 'entity villager-sprite';
-        v.style.left = (data.home.x + 80) + 'px';
-        v.style.top = (data.home.y + 100) + 'px';
-        // Extract name without emoji
-        var nameOnly = name.split(' ')[0];
-        v.innerHTML = '<span class="villager-emoji">' + data.emoji + '</span>' +
-            '<div class="building-label">' + nameOnly + '</div>' +
-            '<div class="speech-bubble"></div>';
-        v.style.fontSize = '2.5rem';
-        v.style.cursor = 'pointer';
-        v.dataset.villagerName = name;
-        v.onclick = (function(n){ return function(e) {
-            e.stopPropagation();
-            Game.villagers.interact(n);
-        }; })(name);
-        world.appendChild(v);
-
-        Game.state.villagers.push({
-            el: v,
-            x: data.home.x + 80,
-            y: data.home.y + 100,
-            name: name,
-            homeX: data.home.x + 80,
-            homeY: data.home.y + 100
-        });
+        // Les villageois n'arrivent qu'une fois leur maison construite
+        if (!Game.buildings.isVillagerHere(name)) continue;
+        Game.villagers.spawn(name);
     }
+};
+
+// Fait apparaître un villageois devant sa maison
+Game.villagers.spawn = function(name) {
+    var world = document.getElementById('game-world');
+    var data = Game.VILLAGER_DATA[name];
+    var house = Game.buildings.houseOf(name);
+    var home = house ? { x: house.x, y: house.y } : data.home;
+    var v = document.createElement('div');
+    v.className = 'entity villager-sprite';
+    v.style.left = (home.x + 80) + 'px';
+    v.style.top = (home.y + 100) + 'px';
+    // Extract name without emoji
+    var nameOnly = name.split(' ')[0];
+    v.innerHTML = '<span class="villager-emoji">' + data.emoji + '</span>' +
+        '<div class="building-label">' + nameOnly + '</div>' +
+        '<div class="speech-bubble"></div>';
+    v.style.fontSize = '2.5rem';
+    v.style.cursor = 'pointer';
+    v.dataset.villagerName = name;
+    v.onclick = function(e) {
+        e.stopPropagation();
+        Game.villagers.interact(name);
+    };
+    world.appendChild(v);
+
+    Game.state.villagers.push({
+        el: v,
+        x: home.x + 80,
+        y: home.y + 100,
+        name: name,
+        homeX: home.x + 80,
+        homeY: home.y + 100
+    });
 };
 
 var WALK_SPEED = 42;   // pixels par seconde (marche tranquille)
