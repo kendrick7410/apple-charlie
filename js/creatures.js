@@ -111,16 +111,22 @@ Game.creatures.update = function(dt) {
         }
 
         // Move
+        // Comportement naturel : l'animal choisit une direction (ou s'arrête un moment pour brouter),
+        // puis tourne et accélère doucement vers elle au lieu de changer de sens d'un coup
         c.timer += dt;
-        if (c.timer > 2000 + Math.random() * 2000) {
+        if (c.timer > (c.nextT || 2500)) {
             c.timer = 0;
-            c.vx = (Math.random() - 0.5) * 2;
-            c.vy = (Math.random() - 0.5) * 2;
+            c.nextT = 2500 + Math.random() * 3000;
+            if (Math.random() < 0.35) { c.tvx = 0; c.tvy = 0; }
+            else { var ang = Math.random() * Math.PI * 2, spd = 0.5 + Math.random() * 0.7; c.tvx = Math.cos(ang) * spd; c.tvy = Math.sin(ang) * spd; }
         }
+        var ease = Math.min(1, dt / 400);
+        c.vx += ((c.tvx || 0) - c.vx) * ease;
+        c.vy += ((c.tvy || 0) - c.vy) * ease;
 
         var sm = (c.speedMul == null) ? 1 : c.speedMul;  // 0 = fixe (papillons)
-        c.x += c.vx * sm;
-        c.y += c.vy * sm;
+        c.x += c.vx * sm * dt / 16.67;
+        c.y += c.vy * sm * dt / 16.67;
 
         // Wrap (limité à la terre, pas la mer)
         var landBottom = Game.CONFIG.BEACH_TOP - 100;

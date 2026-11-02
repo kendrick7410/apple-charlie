@@ -991,16 +991,29 @@ function makeBeachGrass() {
 var DECOR = { '⛱️': makeParasol, '🏖️': makeSandCastle, '🏐': makeBeachBall, '🩴': makeFlipFlops, '🪵': makeLog, '🪁': makeKite, '🌿': makeBeachGrass, '🌾': makeBeachGrass };
 
 // Animation des animaux : se tournent, pattes / ailes, petits sauts
+// Vitesse lissée (le jeu 2D et la 3D n'avancent pas toujours à la même image : sans lissage,
+// l'animal passe « en marche / à l'arrêt » une image sur deux et tremble)
+function smoothMotion(ud, dx, dy, dt, thr) {
+    if (!(dt > 0)) return false;
+    if (Math.hypot(dx, dy) > 200) { ud.svx = ud.svy = 0; return false; }   // téléportation / réapparition
+    var k = Math.min(1, dt * 6);
+    ud.svx = (ud.svx || 0) + (dx / dt - (ud.svx || 0)) * k;
+    ud.svy = (ud.svy || 0) + (dy / dt - (ud.svy || 0)) * k;
+    var sp = Math.hypot(ud.svx, ud.svy);
+    ud.moveAmt = (ud.moveAmt || 0) + ((sp > thr ? 1 : 0) - (ud.moveAmt || 0)) * Math.min(1, dt * 5);   // 0 = arrêté, 1 = marche
+    if (sp > thr) ud.facing = Math.atan2(ud.svx, ud.svy);
+    return ud.moveAmt > 0.5;
+}
 function animateAnimal(obj, dx, dy, dt, time) {
-    var ud = obj.userData, moving = Math.hypot(dx, dy) > 0.2;
-    if (moving) { ud.facing = Math.atan2(dx, dy); ud.step = (ud.step || 0) + dt * 12; }
-    if (ud.facing !== undefined) { var turn = Math.atan2(Math.sin(ud.facing - obj.rotation.y), Math.cos(ud.facing - obj.rotation.y)); obj.rotation.y += turn * Math.min(1, dt * 8); }
-    if (ud.legs) { var sw = moving ? Math.sin(ud.step) * 0.6 : 0; ud.legs[0].rotation.x = sw; ud.legs[3].rotation.x = sw; ud.legs[1].rotation.x = -sw; ud.legs[2].rotation.x = -sw; }
+    var ud = obj.userData, moving = smoothMotion(ud, dx, dy, dt, 8);
+    ud.step = (ud.step || 0) + dt * 12 * ud.moveAmt;
+    if (ud.facing !== undefined) { var turn = Math.atan2(Math.sin(ud.facing - obj.rotation.y), Math.cos(ud.facing - obj.rotation.y)); obj.rotation.y += turn * Math.min(1, dt * 4); }
+    if (ud.legs) { var sw = Math.sin(ud.step) * 0.6 * ud.moveAmt; ud.legs[0].rotation.x = sw; ud.legs[3].rotation.x = sw; ud.legs[1].rotation.x = -sw; ud.legs[2].rotation.x = -sw; }
     if (ud.wings) {
         var f = ud.butterfly ? Math.sin(time * 14 + obj.id) * 0.9 : (ud.flies ? Math.sin(time * 10 + obj.id) * 0.7 : (moving ? Math.sin(time * 18) * 0.3 : 0));
         ud.wings[0].rotation.z = f; ud.wings[1].rotation.z = -f;
     }
-    if (ud.body) ud.body.position.y = ud.flies ? 1.6 + Math.sin(time * 2 + obj.id) * 0.2 : (moving ? Math.abs(Math.sin(ud.step)) * 0.06 : 0);
+    if (ud.body) ud.body.position.y = ud.flies ? 1.6 + Math.sin(time * 2 + obj.id) * 0.2 : Math.abs(Math.sin(ud.step)) * 0.06 * ud.moveAmt;
     var gy = ud.groundY || 0;
     if (ud.butterfly) obj.position.y = gy + 0.3 + Math.sin(time * 3 + obj.id) * 0.15;
     if (ud.firefly) obj.position.y = gy + Math.sin(time * 2 + obj.id) * 0.3;
@@ -1385,6 +1398,9 @@ function placeRec(el, rec) {
     if (rec.px === p.x && rec.py === p.y) return;
     rec.px = p.x; rec.py = p.y;
     var gh = heightAt(p.x, p.y);
+    if (rec.kind === 'animal' && p.x > 2500 && p.x < 4500 && p.y < 1900) {   // animaux de montagne : posés sur la pente
+        var mh = mountainHeight(p.x, p.y); if (mh && mh.y > gh) gh = mh.y;
+    }
     rec.obj.userData.groundY = gh;
     rec.obj.position.set(p.x * U, rec.kind === 'mountain' ? gh - 0.5 : (rec.kind === 'dock' ? 0 : gh), p.y * U);
     // Décor posé par erreur dans l'eau (palmier dans la rivière...) : on ne l'affiche pas
@@ -1516,9 +1532,17 @@ function syncMoving(time) {
         if (!rec.obj.visible) { if (rec.bubbleEl) rec.bubbleEl.style.display = 'none'; return; }
         var ox = rec.px, oy = rec.py;
         placeRec(el, rec);
-        if (rec.obj.userData.sprite) rec.obj.userData.sprite.position.y = Math.abs(Math.sin(time * 6 + rec.px * 0.01)) * 0.12;
-        if (rec.kind === 'animal') animateAnimal(rec.obj, ox === undefined ? 0 : rec.px - ox, oy === undefined ? 0 : rec.py - oy, _dtFrame, time);
-        if (rec.obj.userData.legL) animateWalker(rec.obj, ox === undefined ? 0 : rec.px - ox, oy === undefined ? 0 : rec.py - oy, _dtFrame, time);
+        // Position lissée pour les animaux et villageois (pas de saccades)
+        if (rec.sx === undefined || Math.hypot(rec.px - rec.sx, rec.py - rec.sy) > 200) { rec.sx = rec.px; rec.sy = rec.py; }
+        var kk = Math.min(1, _dtFrame * 10);
+        rec.sx += (rec.px - rec.sx) * kk; rec.sy += (rec.py - rec.sy) * kk;
+        if (rec.kind !== 'boat') { rec.obj.position.x = rec.sx * U; rec.obj.position.z = rec.sy * U; }
+        ox = rec.lsx === undefined ? rec.sx : rec.lsx; oy = rec.lsy === undefined ? rec.sy : rec.lsy;
+        rec.lsx = rec.sx; rec.lsy = rec.sy;
+        rec.px2 = rec.sx;
+        if (rec.obj.userData.sprite) rec.obj.userData.sprite.position.y = Math.abs(Math.sin(time * 6 + rec.obj.id)) * 0.12;
+        if (rec.kind === 'animal') animateAnimal(rec.obj, rec.sx - ox, rec.sy - oy, _dtFrame, time);
+        if (rec.obj.userData.legL) animateWalker(rec.obj, rec.sx - ox, rec.sy - oy, _dtFrame, time);
         // Bulle de dialogue des villageois : une vraie bulle de BD en HTML (texte net et lisible) au-dessus de la tête
         var b = bubbleOf(el);
         if (b !== rec.bubble) {
@@ -1694,6 +1718,11 @@ function stopSwing() {
     s.charlie.x = s.swing.x; s.charlie.y = s.swing.y + 70;
 }
 Game.r3d.isSwinging = function() { return _swinging; };
+Game.r3d.debugMovers = function() {
+    var out = [];
+    tracked.forEach(function(rec) { if (rec.moving && rec.obj.visible) { var u = rec.obj.userData, leg = u.legs ? u.legs[0].rotation.x : (u.legL ? u.legL.rotation.x : 0); out.push({ id: rec.obj.id, rot: rec.obj.rotation.y, leg: leg }); } });
+    return out;
+};
 // Un endroit où Charlie peut aller à pied (pas trop haut sur une montagne, pas dans l'eau profonde)
 Game.r3d.reachable = function(x, y) {
     if (!groundMesh) return true;
@@ -1754,15 +1783,14 @@ function swim(inWater, moving, dt, time) {
 }
 // Animation de marche commune (Charlie, villageois, fermier)
 function animateWalker(obj, dx, dy, dt, time) {
-    var ud = obj.userData, moving = Math.hypot(dx, dy) > 0.3;
-    if (moving) ud.facing = Math.atan2(dx, dy);
-    var turn = ud.facing - obj.rotation.y;
+    var ud = obj.userData, moving = smoothMotion(ud, dx, dy, dt, 12);
+    var turn = (ud.facing || 0) - obj.rotation.y;
     turn = Math.atan2(Math.sin(turn), Math.cos(turn));
     obj.rotation.y += turn * Math.min(1, dt * 10);
-    if (moving) ud.step += dt * 10;
-    var sw = moving ? Math.sin(ud.step) * 0.65 : ud.legL.rotation.x * 0.85;
+    ud.step += dt * 10 * ud.moveAmt;
+    var sw = Math.sin(ud.step) * 0.65 * ud.moveAmt;
     ud.legL.rotation.x = sw; ud.legR.rotation.x = -sw; ud.armL.rotation.x = -sw * 0.8; ud.armR.rotation.x = sw * 0.8;
-    ud.body.position.y = moving ? Math.abs(Math.sin(ud.step)) * 0.07 : 0;
+    ud.body.position.y = Math.abs(Math.sin(ud.step)) * 0.07 * ud.moveAmt;
     ud.head.rotation.y = Math.sin(time * 1.1 + obj.id) * 0.15;
     return moving;
 }

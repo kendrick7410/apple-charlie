@@ -150,9 +150,16 @@ Game.coast.update = function(dt) {
     // Animaux de montagne : ils se baladent lentement, on les ramasse en marchant dessus
     for (var k = mtn.length - 1; k >= 0; k--) {
         var a = mtn[k];
+        // Ils marchent, s'arrêtent, repartent, en tournant doucement (pas de changement de sens brusque)
         a.t += dt;
-        if (a.t > 1600) { a.t = 0; a.vx = (Math.random() - 0.5) * 1.1; a.vy = (Math.random() - 0.5) * 1.1; }
-        a.x += a.vx; a.y += a.vy;
+        if (a.t > (a.nextT || 2000)) {
+            a.t = 0; a.nextT = 2000 + Math.random() * 2500;
+            if (Math.random() < 0.4) { a.tvx = 0; a.tvy = 0; }
+            else { var ang = Math.random() * Math.PI * 2; a.tvx = Math.cos(ang) * 0.55; a.tvy = Math.sin(ang) * 0.55; }
+        }
+        var ease = Math.min(1, dt / 400);
+        a.vx += ((a.tvx || 0) - a.vx) * ease; a.vy += ((a.tvy || 0) - a.vy) * ease;
+        a.x += a.vx * dt / 16.67; a.y += a.vy * dt / 16.67;
         a.el.style.left = a.x + 'px';
         a.el.style.top = a.y + 'px';
         if (Math.hypot(cx - a.x, cy - a.y) < 78) collectCreature('mtn', mtn, k, 'mountainCollection');
