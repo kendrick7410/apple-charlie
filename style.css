@@ -1697,3 +1697,51 @@ html.mode-3d #interior-view > #current-room {
     box-shadow: 0 4px 0 #a32d27;
     font-size: 1rem;
 }
+
+/* Engrenage de l'accueil + fenêtre des commandes */
+.settings-gear {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 3;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 3px solid #e8e2c8;
+    background: #fffef5;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #d4c9a8;
+    transition: transform 0.3s;
+}
+.settings-gear:hover { transform: rotate(60deg); }
+#controls-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.controls-card {
+    position: relative;
+    background: #fffef5;
+    border: 4px solid #e8e2c8;
+    border-radius: 22px;
+    padding: 18px 22px;
+    width: min(560px, 100%);
+    max-height: 85vh;
+    overflow-y: auto;
+    color: #5d4037;
+    font-family: 'Varela Round', 'Noto Color Emoji', sans-serif;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+.controls-card h2 { margin: 0 0 6px; color: #e65100; font-size: 1.3rem; }
+.controls-card h3 { margin: 14px 0 6px; font-size: 0.95rem; color: #6d4c41; }
+.controls-card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 0.85rem; }
+.controls-card dt { font-weight: bold; background: #f3ecd6; border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+.controls-card dd { margin: 0; padding: 2px 0; }
+.controls-close { position: absolute; top: 12px; right: 12px; border: none; background: #ef9a9a; color: #fff; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: bold; }
+@media (max-width: 480px) { .controls-card dl { grid-template-columns: 1fr; } .controls-card dt { white-space: normal; } }

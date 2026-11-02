@@ -4,6 +4,32 @@
 
 Game.titlescreen = {};
 
+// Fenêtre « Commandes » (ouverte par l'engrenage, sur l'accueil et dans le jeu)
+var CONTROLS = [
+    ['🚶 Se déplacer', [['Flèches ou Z Q S D', 'Marcher'], ['Clic sur le sol', 'Charlie marche jusque-là'], ['Flèches à l\'écran', 'Sur téléphone et tablette']]],
+    ['🍎 Ramasser et récolter', [['Marcher dessus', 'Pommes, fleurs, cailloux, papillons (avec le filet)'], ['Clic sur un papillon', 'L\'attraper de loin (avec le filet)'], ['Bouton « Pêcher »', 'Au bord de l\'eau']]],
+    ['🏠 Bâtiments', [['Bouton « Entrer »', 'Près d\'une porte'], ['Bouton « Construire »', 'Près d\'un terrain ou d\'un chantier'], ['Tapis 🌟', 'Marcher dessus pour sortir']]],
+    ['🛋️ Dans ta maison', [['Clic sur un meuble', 'Charlie va l\'utiliser'], ['E', 'Utiliser le meuble le plus proche'], ['Glisser un meuble', 'Le déplacer'], ['Clic droit sur un meuble', 'Le tourner'], ['🔄 / 📦', 'Tourner ou ranger un meuble'], ['1 à 8', 'Jouer du piano'], ['Échap', 'Fermer le livre ou le piano']]],
+    ['🧭 Aventure', [['N ou 🗺️', 'Voyage rapide'], ['🥾 + piolet', 'Escalader les montagnes'], ['Entrer dans l\'eau profonde', 'Nager'], ['🎠 Se balancer', 'Près de ta balançoire ; une flèche pour descendre']]],
+    ['🧰 Boutons du panneau', [['💾', 'Sauvegarder'], ['🔊', 'Couper ou remettre le son'], ['⛏️', 'Pelle : tracer des chemins'], ['📖', 'Collection'], ['🎭', 'Skins'], ['🍴 Manger', 'Remplir la barre de faim']]]
+];
+Game.titlescreen.showControls = function() {
+    var old = document.getElementById('controls-panel');
+    if (old) { old.remove(); return; }
+    var p = document.createElement('div');
+    p.id = 'controls-panel';
+    var html = '<div class="controls-card" role="dialog" aria-label="Commandes"><button class="controls-close" aria-label="Fermer">✕</button><h2>⚙️ Commandes</h2>';
+    CONTROLS.forEach(function(sec) {
+        html += '<h3>' + sec[0] + '</h3><dl>';
+        sec[1].forEach(function(r) { html += '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; });
+        html += '</dl>';
+    });
+    html += '</div>';
+    p.innerHTML = html;
+    p.onclick = function(e) { if (e.target === p || e.target.classList.contains('controls-close')) p.remove(); };
+    document.body.appendChild(p);
+};
+
 Game.titlescreen.show = function() {
     Game.state.currentView = 'title';
 
@@ -42,6 +68,16 @@ Game.titlescreen.show = function() {
         '</div>';
 
     document.body.appendChild(screen);
+
+    // Bouton paramètres (engrenage) : affiche toutes les commandes
+    var gear = document.createElement('button');
+    gear.id = 'btn-settings';
+    gear.className = 'settings-gear';
+    gear.title = 'Paramètres et commandes';
+    gear.setAttribute('aria-label', 'Paramètres et commandes');
+    gear.textContent = '⚙️';
+    gear.onclick = function(e) { e.stopPropagation(); Game.titlescreen.showControls(); };
+    screen.appendChild(gear);
 
     // Button handlers
     var btnNew = document.getElementById('btn-newgame');
