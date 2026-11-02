@@ -114,7 +114,9 @@ Game.villagers.showBubble = function(v, msg) {
     if (!bubble) return;
     bubble.textContent = msg;
     bubble.style.display = 'block';
-    setTimeout(function() { bubble.style.display = 'none'; }, 2500);
+    // Assez longtemps pour lire : plus la phrase est longue, plus la bulle reste
+    clearTimeout(bubble._hide);
+    bubble._hide = setTimeout(function() { bubble.style.display = 'none'; }, Math.min(8000, 3000 + msg.length * 70));
 };
 
 Game.villagers.interact = function(name) {

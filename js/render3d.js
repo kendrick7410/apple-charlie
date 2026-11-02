@@ -92,8 +92,8 @@ function titleHero() {
             if (!cv.isConnected) { r.dispose(); if (r.forceContextLoss) r.forceContextLoss(); return; }
             var t = now / 1000;
             hero.rotation.y = Math.sin(t * 0.6) * 0.6;
-            ud.armR.rotation.x = -2.6 + Math.sin(t * 7) * 0.35;   // coucou !
-            ud.armR.rotation.z = -0.35;
+            ud.armR.rotation.x = 0;
+            ud.armR.rotation.z = 2.35 + Math.sin(t * 7) * 0.3;   // coucou : bras levé sur le côté, la main qui se balance
             ud.body.position.y = Math.abs(Math.sin(t * 2.2)) * 0.06;
             ud.head.rotation.z = Math.sin(t * 1.4) * 0.08;
             r.render(sc, cam);
@@ -216,8 +216,9 @@ function makeBody(o) {
         ball(body, 0.06, mat('#f2c94c', { metalness: 0.7, roughness: 0.3 }), 0, 0.78, 0.33);
     }
     if (o.scarf) put(body, new T.Mesh(geo('scarf', function() { return new T.ConeGeometry(0.2, 0.26, 20); }), mat(o.scarf)), 0, 1.2, 0.2).rotation.x = Math.PI + 0.35;
-    var armL = limb(0.09, 0.3, SHIRT, -0.4, 1.18), armR = limb(0.09, 0.3, SHIRT, 0.4, 1.18);
-    armL.rotation.z = 0.25; armR.rotation.z = -0.25;
+    var armL = limb(0.09, 0.3, SHIRT, -0.36, 1.16), armR = limb(0.09, 0.3, SHIRT, 0.36, 1.16);
+    armL.rotation.z = -0.12; armR.rotation.z = 0.12;   // bras le long du corps, légèrement écartés
+    ball(armL, 0.12, SHIRT, 0, 0, 0); ball(armR, 0.12, SHIRT, 0, 0, 0);   // épaules rondes
     ball(armL, 0.1, SKIN, 0, -0.48, 0); ball(armR, 0.1, SKIN, 0, -0.48, 0);
     var head = new T.Group(); head.position.set(0, 1.68, 0); body.add(head);
     ball(head, 0.46, SKIN, 0, 0, 0);
@@ -876,25 +877,39 @@ function scan() {
         if (els[i].parentElement.classList.contains('farm-pen')) els[i].classList.add('farm-animal');
         syncElement(els[i]);
     }
-    tracked.forEach(function(rec, el) { if (!rec.seen) { scene.remove(rec.obj); tracked.delete(el); } });
+    tracked.forEach(function(rec, el) { if (!rec.seen) { scene.remove(rec.obj); if (rec.bubbleEl) rec.bubbleEl.remove(); tracked.delete(el); } });
 }
 function syncMoving(time) {
     tracked.forEach(function(rec, el) {
         if (!rec.moving) return;
         rec.obj.visible = el.style.display !== 'none';
-        if (!rec.obj.visible) return;
+        if (!rec.obj.visible) { if (rec.bubbleEl) rec.bubbleEl.style.display = 'none'; return; }
         var ox = rec.px, oy = rec.py;
         placeRec(el, rec);
         if (rec.obj.userData.sprite) rec.obj.userData.sprite.position.y = Math.abs(Math.sin(time * 6 + rec.px * 0.01)) * 0.12;
         if (rec.obj.userData.legL) animateWalker(rec.obj, ox === undefined ? 0 : rec.px - ox, oy === undefined ? 0 : rec.py - oy, _dtFrame, time);
-        // Bulle de dialogue des villageois
+        // Bulle de dialogue des villageois : une vraie bulle de BD en HTML (texte net et lisible) au-dessus de la tête
         var b = bubbleOf(el);
         if (b !== rec.bubble) {
-            if (rec.bubbleSprite) rec.obj.remove(rec.bubbleSprite);
-            rec.bubbleSprite = null; rec.bubble = b;
-            if (b) { rec.bubbleSprite = labelSprite('💬 ' + b, 0.5); rec.bubbleSprite.position.y = 2.2; rec.obj.add(rec.bubbleSprite); }
+            rec.bubble = b;
+            if (b) {
+                if (!rec.bubbleEl) { rec.bubbleEl = document.createElement('div'); rec.bubbleEl.className = 'r3d-bubble'; document.body.appendChild(rec.bubbleEl); }
+                rec.bubbleEl.textContent = b;
+            } else if (rec.bubbleEl) { rec.bubbleEl.remove(); rec.bubbleEl = null; }
         }
+        if (rec.bubbleEl) placeBubble(rec);
     });
+}
+
+var _bv = null;
+function placeBubble(rec) {
+    if (!_bv) _bv = new T.Vector3();
+    _bv.copy(rec.obj.position); _bv.y += 3.1;
+    _bv.project(camera);
+    var off = _bv.z > 1 || Math.abs(_bv.x) > 1.1 || Math.abs(_bv.y) > 1.1 || Game.state.currentView !== 'world';
+    rec.bubbleEl.style.display = off ? 'none' : 'block';
+    rec.bubbleEl.style.left = ((_bv.x + 1) / 2 * window.innerWidth) + 'px';
+    rec.bubbleEl.style.top = ((1 - _bv.y) / 2 * window.innerHeight) + 'px';
 }
 
 // Animation de marche commune (Charlie, villageois, fermier)

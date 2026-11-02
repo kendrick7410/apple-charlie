@@ -1644,3 +1644,32 @@ html.mode-3d #interior-view > #current-room {
     pointer-events: none;
     display: none;
 }
+
+/* Bulle de BD des villageois (vue 3D) */
+.r3d-bubble {
+    position: fixed;
+    z-index: 1100;
+    transform: translate(-50%, -100%);
+    max-width: min(280px, 70vw);
+    background: #fffef7;
+    color: #4e342e;
+    border: 3px solid #5d4037;
+    border-radius: 18px;
+    padding: 8px 14px;
+    font-size: 1rem;
+    font-weight: bold;
+    line-height: 1.3;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    pointer-events: none;
+}
+.r3d-bubble::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -12px;
+    transform: translateX(-50%);
+    border: 10px solid transparent;
+    border-top-color: #5d4037;
+    border-bottom: 0;
+}
