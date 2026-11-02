@@ -618,6 +618,7 @@ function mountainPeak(h, R) {
 }
 function makeMountain(h, seed) {
     var g = new T.Group(), R = rand(seed || 7);
+    g.userData.h = h;
     g.userData.baseR = h * 0.62;
     g.add(mountainPeak(h, R));
     // Deux sommets secondaires collés au pic principal
@@ -1228,8 +1229,7 @@ function buildFor(el, kind, e, label) {
         case 'field': obj = makeField(el); break;
         default: {
             obj = new T.Group();
-            var sp = emojiSprite(e || '❔', Math.max(0.8, size * 1.25)); obj.add(sp);
-            obj.userData.sprite = sp;
+            if (e) { var sp = emojiSprite(e, Math.max(0.8, size * 1.25)); obj.add(sp); obj.userData.sprite = sp; }
         }
     }
     // La nuit, les maisons et boutiques construites éclairent autour d'elles par leurs fenêtres
@@ -1289,7 +1289,12 @@ function syncElement(el) {
     var rec = tracked.get(el);
     if (!rec || rec.key !== key) {
         if (rec) scene.remove(rec.obj);
-        rec = { key: key, obj: buildFor(el, kind, e, label), kind: kind, moving: MOVING.test(el.className), bubble: '' };
+        rec = { key: key, obj: buildFor(el, kind, e, label), kind: kind, moving: MOVING.test(el.className), bubble: '', label: label };
+        if (!e && /^⛰/.test(label)) {   // nom d'une montagne (élément séparé, juste sous le sommet)
+            var nm = label.replace(/^[^A-Za-zÀ-ÿ]+/, '').trim();
+            Game.SUMMITS = Game.SUMMITS || [];
+            if (Game.SUMMITS.indexOf(nm) === -1) Game.SUMMITS.push(nm);
+        }
         scene.add(rec.obj);
         tracked.set(el, rec);
     }
@@ -1375,11 +1380,20 @@ function colliderFor(el, kind, obj) {
         default:             return null;
     }
 }
+function canClimb() { var t = Game.state.tools; return !!(t.piolet && t.crampons); }
+var _climbHintT = 0;
 function collide() {
-    var c = Game.state.charlie;
+    var c = Game.state.charlie, climb = canClimb();
     tracked.forEach(function(rec) {
         var col = rec.col;
         if (!col || !rec.obj.visible || rec.px === undefined) return;
+        if (rec.kind === 'mountain') {
+            if (climb) return;   // piolet + crampons : on escalade
+            if (Math.hypot(c.x - rec.px, c.y - rec.py) < col.r + CHARLIE_R && performance.now() - _climbHintT > 9000) {
+                _climbHintT = performance.now();
+                Game.ui.notify("🧗 Pour escalader la montagne, il te faut un piolet et des crampons (au Magasin) !");
+            }
+        }
         var dx = c.x - rec.px, dy = c.y - rec.py;
         if (Math.abs(dx) > 400 || Math.abs(dy) > 400) return;
         if (col.r) {
@@ -1461,6 +1475,85 @@ function placeBubble(rec) {
     rec.bubbleEl.style.top = ((1 - _bv.y) / 2 * window.innerHeight) + 'px';
 }
 
+// ── Alpinisme : avec piolet + crampons, Charlie grimpe sur les montagnes ──
+var _mtnRay = null, _mtnFrom = null, _mtnDown = null;
+function mountainHeight(px, py) {
+    if (!_mtnRay) { _mtnRay = new T.Raycaster(); _mtnFrom = new T.Vector3(); _mtnDown = new T.Vector3(0, -1, 0); }
+    var best = null;
+    tracked.forEach(function(rec) {
+        if (rec.kind !== 'mountain' || rec.px === undefined || !rec.obj.userData.baseR) return;
+        var reach = rec.obj.userData.baseR / U * 1.5;
+        if (Math.abs(px - rec.px) > reach || Math.abs(py - rec.py) > reach) return;
+        _mtnFrom.set(px * U, 60, py * U);
+        _mtnRay.set(_mtnFrom, _mtnDown);
+        var hit = _mtnRay.intersectObject(rec.obj, true)[0];
+        if (hit && (!best || hit.point.y > best.y)) best = { y: hit.point.y, rec: rec };
+    });
+    return best;
+}
+function climbPose(onMtn, moving, dt, time) {
+    var ud = charlie.userData;
+    // Crampons sous les bottes et piolet dans la main dès qu'on les possède
+    var t = Game.state.tools;
+    if (t.crampons && !ud.crampons) {
+        ud.crampons = true;
+        [ud.legL, ud.legR].forEach(function(leg) { for (var k = 0; k < 4; k++) put(leg, new T.Mesh(geo('crampon', function() { return new T.ConeGeometry(0.03, 0.09, 6); }), mat('#9aa3ad', { metalness: 0.8, roughness: 0.3 })), (k % 2 - 0.5) * 0.16, -0.66, (k < 2 ? 0.15 : -0.05)).rotation.x = Math.PI; });
+    }
+    if (t.piolet && !ud.piolet) {
+        var axe = new T.Group(); axe.position.set(0, -0.5, 0.05); ud.armR.add(axe);
+        put(axe, new T.Mesh(geo('axeshaft', function() { return new T.CylinderGeometry(0.025, 0.025, 0.75, 8); }), mat('#c0392b')), 0, 0.25, 0.1).rotation.x = 0.4;
+        put(axe, new T.Mesh(geo('axehead', function() { return new T.BoxGeometry(0.4, 0.06, 0.06); }), mat('#9aa3ad', { metalness: 0.8, roughness: 0.3 })), 0, 0.6, 0.25);
+        ud.piolet = axe;
+    }
+    if (ud.piolet) ud.piolet.visible = !!onMtn;
+    if (!onMtn) { if (ud.climbLean) { ud.body.rotation.x = 0; ud.climbLean = 0; } return; }
+    // Penché vers la pente, il plante le piolet un bras après l'autre
+    ud.climbLean = 0.35;
+    ud.body.rotation.x = 0.35;
+    if (moving) {
+        var a = time * 6;
+        ud.armR.rotation.x = -2.0 + Math.sin(a) * 0.7;
+        ud.armL.rotation.x = -1.6 - Math.sin(a) * 0.6;
+    } else { ud.armR.rotation.x = -0.6; ud.armL.rotation.x = 0; }
+}
+// Sommets : arriver en haut d'une montagne qui a un nom → récompense + drapeau planté
+var _summitsBuilt = false;
+// Nom d'une montagne : l'étiquette « ⛰️ ... » la plus proche
+function summitName(rec) {
+    if (rec.summitName !== undefined) return rec.summitName;
+    var best = '', bd = 320;
+    tracked.forEach(function(r2) {
+        if (!/^⛰/.test(r2.label || '') || r2.px === undefined) return;
+        var d = Math.hypot(r2.px - rec.px, r2.py - rec.py);
+        if (d < bd) { bd = d; best = r2.label.replace(/^[^A-Za-zÀ-ÿ]+/, '').trim(); }
+    });
+    rec.summitName = best;
+    if (best && Game.state.summits && Game.state.summits[best]) plantFlag(rec);
+    return best;
+}
+function checkSummit(onMtn) {
+    var rec = onMtn.rec, h = rec.obj.userData.h, name = summitName(rec);
+    if (!name || onMtn.y < rec.obj.position.y + h * 0.8) return;
+    var s = Game.state;
+    s.summits = s.summits || {};
+    if (s.summits[name]) return;
+    s.summits[name] = true;
+    plantFlag(rec);
+    Game.xp.add(60);
+    s.inventory.money += 40;
+    Game.audio.playLevelUp && Game.audio.playLevelUp();
+    Game.particles.confetti();
+    Game.ui.notify('🚩 Sommet ! Tu as gravi « ' + name + ' » ! +60 XP, +40 💰', 'levelup');
+    Game.ui.update();
+    Game.saveGame();
+}
+function plantFlag(rec) {
+    if (rec.flag) return;
+    var f = new T.Group(), h = rec.obj.userData.h;
+    put(f, new T.Mesh(geo('flagpole2', function() { return new T.CylinderGeometry(0.04, 0.04, 1.6, 8); }), mat('#8a5a3c')), 0, 0.8, 0);
+    rbox(f, 0.7, 0.45, 0.04, 0.03, '#e8443c', 0.36, 1.35, 0);
+    f.position.set(0, h - 0.1, 0); rec.obj.add(f); rec.flag = f;
+}
 // ── Nage : dans l'eau profonde (rivière, lacs), Charlie nage le crawl ou fait du sur-place ──
 var SWIM_DEPTH = -0.34, WATER_Y = -0.16, _swimK = 0, _ripples = [], _rippleT = 0;
 function swim(inWater, moving, dt, time) {
@@ -2086,6 +2179,7 @@ function init() {
     charlie = makeCharlie(); scene.add(charlie);
     addGhost(charlie);
     scan();
+    tracked.forEach(function(rec) { if (rec.kind === 'mountain') summitName(rec); });   // drapeaux des sommets déjà gravis
     applyPhase();
 
     Game.player.handleClick = handleClick3d;
@@ -2204,10 +2298,14 @@ function loop(now) {
     // Charlie suit sa position (lissée) du jeu 2D
     var cx = s.charlie.visualX, cy = s.charlie.visualY;
     var gy = heightAt(cx, cy);
+    var onMtn = canClimb() ? mountainHeight(cx, cy) : null;
+    if (onMtn && onMtn.y > gy) gy = onMtn.y;
     if (!_exitHold) {   // pendant l'animation de porte, c'est elle qui place Charlie
         var moved = animateWalker(charlie, _prev ? cx - _prev.x : 0, _prev ? cy - _prev.y : 0, dt, time);
         charlie.position.set(cx * U, gy, cy * U);
-        swim(rawHeightAt(cx, cy) < SWIM_DEPTH, moved, dt, time);
+        swim(!onMtn && rawHeightAt(cx, cy) < SWIM_DEPTH, moved, dt, time);
+        climbPose(onMtn, moved, dt, time);
+        if (onMtn) checkSummit(onMtn);
     }
     _prev = { x: cx, y: cy };
 

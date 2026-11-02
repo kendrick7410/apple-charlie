@@ -220,6 +220,16 @@ Game.ui.updateCollections = function() {
     }
     renderSpecies('collection-sea', Game.SEA_SPECIES, s.seaCollection);
     renderSpecies('collection-mountain', Game.MOUNTAIN_SPECIES, s.mountainCollection);
+    // Sommets gravis (alpinisme, vue 3D) : la liste des montagnes vient de la carte
+    var sumEl = document.getElementById('collection-summits');
+    if (sumEl) {
+        var names = Game.SUMMITS || [], shtml = '';
+        names.forEach(function(n) {
+            shtml += s.summits && s.summits[n] ? '<span class="museum-item donated" style="border-color:#90a4ae">🚩<small>' + n + '</small></span>' : '<span class="museum-item empty">?</span>';
+        });
+        sumEl.innerHTML = shtml;
+        setText('collection-summits-count', Object.keys(s.summits || {}).length + '/' + names.length);
+    }
 
     var pizzasEl = document.getElementById('collection-pizzas');
     if (pizzasEl) {

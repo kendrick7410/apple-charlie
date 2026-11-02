@@ -575,7 +575,9 @@ Game.TOOLS = {
     rod:      { emoji: '🎣', label: 'Canne à pêche',  price: 40,  desc: 'Pêche plus rapide' },
     watering: { emoji: '🚿', label: 'Arrosoir',       price: 30,  desc: 'Arrose le jardin' },
     shovel:   { emoji: '⛏️', label: 'Pelle',           price: 35,  desc: 'Creuse et trace des chemins' },
-    net:      { emoji: '🥅', label: 'Filet',           price: 45,  desc: 'Capture les papillons' }
+    net:      { emoji: '🥅', label: 'Filet',           price: 45,  desc: 'Capture les papillons' },
+    piolet:   { emoji: '🧗', label: 'Piolet',          price: 120, desc: 'Avec les crampons : escalade les montagnes' },
+    crampons: { emoji: '🥾', label: 'Crampons',        price: 100, desc: 'Avec le piolet : escalade les montagnes' }
 };
 
 Game.CROPS = {
@@ -598,7 +600,9 @@ Game.SHOP_ITEMS = [
     { type: 'seed', id: 'strawberry', price: 8  },
     { type: 'material', id: 'materials', price: 20 },
     { type: 'tool', id: 'shovel' },
-    { type: 'tool', id: 'net' }
+    { type: 'tool', id: 'net' },
+    { type: 'tool', id: 'piolet' },
+    { type: 'tool', id: 'crampons' }
 ];
 
 // ── Species data (fish & butterflies) ──

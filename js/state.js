@@ -14,7 +14,7 @@ Game.state = {
     houseLevel: 0,
     isBaking: false,
     isFishing: false,
-    tools: { axe: false, rod: false, watering: false, shovel: false, net: false },
+    tools: { axe: false, rod: false, watering: false, shovel: false, net: false, piolet: false, crampons: false },
     shovelMode: false,
     xp: 0,
     level: 1,
@@ -32,6 +32,7 @@ Game.state = {
     museum: { fish: {}, butterflies: {} },
     seaCollection: {},       // animaux de la mer trouvés { id: count }
     mountainCollection: {},  // animaux de la montagne trouvés { id: count }
+    summits: {},             // sommets gravis (alpinisme) { 'Le Cervin': true }
     snowGlobes: [],          // boules à neige possédées [id, ...]
     pizzasTasted: {},        // pizzas de David goûtées { id: count }
     pizzasOwned: {},         // pizzas achetées chez David, gardées pour manger { id: count }
@@ -107,6 +108,7 @@ Game.saveGame = function() {
         museum: JSON.parse(JSON.stringify(s.museum)),
         seaCollection: Object.assign({}, s.seaCollection),
         mountainCollection: Object.assign({}, s.mountainCollection),
+        summits: Object.assign({}, s.summits),
         snowGlobes: s.snowGlobes.slice(),
         pizzasTasted: Object.assign({}, s.pizzasTasted),
         pizzasOwned: Object.assign({}, s.pizzasOwned),
@@ -157,6 +159,7 @@ Game.loadGame = function() {
         if (data.museum) s.museum = data.museum;
         if (data.seaCollection) s.seaCollection = data.seaCollection;
         if (data.mountainCollection) s.mountainCollection = data.mountainCollection;
+        if (data.summits) s.summits = data.summits;
         if (data.snowGlobes) s.snowGlobes = data.snowGlobes;
         if (data.pizzasTasted) s.pizzasTasted = data.pizzasTasted;
         if (data.pizzasOwned) s.pizzasOwned = data.pizzasOwned;
