@@ -13,6 +13,9 @@ cp -a "$SRC"/index.html "$SRC"/favicon.svg "$SRC"/favicon-32.png "$SRC"/apple-to
 # Numéro de version sur les scripts et le CSS : le navigateur recharge forcément la nouvelle version
 VER=$(git rev-parse --short HEAD)
 sed -i -E "s#(src=\"js/[a-z0-9]+\.js)\"#\1?v=$VER\"#g; s#(href=\"style\.css)\"#\1?v=$VER\"#" "$DEST"/index.html
+# Version publiée : le jeu la compare toutes les minutes pour se mettre à jour tout seul
+echo "$VER" > "$DEST"/version.txt
+sed -i "s#<head>#<head>\n    <meta name=\"game-version\" content=\"$VER\">#" "$DEST"/index.html
 chmod 755 /var/www "$DEST"
 chmod -R a+rX "$DEST"
 echo "OK -> publié dans $DEST"

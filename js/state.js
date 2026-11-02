@@ -275,4 +275,41 @@ Game.worlds = {
     get: function(id) { return readWorlds().find(function(x) { return x.id === id; }); }
 };
 
+// ── Mise à jour automatique ──
+// Toutes les minutes, le jeu regarde si une nouvelle version a été publiée (version.txt).
+// Si oui : sur l'accueil il se recharge ; en jeu il sauvegarde, se recharge et revient dans le même monde.
+(function() {
+    var meta = document.querySelector('meta[name="game-version"]');
+    var current = meta && meta.content;
+    if (!current) return;   // en local (pas publié) : pas de vérification
+    function reloadInto(worldId) {
+        try { if (worldId) sessionStorage.setItem('village_resume', worldId); } catch (e) {}
+        location.reload();
+    }
+    function check() {
+        fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(function(r) { return r.ok ? r.text() : ''; }).then(function(v) {
+            v = (v || '').trim();
+            if (!v || v === current) return;
+            var s = Game.state;
+            if (!s || s.currentView === 'title' || !Game.worldId) { reloadInto(null); return; }
+            if (Game.ui && Game.ui.notify) Game.ui.notify('✨ Nouvelle mise à jour ! Le jeu se met à jour dans 5 secondes…', 'levelup');
+            setTimeout(function() { if (Game.saveGame) Game.saveGame(); reloadInto(Game.worldId); }, 5000);
+            current = v;
+        }).catch(function() {});
+    }
+    setInterval(check, 60000);
+    document.addEventListener('visibilitychange', function() { if (!document.hidden) check(); });
+})();
+// Après une mise à jour automatique : on revient directement dans le monde où on jouait
+window.addEventListener('load', function() {
+    var id = null;
+    try { id = sessionStorage.getItem('village_resume'); sessionStorage.removeItem('village_resume'); } catch (e) {}
+    if (id && Game.worlds.get(id) && Game.titlescreen && Game.titlescreen.playWorld) {
+        setTimeout(function() {
+            Game.titlescreen.playWorld(id, false);
+            setTimeout(function() { Game.ui.notify('✨ Le jeu est à jour !', 'info'); }, 1500);
+        }, 300);
+    }
+});
+
 })();

@@ -858,5 +858,7 @@ Game.I18N_EN = {
 ": apporte-le à la caisse 🛒": ": bring it to the checkout 🛒",
 "🛒 Merci et à bientôt !": "🛒 Thank you, see you soon!",
 "acheté.": "bought.",
-"Matériaux": "Materials"
+"Matériaux": "Materials",
+"✨ Nouvelle mise à jour ! Le jeu se met à jour dans 5 secondes…": "✨ New update! The game updates in 5 seconds…",
+"✨ Le jeu est à jour !": "✨ The game is up to date!"
 };
