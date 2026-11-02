@@ -1254,6 +1254,7 @@ function onRoomUp() {
 // Charlie se tourne vers la porte, la tire pour l'ouvrir, entre ; l'écran se ferme en cercle sur lui,
 // puis s'ouvre en cercle dans la pièce. En sortant : il sort, et la porte se referme derrière lui.
 var _cutscene = false, _exitHold = false, _lastBuildingId = null;
+var _camFocus = null;   // pendant les animations de porte : la caméra se rapproche de la porte
 function iris(closing, cx, cy, ms) {
     return new Promise(function(resolve) {
         var el = document.getElementById('r3d-iris');
@@ -1298,9 +1299,10 @@ function enterAnimation(elId) {
     if (!door) return Promise.resolve();
     _cutscene = true; _exitHold = true; s.paused = true; setGhosts(false);
     var ud = charlie.userData, front = new T.Vector3(); door.getWorldPosition(front);
-    var x0 = charlie.position.x, z0 = charlie.position.z, sx = front.x + 0.45, sz = front.z + 0.8;
+    _camFocus = { x: front.x + 0.45, z: front.z + 0.4, zoom: 0.38 };   // la caméra se rapproche de la porte
+    var x0 = charlie.position.x, z0 = charlie.position.z, sx = front.x + 0.45, sz = front.z + 0.85;
     var r0 = charlie.rotation.y, r1 = Math.PI * (r0 >= 0 ? 1 : -1);
-    return tween(380, function(k) {                       // se place devant la porte et se tourne vers elle
+    return tween(650, function(k) {                       // se place devant la porte et se tourne vers elle
         charlie.position.x = x0 + (sx - x0) * k;
         charlie.position.z = z0 + (sz - z0) * k;
         charlie.rotation.y = r0 + (r1 - r0) * k;
@@ -1308,25 +1310,32 @@ function enterAnimation(elId) {
     }).then(function() {
         ud.facing = charlie.rotation.y;
         ud.legL.rotation.x = ud.legR.rotation.x = 0;
-        ud.armR.rotation.x = -1.3;                        // tend le bras vers la poignée
+        return tween(260, function(k) { ud.armR.rotation.x = -1.3 * k; });   // tend le bras vers la poignée
+    }).then(function() {
         Game.audio.play('craft');
-        return tween(480, function(k) {                   // tire la porte vers lui
+        return tween(750, function(k) {                   // tire la porte vers lui (en reculant un peu)
             door.rotation.y = -1.9 * k;
-            ud.body.position.z = -0.15 * Math.sin(k * Math.PI);
+            ud.body.position.z = -0.18 * Math.sin(k * Math.PI);
         });
     }).then(function() {
         ud.armR.rotation.x = 0;
-        var p = screenOf(new T.Vector3(front.x + 0.45, 1.3, front.z));
-        iris(true, p.x, p.y, 700);
         var zz = charlie.position.z;
-        return tween(700, function(k) { charlie.position.z = zz - 1.7 * k; walkLegs(ud); });   // entre
+        return tween(800, function(k) { charlie.position.z = zz - 1.4 * k; walkLegs(ud); });   // entre
+    }).then(function() {
+        ud.legL.rotation.x = ud.legR.rotation.x = 0;
+        charlie.visible = false;                          // il est à l'intérieur
+        var p = screenOf(new T.Vector3(front.x + 0.45, 1.2, front.z));
+        Game.audio.play('craft');
+        var closing = tween(520, function(k) { door.rotation.y = -1.9 * (1 - k); });   // la porte se referme
+        return Promise.all([closing, iris(true, p.x, p.y, 950)]);
     }).then(function() {
         door.rotation.y = 0;
         ud.body.position.z = 0;
+        charlie.visible = true;
     });
 }
 function afterEnter() {
-    Game.state.paused = false; _exitHold = false; setGhosts(true);
+    Game.state.paused = false; _exitHold = false; setGhosts(true); _camFocus = null;
     room3d = null;
     buildRoom();
     syncRoom();
@@ -1341,20 +1350,28 @@ function exitAnimation(elId) {
     var ud = charlie.userData, front = new T.Vector3(); door.getWorldPosition(front);
     var ex = s.charlie.x * U, ez = s.charlie.y * U;
     s.charlie.visualX = s.charlie.x; s.charlie.visualY = s.charlie.y;
+    _camFocus = { x: front.x + 0.45, z: front.z + 0.4, zoom: 0.38, snap: true };
     door.rotation.y = -1.9;
     charlie.position.set(front.x + 0.45, charlie.position.y, front.z - 0.5);
     charlie.rotation.y = 0; ud.facing = 0;
-    var p = screenOf(new T.Vector3(front.x + 0.45, 1.3, front.z));
-    iris(false, p.x, p.y, 650);
-    return tween(750, function(k) {                       // sort
-        charlie.position.x = front.x + 0.45 + (ex - front.x - 0.45) * k;
-        charlie.position.z = front.z - 0.5 + (ez - front.z + 0.5) * k;
-        walkLegs(ud);
+    var p = screenOf(new T.Vector3(front.x + 0.45, 1.2, front.z));
+    return iris(false, window.innerWidth / 2, window.innerHeight / 2, 700).then(function() {
+        return tween(900, function(k) {                   // sort
+            charlie.position.x = front.x + 0.45 + (ex - front.x - 0.45) * k;
+            charlie.position.z = front.z - 0.5 + (ez - front.z + 0.5) * k;
+            walkLegs(ud);
+        });
     }).then(function() {
         ud.legL.rotation.x = ud.legR.rotation.x = 0;
-        Game.audio.play('craft');
-        return tween(420, function(k) { door.rotation.y = -1.9 * (1 - k); });   // la porte se referme
+        charlie.rotation.y = Math.PI; ud.facing = Math.PI;   // se retourne pour refermer
+        return tween(250, function(k) { ud.armR.rotation.x = -1.3 * k; });
     }).then(function() {
+        Game.audio.play('craft');
+        return tween(550, function(k) { door.rotation.y = -1.9 * (1 - k); });   // pousse la porte, elle se referme
+    }).then(function() {
+        ud.armR.rotation.x = 0;
+        charlie.rotation.y = 0; ud.facing = 0;
+        _camFocus = null;                                 // la caméra reprend sa place
         _exitHold = false; s.paused = false; setGhosts(true); _cutscene = false;
     });
 }
@@ -1538,9 +1555,18 @@ function loop(now) {
 
     // Caméra de biais qui suit Charlie ; le soleil (et ses ombres) suit aussi
     if (!_camTarget) { _camTarget = new T.Vector3(); _look = new T.Vector3(); }
-    _camTarget.set(cx * U, gy + CAM_H, cy * U + CAM_D);
-    camera.position.lerp(_camTarget, Math.min(1, dt * 4));
-    _look.set(camera.position.x, camera.position.y - CAM_H + 1, camera.position.z - CAM_D);
+    if (_camFocus) {
+        // Gros plan sur la porte (animation d'entrée / sortie)
+        var z = _camFocus.zoom;
+        _camTarget.set(_camFocus.x, gy + CAM_H * z, _camFocus.z + CAM_D * z);
+        if (_camFocus.snap) { camera.position.copy(_camTarget); _camFocus.snap = false; }
+        else camera.position.lerp(_camTarget, Math.min(1, dt * 3));
+        _look.set(camera.position.x, camera.position.y - CAM_H * z + 1.1, camera.position.z - CAM_D * z);
+    } else {
+        _camTarget.set(cx * U, gy + CAM_H, cy * U + CAM_D);
+        camera.position.lerp(_camTarget, Math.min(1, dt * 4));
+        _look.set(camera.position.x, camera.position.y - CAM_H + 1, camera.position.z - CAM_D);
+    }
     camera.lookAt(_look);
     sun.position.set(cx * U - 12, 20, cy * U + 10);
     sun.target.position.set(cx * U, 0, cy * U);
