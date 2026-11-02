@@ -91,7 +91,7 @@ Game.CONFIG = {
     VILLAGE_REVENUE_INTERVAL: 60000 * 24
 };
 
-Game.HOUSE_STAGES = ["🏗️", "🧱", "🏠", "🏘️", "🏡"];
+Game.HOUSE_STAGES = ["🏗️", "🧱", "🛖", "🏠", "🏡"];   // une seule maison à chaque étape
 
 // ── Réseau de chemins (partagé entre la carte et la minimap) ──
 // Chaque chemin relie de vrais lieux : aucun ne se termine dans le vide.
@@ -177,9 +177,9 @@ Game.TIME_PHASES = {
 // Les autres sont des terrains à bâtir : il faut atteindre le niveau `level`
 // puis payer `cost` matériaux 🧱 (achetés au Magasin) pour que le villageois emménage.
 Game.HOUSES = [
-    { id: 'lya',  name: 'Eloise 🐰',  x: 850,  y: 1200, emoji: '🏘️', start: true, furniture: [['🛏️',50,50],['🎨',450,100],['🧶',250,250]] },
+    { id: 'lya',  name: 'Eloise 🐰',  x: 850,  y: 1200, emoji: '🏡', start: true, furniture: [['🛏️',50,50],['🎨',450,100],['🧶',250,250]] },
     { id: 'melo', name: 'Lea 🐱', x: 1100, y: 1400, emoji: '🏠', level: 2, cost: 3, furniture: [['🛋️',400,50],['📺',450,50],['🍜',100,300]] },
-    { id: 'jo',   name: 'Tom 🐶',   x: 1500, y: 900,  emoji: '🏘️', level: 3, cost: 5, furniture: [['🎸',50,400],['🍕',300,300],['🏆',50,50]] },
+    { id: 'jo',   name: 'Tom 🐶',   x: 1500, y: 900,  emoji: '🏠', level: 3, cost: 5, furniture: [['🎸',50,400],['🍕',300,300],['🏆',50,50]] },
     { id: 'celestine', name: 'Lucie 🦊', x: 700, y: 1500, emoji: '🏡', level: 5, cost: 8, furniture: [['🔮',50,50],['📖',400,100],['🕯️',250,300]] },
     { id: 'ordra', name: 'Ordralfabétix 🐡', x: 1700, y: 1000, emoji: '🛖', level: 7, cost: 10, furniture: [['🐟',50,50],['🪣',400,100],['🎣',250,300]] },
     // Max garde le refuge du Cervin : sa "maison", c'est le refuge en ruine à réparer

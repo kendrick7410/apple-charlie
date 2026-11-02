@@ -54,7 +54,7 @@ Game.titlescreen.show = function() {
             Game.titlescreen.hide();
             Game.startGame();
             setTimeout(function() {
-                Game.ui.notify("🏘️ Ton village est tout petit : seule Eloise 🐰 y habite. Gagne des niveaux ⭐ et achète des matériaux 🧱 pour construire d'autres maisons !", 'info');
+                Game.ui.notify("🏡 Ton village est tout petit : seule Eloise 🐰 y habite. Gagne des niveaux ⭐ et achète des matériaux 🧱 pour construire d'autres maisons !", 'info');
             }, 1500);
         };
     }
