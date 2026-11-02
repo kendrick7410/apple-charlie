@@ -76,7 +76,7 @@ Game.CONFIG = {
     },
 
     // Plage / mer (tout en bas de la grande carte)
-    BEACH_TOP: 5000,      // début du sable
+    BEACH_TOP: 4830,      // début du sable (plage agrandie)
     SEA_TOP: 5500,        // début de la mer
     BOAT_INTERVAL: 60000, // un bateau au port toutes les minutes
 

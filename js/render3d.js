@@ -649,6 +649,233 @@ function makeGarden(el) {
     return g;
 }
 
+// ═══════════════════════ Animaux en 3D ═══════════════════════
+// Un modèle rond par animal du jeu (ferme, nature, montagne, plage). userData.legs / wings servent à l'animation.
+function quad(o) {
+    // Quadrupède générique : corps, tête, 4 pattes, queue
+    var g = new T.Group(), body = new T.Group(); g.add(body);
+    var FUR = mat(o.fur), s = o.size || 1, L = o.long || 1.35;
+    ball(body, 0.5, FUR, 0, 0.62, 0, 1.0, 0.78, L);
+    if (o.belly) ball(body, 0.42, o.belly, 0, 0.55, 0.05, 0.9, 0.6, L * 0.9);
+    if (o.spots) o.spots.forEach(function(p) { ball(body, 0.18, o.spotColor || '#2b2b2b', p[0], 0.7 + p[1], p[2], 1, 0.6, 1); });
+    var head = new T.Group(); head.position.set(0, 0.95, 0.62 * L); body.add(head);
+    ball(head, 0.32, FUR, 0, 0, 0);
+    if (o.snout) ball(head, 0.16, o.snout, 0, -0.08, 0.27, 1.2, 0.85, 0.8);
+    ball(head, 0.045, '#1a1410', -0.13, 0.08, 0.27); ball(head, 0.045, '#1a1410', 0.13, 0.08, 0.27);
+    if (o.nose) ball(head, 0.05, o.nose, 0, -0.04, o.snout ? 0.4 : 0.31);
+    [-1, 1].forEach(function(sx) {
+        var ear;
+        if (o.ears === 'long') { ear = put(head, new T.Mesh(capsuleGeo(0.07, 0.38), FUR), sx * 0.12, 0.42, -0.04); ear.rotation.z = -sx * 0.15; }
+        else if (o.ears === 'point') { ear = put(head, new T.Mesh(geo('earcone', function() { return new T.ConeGeometry(0.16, 0.3, 16); }), FUR), sx * 0.2, 0.3, 0); ear.rotation.z = -sx * 0.35; ear.scale.setScalar(0.75); }
+        else if (o.ears === 'floppy') { ear = ball(head, 0.13, o.earColor || o.fur, sx * 0.3, 0.05, 0, 0.5, 1.2, 0.9); ear.rotation.z = sx * 0.5; }
+        else ball(head, 0.1, o.earColor || o.fur, sx * 0.24, 0.24, -0.02);
+        if (o.horns) { var h = put(head, new T.Mesh(geo('horn', function() { return new T.ConeGeometry(0.05, 0.28, 10); }), mat(o.horns)), sx * 0.13, 0.33, -0.05); h.rotation.z = -sx * 0.3; h.rotation.x = -0.3; }
+        if (o.antlers) { var an = new T.Group(); an.position.set(sx * 0.14, 0.3, -0.05); head.add(an); put(an, new T.Mesh(capsuleGeo(0.03, 0.4), mat('#8a6a43')), 0, 0.2, 0).rotation.z = -sx * 0.4; put(an, new T.Mesh(capsuleGeo(0.025, 0.2), mat('#8a6a43')), sx * 0.12, 0.28, 0).rotation.z = sx * 0.4; }
+    });
+    if (o.beard) ball(head, 0.07, o.beard, 0, -0.26, 0.18, 0.8, 1.5, 0.8);
+    var legs = [];
+    [[-0.26, 0.42], [0.26, 0.42], [-0.26, -0.42], [0.26, -0.42]].forEach(function(p) {
+        var piv = new T.Group(); piv.position.set(p[0], 0.45, p[1] * L); body.add(piv);
+        put(piv, new T.Mesh(capsuleGeo(0.09, o.legLen || 0.22), mat(o.legs || o.fur)), 0, -0.22, 0);
+        legs.push(piv);
+    });
+    if (o.tail === 'bushy') { var t = ball(body, 0.3, FUR, 0, 1.0, -0.75 * L, 0.8, 1.3, 0.8); t.rotation.x = 0.5; if (o.tailTip) ball(body, 0.16, o.tailTip, 0, 1.3, -0.85 * L); }
+    else if (o.tail === 'flat') ball(body, 0.26, '#5a4030', 0, 0.45, -0.85 * L, 0.9, 0.2, 1.2);
+    else if (o.tail === 'curl') put(body, new T.Mesh(geo('curl', function() { return new T.TorusGeometry(0.08, 0.03, 8, 16, Math.PI * 1.5); }), FUR), 0, 0.8, -0.7 * L).rotation.y = Math.PI / 2;
+    else if (o.tail !== 'none') ball(body, 0.1, o.tailColor || o.fur, 0, 0.75, -0.68 * L);
+    if (o.spikes) for (var k = 0; k < 14; k++) { var a = (k / 14) * Math.PI - Math.PI / 2, sp = put(body, new T.Mesh(geo('spike', function() { return new T.ConeGeometry(0.05, 0.16, 8); }), mat('#5a4636')), Math.sin(a) * 0.4, 0.7 + Math.cos(a) * 0.32, (k % 3 - 1) * 0.25); sp.rotation.z = -a * 0.9; }
+    g.scale.setScalar(s * 0.75);
+    g.userData.legs = legs; g.userData.body = body;
+    return g;
+}
+function bird(o) {
+    var g = new T.Group(), body = new T.Group(); g.add(body);
+    ball(body, 0.35, o.color, 0, 0.45, 0, 0.9, 0.9, 1.1);
+    var head = new T.Group(); head.position.set(0, 0.85, 0.2); body.add(head);
+    ball(head, 0.22, o.head || o.color, 0, 0, 0);
+    put(head, new T.Mesh(geo('beak', function() { return new T.ConeGeometry(0.07, 0.18, 10); }), mat(o.beak || '#f2a33a')), 0, -0.03, 0.24).rotation.x = Math.PI / 2;
+    ball(head, 0.035, '#1a1410', -0.1, 0.06, 0.17); ball(head, 0.035, '#1a1410', 0.1, 0.06, 0.17);
+    if (o.comb) [0, 0.08, -0.08].forEach(function(z, i) { ball(head, 0.06, '#e53935', 0, 0.22 - i * 0.01, z); });
+    var wings = [];
+    [-1, 1].forEach(function(sx) {
+        var piv = new T.Group(); piv.position.set(sx * 0.3, 0.55, 0); body.add(piv);
+        ball(piv, 0.22, o.wing || o.color, sx * 0.15 * (o.span || 1), 0, 0, 1.2 * (o.span || 1), 0.25, 0.8);
+        wings.push(piv);
+    });
+    if (o.tail) ball(body, 0.14, o.tail, 0, 0.5, -0.38, 0.8, 0.5, 1.2);
+    [-0.1, 0.1].forEach(function(x) { put(body, new T.Mesh(geo('birdleg', function() { return new T.CylinderGeometry(0.025, 0.025, 0.2, 6); }), mat('#f2a33a')), x, 0.1, 0); });
+    g.scale.setScalar((o.size || 1) * 0.7);
+    g.userData.wings = wings; g.userData.flies = !!o.flies; g.userData.body = body;
+    return g;
+}
+function seaThing(e) {
+    var g = new T.Group(), k, a;
+    switch (e) {
+        case '🦀': case '🦞': {
+            var red = e === '🦀' ? '#e2533a' : '#c9302c';
+            ball(g, 0.32, red, 0, 0.22, 0, 1.3, 0.55, e === '🦞' ? 1.6 : 1);
+            [-1, 1].forEach(function(sx) {
+                ball(g, 0.13, red, sx * 0.38, 0.3, 0.32, 1, 0.7, 1.2);
+                for (var j = 0; j < 3; j++) put(g, new T.Mesh(capsuleGeo(0.03, 0.18), mat(red)), sx * 0.35, 0.1, -0.15 + j * 0.15).rotation.z = sx * 1.1;
+                put(g, new T.Mesh(geo('eyestalk', function() { return new T.CylinderGeometry(0.02, 0.02, 0.15, 6); }), mat(red)), sx * 0.1, 0.42, 0.2);
+                ball(g, 0.04, '#1a1410', sx * 0.1, 0.5, 0.2);
+            });
+            break;
+        }
+        case '⭐':
+            for (k = 0; k < 5; k++) { a = k / 5 * Math.PI * 2; var arm = ball(g, 0.12, '#ff8a3d', Math.cos(a) * 0.2, 0.06, Math.sin(a) * 0.2, 2.2, 0.5, 0.9); arm.rotation.y = -a; }
+            ball(g, 0.14, '#ff8a3d', 0, 0.07, 0, 1, 0.5, 1);
+            break;
+        case '🐚': {
+            var sh = put(g, new T.Mesh(geo('shell', function() { return new T.ConeGeometry(0.22, 0.4, 16); }), mat('#f6dcc8')), 0, 0.15, 0); sh.rotation.z = Math.PI / 2;
+            ball(g, 0.14, '#f2c6a8', -0.18, 0.12, 0); break;
+        }
+        case '🐙': case '🦑': {
+            var c = e === '🐙' ? '#c44f9a' : '#e98ab8';
+            ball(g, 0.3, c, 0, 0.45, 0, 1, e === '🦑' ? 1.5 : 1.1, 1);
+            for (k = 0; k < 6; k++) { a = k / 6 * Math.PI * 2; var tt = put(g, new T.Mesh(capsuleGeo(0.05, 0.3), mat(c)), Math.cos(a) * 0.2, 0.12, Math.sin(a) * 0.2); tt.rotation.z = Math.cos(a) * 0.6; tt.rotation.x = Math.sin(a) * 0.6; }
+            ball(g, 0.05, '#1a1410', -0.1, 0.5, 0.26); ball(g, 0.05, '#1a1410', 0.1, 0.5, 0.26); break;
+        }
+        case '🪼':
+            ball(g, 0.3, mat('#b9a6ff', { transparent: true, opacity: 0.75 }), 0, 0.55, 0, 1, 0.7, 1);
+            for (k = 0; k < 5; k++) put(g, new T.Mesh(capsuleGeo(0.02, 0.4), mat('#d6cbff')), Math.cos(k * 1.26) * 0.15, 0.25, Math.sin(k * 1.26) * 0.15);
+            break;
+        case '🦐':
+            for (k = 0; k < 5; k++) ball(g, 0.11 - k * 0.012, '#ff9a6a', 0, 0.2 + Math.sin(k * 0.6) * 0.1, 0.2 - k * 0.12);
+            break;
+        default: { // 🐠 et autres poissons
+            ball(g, 0.28, '#ff8c2a', 0, 0.3, 0, 0.6, 1, 1.4);
+            ball(g, 0.29, '#ffffff', 0, 0.3, 0.05, 0.55, 0.95, 0.25);
+            var fin = put(g, new T.Mesh(geo('fin', function() { return new T.ConeGeometry(0.2, 0.25, 3); }), mat('#ff8c2a')), 0, 0.3, -0.45); fin.rotation.x = -Math.PI / 2;
+        }
+    }
+    return g;
+}
+var ANIMALS = {
+    '🐄': function() { return quad({ fur: '#f7f4ef', spots: [[-0.2, 0.05, 0.2], [0.25, 0.1, -0.2], [0, 0.2, -0.4]], snout: '#f2b8b8', horns: '#efe3c8', size: 1.3, tail: 'thin' }); },
+    '🐷': function() { return quad({ fur: '#f7b6c2', snout: '#ef97a8', nose: '#d97a8c', ears: 'point', tail: 'curl', size: 0.95, legLen: 0.12 }); },
+    '🐐': function() { return quad({ fur: '#f1ece2', horns: '#a39377', beard: '#e8e0d0', ears: 'floppy', size: 0.95, tail: 'thin' }); },
+    '🦌': function() { return quad({ fur: '#b07a46', belly: '#e9d6b8', antlers: true, ears: 'point', size: 1.2, legLen: 0.4, tail: 'thin', tailColor: '#ffffff' }); },
+    '🐻': function() { return quad({ fur: '#7a4f2e', snout: '#c9a27a', nose: '#1a1410', size: 1.4, long: 1.1, tail: 'thin' }); },
+    '🦊': function() { return quad({ fur: '#e8792e', belly: '#fff3e6', snout: '#fff3e6', nose: '#1a1410', ears: 'point', tail: 'bushy', tailTip: '#ffffff', size: 0.8, legs: '#3a2a20' }); },
+    '🐆': function() { return quad({ fur: '#e9e2d4', spots: [[-0.2, 0.05, 0.25], [0.2, 0.1, 0], [-0.15, 0.15, -0.3], [0.25, 0, -0.45]], spotColor: '#6b6258', snout: '#f4efe6', nose: '#c98a8a', tail: 'bushy', size: 1.0 }); },
+    '🐇': function() { return quad({ fur: '#f2f0ee', ears: 'long', nose: '#ff9aa8', tail: 'thin', size: 0.55, long: 1.1, legLen: 0.1 }); },
+    '🐿️': function() { return quad({ fur: '#c9702e', belly: '#f2dcc0', ears: 'point', tail: 'bushy', size: 0.5, long: 1.05, legLen: 0.12 }); },
+    '🦫': function() { return quad({ fur: '#8a5a34', snout: '#b88a5e', nose: '#1a1410', tail: 'flat', size: 0.75, legLen: 0.1 }); },
+    '🦔': function() { return quad({ fur: '#c9a27a', snout: '#e8d0b0', nose: '#1a1410', spikes: true, tail: 'none', size: 0.55, legLen: 0.08 }); },
+    '🐔': function() { return bird({ color: '#ffffff', comb: true, wing: '#f2efe8', size: 0.85 }); },
+    '🐓': function() { return bird({ color: '#d9702e', head: '#f0a33a', comb: true, wing: '#8a3b1e', tail: '#2f6b3a', size: 0.95 }); },
+    '🐤': function() { return bird({ color: '#ffd84a', size: 0.5 }); },
+    '🐣': function() { var g = bird({ color: '#ffd84a', size: 0.5 }); ball(g, 0.42, '#fffaf0', 0, 0.12, 0, 1, 0.6, 1); return g; },
+    '🐦': function() { return bird({ color: '#5aa7e3', wing: '#2f6ea8', beak: '#f2c94c', size: 0.5, flies: true }); },
+    '🦅': function() { return bird({ color: '#6b4426', head: '#ffffff', beak: '#f2c94c', wing: '#4f3019', span: 2.2, size: 1.0, flies: true }); },
+    '🦇': function() { return bird({ color: '#3d3550', wing: '#2a2438', beak: '#3d3550', span: 1.8, size: 0.6, flies: true }); }
+};
+ANIMALS['🐮'] = ANIMALS['🐄']; ANIMALS['🐖'] = ANIMALS['🐷'];
+['🦀', '⭐', '🐚', '🐙', '🦑', '🪼', '🦐', '🦞', '🐠'].forEach(function(e) { ANIMALS[e] = function() { return seaThing(e); }; });
+// Papillon (tous pareils, doré) et luciole
+ANIMALS['🦋'] = function() {
+    var g = new T.Group(), wm = mat('#ffcf3f', { side: T.DoubleSide, roughness: 0.6, emissive: '#5a4000', emissiveIntensity: 0.4 });
+    var wings = [];
+    [-1, 1].forEach(function(sx) {
+        var piv = new T.Group(); piv.position.y = 0.9; g.add(piv);
+        var w = new T.Mesh(geo('bwing', function() { return new T.CircleGeometry(0.22, 16); }), wm); w.position.x = sx * 0.2; w.rotation.x = -Math.PI / 2; piv.add(w);
+        wings.push(piv);
+    });
+    put(g, new T.Mesh(capsuleGeo(0.035, 0.2), mat('#3a2a20')), 0, 0.9, 0).rotation.x = Math.PI / 2;
+    g.userData.wings = wings; g.userData.butterfly = true;
+    return g;
+};
+ANIMALS['✨'] = function() {
+    var g = new T.Group();
+    ball(g, 0.08, mat('#fff3a0', { emissive: '#ffe066', emissiveIntensity: 2 }), 0, 1.2, 0);
+    var halo = new T.Sprite(glowMaterial(1)); halo.position.y = 1.2; halo.scale.set(0.9, 0.9, 1); g.add(halo);
+    g.userData.firefly = true;
+    return g;
+};
+
+// ═══════════════════════ Objets de plage en 3D ═══════════════════════
+function makeParasol() {
+    var g = new T.Group();
+    put(g, new T.Mesh(geo('pole', function() { return new T.CylinderGeometry(0.05, 0.05, 2.4, 8); }), mat('#f4ede0')), 0, 1.2, 0).rotation.z = 0.12;
+    var top = new T.Group(); top.position.set(0.14, 2.35, 0); top.rotation.z = 0.12; g.add(top);
+    for (var k = 0; k < 8; k++) {
+        var seg = new T.Mesh(geo('canopy', function() { return new T.ConeGeometry(1.3, 0.5, 8, 1, true, 0, Math.PI / 4); }), mat(k % 2 ? '#ffffff' : '#e8443c', { side: T.DoubleSide }));
+        seg.rotation.y = k * Math.PI / 4; seg.castShadow = true; top.add(seg);
+    }
+    // Deux transats à l'ombre
+    [-0.85, 0.85].forEach(function(x, i) {
+        var ch = new T.Group(); ch.position.set(x, 0, 0.9); ch.rotation.y = i ? -0.25 : 0.25; g.add(ch);
+        var col = i ? '#4fa3e0' : '#ffcf3f';
+        [-0.32, 0.32].forEach(function(px) { rbox(ch, 0.05, 0.05, 1.3, 0.02, '#c98f5a', px, 0.3, 0.1); });
+        rbox(ch, 0.68, 0.07, 1.2, 0.03, col, 0, 0.33, 0.15);
+        var back = rbox(ch, 0.7, 0.06, 0.7, 0.03, col, 0, 0.55, -0.62); back.rotation.x = 0.8;
+        [[-0.3, 0.6], [0.3, 0.6], [-0.3, -0.4], [0.3, -0.4]].forEach(function(p) { rbox(ch, 0.05, 0.28, 0.05, 0.02, '#c98f5a', p[0], 0.14, p[1]); });
+    });
+    rbox(g, 0.9, 0.02, 1.6, 0.05, '#ff8fb1', 0.2, 0.02, -1.1);   // serviette
+    return g;
+}
+function makeSandCastle() {
+    var g = new T.Group(), SAND = '#e6c788';
+    rbox(g, 1.2, 0.5, 1.2, 0.08, SAND, 0, 0.25, 0);
+    [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]].forEach(function(p) {
+        put(g, new T.Mesh(geo('tower', function() { return new T.CylinderGeometry(0.22, 0.26, 0.85, 14); }), mat(SAND)), p[0], 0.42, p[1]);
+        put(g, new T.Mesh(geo('towertop', function() { return new T.ConeGeometry(0.26, 0.3, 14); }), mat('#d9b46e')), p[0], 1.0, p[1]);
+    });
+    put(g, new T.Mesh(geo('flagpole', function() { return new T.CylinderGeometry(0.015, 0.015, 0.5, 6); }), mat('#8a5a3c')), 0.5, 1.35, 0.5);
+    rbox(g, 0.25, 0.15, 0.02, 0.02, '#e8443c', 0.62, 1.5, 0.5);
+    put(g, new T.Mesh(geo('bucket', function() { return new T.CylinderGeometry(0.2, 0.15, 0.3, 14); }), mat('#4fa3e0')), 1.0, 0.15, 0.3);
+    return g;
+}
+function makeBeachBall() {
+    var g = new T.Group(), cols = ['#e8443c', '#ffffff', '#4fa3e0', '#ffffff', '#ffcf3f', '#ffffff'];
+    for (var k = 0; k < 6; k++) put(g, new T.Mesh(new T.SphereGeometry(0.3, 16, 12, k * Math.PI / 3, Math.PI / 3), mat(cols[k])), 0, 0.3, 0);
+    return g;
+}
+function makeFlipFlops() {
+    var g = new T.Group();
+    [[-0.12, 0.1], [0.14, -0.05]].forEach(function(p) {
+        rbox(g, 0.18, 0.04, 0.45, 0.08, '#4fa3e0', p[0], 0.03, p[1]);
+        put(g, new T.Mesh(geo('strap', function() { return new T.TorusGeometry(0.07, 0.015, 6, 12, Math.PI); }), mat('#ffcf3f')), p[0], 0.05, p[1] + 0.05);
+    });
+    return g;
+}
+function makeLog() {
+    var g = new T.Group();
+    var l = put(g, new T.Mesh(geo('log', function() { return new T.CylinderGeometry(0.22, 0.25, 1.4, 14); }), mat('#9a6b48')), 0, 0.22, 0); l.rotation.z = Math.PI / 2; l.rotation.y = 0.4;
+    return g;
+}
+function makeKite() {
+    var g = new T.Group(), k = new T.Group(); k.position.y = 3.2; g.add(k);
+    k.add(new T.Mesh(geo('kite', function() { var s = new T.Shape(); s.moveTo(0, 0.6); s.lineTo(0.4, 0); s.lineTo(0, -0.7); s.lineTo(-0.4, 0); s.lineTo(0, 0.6); return new T.ShapeGeometry(s); }), mat('#e8443c', { side: T.DoubleSide })));
+    put(g, new T.Mesh(geo('kitestring', function() { return new T.CylinderGeometry(0.008, 0.008, 3.2, 4); }), mat('#ffffff')), 0, 1.6, 0);
+    g.userData.kite = k;
+    return g;
+}
+function makeBeachGrass() {
+    var g = new T.Group();
+    for (var k = 0; k < 7; k++) { var b = put(g, new T.Mesh(geo('blade', function() { return new T.ConeGeometry(0.04, 0.6, 5); }), mat('#9bbf5a')), (k % 3 - 1) * 0.08, 0.3, (k % 2) * 0.06); b.rotation.z = (k - 3) * 0.18; }
+    return g;
+}
+var DECOR = { '⛱️': makeParasol, '🏖️': makeSandCastle, '🏐': makeBeachBall, '🩴': makeFlipFlops, '🪵': makeLog, '🪁': makeKite, '🌿': makeBeachGrass, '🌾': makeBeachGrass };
+
+// Animation des animaux : se tournent, pattes / ailes, petits sauts
+function animateAnimal(obj, dx, dy, dt, time) {
+    var ud = obj.userData, moving = Math.hypot(dx, dy) > 0.2;
+    if (moving) { ud.facing = Math.atan2(dx, dy); ud.step = (ud.step || 0) + dt * 12; }
+    if (ud.facing !== undefined) { var turn = Math.atan2(Math.sin(ud.facing - obj.rotation.y), Math.cos(ud.facing - obj.rotation.y)); obj.rotation.y += turn * Math.min(1, dt * 8); }
+    if (ud.legs) { var sw = moving ? Math.sin(ud.step) * 0.6 : 0; ud.legs[0].rotation.x = sw; ud.legs[3].rotation.x = sw; ud.legs[1].rotation.x = -sw; ud.legs[2].rotation.x = -sw; }
+    if (ud.wings) {
+        var f = ud.butterfly ? Math.sin(time * 14 + obj.id) * 0.9 : (ud.flies ? Math.sin(time * 10 + obj.id) * 0.7 : (moving ? Math.sin(time * 18) * 0.3 : 0));
+        ud.wings[0].rotation.z = f; ud.wings[1].rotation.z = -f;
+    }
+    if (ud.body) ud.body.position.y = ud.flies ? 1.6 + Math.sin(time * 2 + obj.id) * 0.2 : (moving ? Math.abs(Math.sin(ud.step)) * 0.06 : 0);
+    var gy = ud.groundY || 0;
+    if (ud.butterfly) obj.position.y = gy + 0.3 + Math.sin(time * 3 + obj.id) * 0.15;
+    if (ud.firefly) obj.position.y = gy + Math.sin(time * 2 + obj.id) * 0.3;
+    if (ud.kite) { ud.kite.rotation.z = Math.sin(time * 1.5 + obj.id) * 0.3; ud.kite.position.x = Math.sin(time + obj.id) * 0.3; }
+}
+
 // ═══════════════════════ Décor fixe (sol, mer, rivière, chemins) ═══════════════════════
 // Texture d'eau : bleu, reflets ondulés et petites taches d'écume (répétée, on la fait défiler)
 var riverTex = null, seaTex = null, lakeTex = null;
@@ -671,6 +898,16 @@ function waterTexture(base) {
     var t = new T.CanvasTexture(c);
     t.encoding = T.sRGBEncoding; t.wrapS = t.wrapT = T.RepeatWrapping;
     return t;
+}
+// Ligne où commence le sable (ondulée) et dunes (hauteur en unités 3D)
+function sandLine(x) { return Game.CONFIG.BEACH_TOP - 10 + Math.sin(x / 310) * 70 + Math.sin(x / 97 + 1) * 28; }
+function dunes(px, py, shore) {
+    if (px < 3050 || px > 3950) return 0;
+    var top = sandLine(px) + 60, bottom = shore - 170;
+    if (py < top || py > bottom) return 0;
+    var edge = Math.min(1, (px - 3050) / 160, (3950 - px) / 160, (py - top) / 90, (bottom - py) / 90);
+    var w = Math.max(0, Math.sin(px / 85 + Math.sin(py / 140) * 1.4) * 0.6 + Math.sin(px / 47 - py / 63) * 0.3 + 0.4);
+    return w * 1.1 * Math.max(0, edge);
 }
 function shorelineY(x) { return Game.world.shorelineY ? Game.world.shorelineY(x) : Game.CONFIG.SEA_TOP; }
 function rectOf(el) { return { x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0, w: el.offsetWidth, h: el.offsetHeight }; }
@@ -716,7 +953,12 @@ function buildTerrain() {
             c.lerp(ROCK, k * 0.55);
             if (k > 0.55) c.lerp(SNOW, (k - 0.55) * 1.6);
         }
-        if (py > C.BEACH_TOP - 60) c.lerp(SAND, Math.min(1, (py - (C.BEACH_TOP - 60)) / 120));
+        // Bord herbe / sable ondulé (pas une ligne droite), avec un passage doux
+        var sandY = sandLine(px) + (R() - 0.5) * 30;
+        if (py > sandY - 40) c.lerp(SAND, Math.min(1, (py - (sandY - 40)) / 80));
+        // Dunes de sable à l'est de la plage
+        var dz = dunes(px, py, shore);
+        if (dz > 0) { h += dz; c.lerp(lin('#f2dcaa'), Math.min(1, dz * 0.6)); }
         if (py > shore - 120) { var d = (py - (shore - 120)) / 120; h -= Math.min(1, d) * 0.15; c.lerp(WET, Math.min(1, d) * 0.6); }
         if (py > shore) { h -= Math.min(1.2, (py - shore) / 300); c.copy(SEABED); }
         // Distance à l'eau la plus proche (ellipses de la rivière et des lacs)
@@ -786,6 +1028,14 @@ function buildTerrain() {
         scene.add(m);
     });
 
+    // Herbes des dunes
+    var RG = rand(17);
+    for (var gi = 0; gi < 60; gi++) {
+        var gx = 3080 + RG() * 840, gz = sandLine(gx) + 80 + RG() * (shorelineY(gx) - 260 - sandLine(gx));
+        if (dunes(gx, gz, shorelineY(gx)) < 0.3) continue;
+        var grass = makeBeachGrass(); grass.position.set(gx * U, heightAt(gx, gz), gz * U); grass.scale.setScalar(0.9 + RG() * 0.6); scene.add(grass);
+    }
+
     // Enclos de la ferme : petites barrières
     var FENCE = mat('#c99a63');
     pens.forEach(function(r) {
@@ -842,6 +1092,8 @@ function kindOf(el, e) {
     if (cl.contains('flower')) return 'flower';
     if (/^(🏔️|🗻|⛰️)/.test(e)) return 'mountain';
     if (e === '🌴') return 'palm';
+    if (ANIMALS[e]) return 'animal';
+    if (DECOR[e]) return 'decor';
     return 'sprite';
 }
 function houseIdOf(el) { return el.id === 'house-site' ? 'charlie' : el.id.replace('house-', ''); }
@@ -872,6 +1124,8 @@ function buildFor(el, kind, e, label) {
         case 'dock': obj = makeDock(el.offsetWidth * U, el.offsetHeight * U); break;
         case 'boat': obj = makeBoat(); break;
         case 'crate': obj = makeCrate(); break;
+        case 'animal': obj = ANIMALS[e](); break;
+        case 'decor': obj = DECOR[e](); obj.rotation.y = ((parseFloat(el.style.left) || 0) * 7.3) % (Math.PI * 2); break;
         case 'barn': obj = makeBarn(); break;
         case 'hay': obj = makeHay(el.offsetWidth * U); break;
         case 'field': obj = makeField(el); break;
@@ -978,9 +1232,10 @@ function placeRec(el, rec) {
     if (rec.px === p.x && rec.py === p.y) return;
     rec.px = p.x; rec.py = p.y;
     var gh = heightAt(p.x, p.y);
+    rec.obj.userData.groundY = gh;
     rec.obj.position.set(p.x * U, rec.kind === 'mountain' ? gh - 0.5 : (rec.kind === 'dock' ? 0 : gh), p.y * U);
     // Décor posé par erreur dans l'eau (palmier dans la rivière...) : on ne l'affiche pas
-    if ((rec.kind === 'palm' || (rec.kind === 'sprite' && !rec.moving) || (rec.kind === 'rock' && !el.classList.contains('stone'))) && gh < -0.2) rec.hideInWater = true;
+    if ((rec.kind === 'palm' || rec.kind === 'decor' || (rec.kind === 'sprite' && !rec.moving) || (rec.kind === 'rock' && !el.classList.contains('stone'))) && gh < -0.2) rec.hideInWater = true;
 }
 function syncGarden(el, g) {
     var cells = el.querySelectorAll('.garden-cell');
@@ -1082,6 +1337,7 @@ function syncMoving(time) {
         var ox = rec.px, oy = rec.py;
         placeRec(el, rec);
         if (rec.obj.userData.sprite) rec.obj.userData.sprite.position.y = Math.abs(Math.sin(time * 6 + rec.px * 0.01)) * 0.12;
+        if (rec.kind === 'animal') animateAnimal(rec.obj, ox === undefined ? 0 : rec.px - ox, oy === undefined ? 0 : rec.py - oy, _dtFrame, time);
         if (rec.obj.userData.legL) animateWalker(rec.obj, ox === undefined ? 0 : rec.px - ox, oy === undefined ? 0 : rec.py - oy, _dtFrame, time);
         // Bulle de dialogue des villageois : une vraie bulle de BD en HTML (texte net et lisible) au-dessus de la tête
         var b = bubbleOf(el);
