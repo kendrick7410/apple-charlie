@@ -1574,3 +1574,31 @@ button, input, select, textarea {
     border-radius: 50%;
     background: rgba(255,255,255,0.55);
 }
+
+/* Vue 3D (adresse avec ?3d) : la carte 2D reste là pour la logique du jeu mais devient invisible */
+#r3d-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+html.mode-3d #game-world {
+    visibility: hidden;
+}
+html.mode-3d #time-overlay {
+    display: none;   /* le jour et la nuit sont faits par les lumières 3D */
+}
+#r3d-fps {
+    position: fixed;
+    left: 50%;
+    bottom: 6px;
+    transform: translateX(-50%);
+    z-index: 1200;
+    font: 11px ui-monospace, Menlo, monospace;
+    color: #fff;
+    background: rgba(0,0,0,0.45);
+    padding: 2px 8px;
+    border-radius: 6px;
+    pointer-events: none;
+}
