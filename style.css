@@ -1621,3 +1621,26 @@ html.mode-3d #time-overlay {
 }
 #r3d-slow a { color: #e65100; }
 #r3d-slow button { border: none; background: #ef9a9a; color: #fff; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+
+/* Intérieurs en 3D : la pièce 2D reste pour la logique mais devient invisible ; les boutons restent cliquables */
+html.mode-3d #interior-view {
+    background: transparent;
+    pointer-events: none;
+}
+html.mode-3d #interior-view > * {
+    pointer-events: auto;
+}
+html.mode-3d #interior-view > #current-room {
+    visibility: hidden;
+    pointer-events: none;
+}
+/* Transition en cercle (comme dans Animal Crossing) : un rond transparent entouré de noir */
+#r3d-iris {
+    position: fixed;
+    z-index: 9800;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 300vmax #000;
+    pointer-events: none;
+    display: none;
+}

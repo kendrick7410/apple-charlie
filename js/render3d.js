@@ -311,8 +311,13 @@ function makeHouse(style, scale) {
         var s = new T.Shape(); s.moveTo(-0.45, 0); s.lineTo(-0.45, 1.05); s.absarc(0, 1.05, 0.45, Math.PI, 0, true); s.lineTo(0.45, 0); s.lineTo(-0.45, 0);
         return new T.ExtrudeGeometry(s, { depth: 0.08, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2, curveSegments: 16 });
     });
-    put(g, new T.Mesh(doorGeo, mat('#8a5a3c')), 0, 0.35, 1.66);
-    ball(g, 0.06, mat('#f2c94c', { metalness: 0.6, roughness: 0.3 }), 0.28, 1.0, 1.82);
+    // Porte sur charnière (côté gauche) : elle s'ouvre vers l'extérieur quand Charlie entre
+    var hinge = new T.Group(); hinge.position.set(-0.45, 0.35, 1.66); g.add(hinge);
+    put(hinge, new T.Mesh(doorGeo, mat('#8a5a3c')), 0.45, 0, 0);
+    ball(hinge, 0.06, mat('#f2c94c', { metalness: 0.6, roughness: 0.3 }), 0.73, 0.65, 0.16);
+    var dark = new T.Mesh(geo('doorhole', function() { var sh = new T.Shape(); sh.moveTo(-0.45, 0); sh.lineTo(-0.45, 1.05); sh.absarc(0, 1.05, 0.45, Math.PI, 0, true); sh.lineTo(0.45, 0); sh.lineTo(-0.45, 0); return new T.ShapeGeometry(sh, 16); }), mat('#2a1a12'));
+    dark.position.set(0, 0.35, 1.655); g.add(dark);
+    g.userData.door = hinge;
     var glass = new T.MeshStandardMaterial({ color: lin('#a9dcf7'), emissive: lin('#ffb453'), emissiveIntensity: 0, roughness: 0.15 });
     windowGlass.push(glass);
     [-1.3, 1.3].forEach(function(x) {
@@ -922,6 +927,422 @@ function handleClick3d(e) {
     _stuck = 0;
 }
 
+// ═══════════════════════ Intérieurs en 3D ═══════════════════════
+// La pièce 2D (#current-room) reste la logique (meubles, Charlie, sortie par le tapis) mais devient invisible ;
+// on la redessine ici comme une maison de poupée vue de biais. Les clics et le glisser des meubles
+// sont traduits en coordonnées de la pièce et renvoyés à furniture.js.
+var room3d = null;              // { scene, camera, items, charlie, ... }
+var RU = 1 / 57;                // 57 px de la pièce = 1 unité (la pièce fait 570 px ≈ 10 unités)
+var ROOM_THEMES = {
+    bakery:   { floor: '#f3d9a8', wall: '#fff1dc', trim: '#bf8c3e' },
+    shop:     { floor: '#cfe8d8', wall: '#e8f6ec', trim: '#3e9e6a' },
+    fishShop: { floor: '#bfe3f0', wall: '#e3f3fb', trim: '#2a8bbf' },
+    museum:   { floor: '#3a3358', wall: '#4a4170', trim: '#8c7bc4' },
+    souvenir: { floor: '#d7f3ee', wall: '#e2f6f2', trim: '#009688' },
+    pizzeria: { floor: '#f6e0c4', wall: '#fff0e6', trim: '#c62828' }
+};
+function roomPx() { var r = document.getElementById('current-room'); return { w: r.clientWidth || 570, h: r.clientHeight || 570 }; }
+// Coordonnées de la pièce (px, coin haut-gauche d'un emoji de 48 px) → position 3D (centre au sol)
+function roomPos(x, y) { var R = roomPx(); return { x: (x + 24 - R.w / 2) * RU, z: (y + 24 - R.h / 2) * RU }; }
+
+// Meubles en 3D (même liste que furniture.js / Game.RECIPES)
+function makeFurniture(type, f) {
+    var g = new T.Group(), on = !!f[4];
+    switch (type) {
+        case 'bed':
+            rbox(g, 1.5, 0.45, 2.2, 0.12, '#9a6b48', 0, 0.25, 0);
+            rbox(g, 1.35, 0.22, 2.0, 0.1, '#ffffff', 0, 0.55, 0);
+            rbox(g, 1.38, 0.18, 1.3, 0.1, '#6fa8dc', 0, 0.62, 0.32);
+            rbox(g, 0.9, 0.2, 0.45, 0.1, '#fff4f4', 0, 0.72, -0.72);
+            rbox(g, 1.5, 0.9, 0.16, 0.08, '#8a5a3c', 0, 0.55, -1.1);
+            break;
+        case 'table':
+            put(g, new T.Mesh(new T.CylinderGeometry(0.75, 0.75, 0.12, 28), mat('#b07d4f')), 0, 0.8, 0);
+            put(g, new T.Mesh(new T.CylinderGeometry(0.1, 0.16, 0.8, 12), mat('#8a5a3c')), 0, 0.4, 0);
+            break;
+        case 'chair':
+            rbox(g, 0.6, 0.1, 0.6, 0.05, '#c98f5a', 0, 0.48, 0);
+            rbox(g, 0.6, 0.6, 0.1, 0.05, '#c98f5a', 0, 0.8, -0.26);
+            [[-0.24, -0.24], [0.24, -0.24], [-0.24, 0.24], [0.24, 0.24]].forEach(function(p) { rbox(g, 0.08, 0.48, 0.08, 0.03, '#8a5a3c', p[0], 0.24, p[1]); });
+            break;
+        case 'bookshelf':
+            rbox(g, 1.4, 1.9, 0.36, 0.08, '#8a5a3c', 0, 0.95, -0.08);
+            ['#e53935', '#43a047', '#1e88e5', '#fdd835', '#8e24aa', '#fb8c00', '#26a69a', '#ec407a'].forEach(function(c, i) {
+                rbox(g, 0.15, i % 2 ? 0.38 : 0.44, 0.3, 0.03, c, -0.5 + (i % 4) * 0.33, i < 4 ? 1.5 : 0.8, 0.18);
+            });
+            [0.55, 1.25].forEach(function(y) { rbox(g, 1.3, 0.06, 0.4, 0.02, '#6e4428', 0, y, 0.12); });
+            break;
+        case 'lamp':
+            put(g, new T.Mesh(new T.CylinderGeometry(0.25, 0.3, 0.08, 20), mat('#5d4037')), 0, 0.04, 0);
+            put(g, new T.Mesh(new T.CylinderGeometry(0.04, 0.04, 1.3, 10), mat('#5d4037')), 0, 0.7, 0);
+            var shade = new T.MeshStandardMaterial({ color: lin('#fff3c4'), emissive: lin('#ffcf6a'), emissiveIntensity: on ? 1.2 : 0, roughness: 0.6, side: T.DoubleSide });
+            put(g, new T.Mesh(new T.CylinderGeometry(0.22, 0.4, 0.45, 20, 1, true), shade), 0, 1.4, 0);
+            if (on) { var l = new T.PointLight(lin('#ffcf80'), 1.8, 9, 1.6); l.position.set(0, 1.3, 0); g.add(l); }
+            break;
+        case 'plant':
+            put(g, new T.Mesh(new T.CylinderGeometry(0.3, 0.22, 0.45, 18), mat('#d9774b')), 0, 0.22, 0);
+            [[0, 0.75, 0, 0.32], [0.22, 0.62, 0.1, 0.22], [-0.2, 0.65, -0.05, 0.24]].forEach(function(b) { ball(g, b[3], '#4f9a3c', b[0], b[1], b[2]); });
+            if (!f[3] || (Game.state.totalTimePlayed - f[3]) >= 12 * 60 * 1000) [[0.15, 0.95, 0.15], [-0.18, 0.85, 0.12]].forEach(function(p) { ball(g, 0.09, '#ffd54f', p[0], p[1], p[2]); });
+            break;
+        case 'mirror':
+            rbox(g, 0.9, 1.6, 0.12, 0.3, '#c9a24a', 0, 0.9, 0);
+            put(g, new T.Mesh(new T.PlaneGeometry(0.72, 1.4), new T.MeshStandardMaterial({ color: lin('#cfe9f7'), metalness: 0.9, roughness: 0.08 })), 0, 0.9, 0.07);
+            break;
+        case 'stove':
+            rbox(g, 1.1, 0.95, 0.75, 0.08, '#e0e0e0', 0, 0.48, 0);
+            [[-0.25, -0.12], [0.25, -0.12], [-0.25, 0.18], [0.25, 0.18]].forEach(function(p) { put(g, new T.Mesh(new T.CylinderGeometry(0.15, 0.15, 0.04, 18), mat('#424242')), p[0], 0.97, p[1]); });
+            rbox(g, 0.8, 0.45, 0.04, 0.04, '#616161', 0, 0.42, 0.38);
+            break;
+        case 'tv':
+            rbox(g, 1.3, 0.5, 0.5, 0.08, '#8a5a3c', 0, 0.25, 0);
+            rbox(g, 1.2, 0.8, 0.18, 0.1, '#37474f', 0, 0.95, 0);
+            var scr = new T.MeshStandardMaterial({ color: lin('#1a2340'), emissive: lin('#7fb4ff'), emissiveIntensity: on ? 1.1 : 0, roughness: 0.3 });
+            put(g, new T.Mesh(new T.PlaneGeometry(1.0, 0.62), scr), 0, 0.95, 0.1);
+            if (on) { var tl = new T.PointLight(lin('#8fbfff'), 0.8, 5, 2); tl.position.set(0, 1, 0.6); g.add(tl); }
+            break;
+        case 'piano':
+            rbox(g, 1.7, 1.1, 0.7, 0.1, '#2b2b2b', 0, 0.55, 0);
+            rbox(g, 1.5, 0.08, 0.3, 0.02, '#ffffff', 0, 0.82, 0.42);
+            for (var k = 0; k < 6; k++) rbox(g, 0.08, 0.05, 0.18, 0.01, '#111111', -0.6 + k * 0.24, 0.88, 0.36);
+            break;
+        case 'bath':
+            rbox(g, 1.9, 0.6, 1.05, 0.3, '#ffffff', 0, 0.3, 0);
+            put(g, new T.Mesh(new T.PlaneGeometry(1.6, 0.75), new T.MeshStandardMaterial({ color: lin('#8fd3f4'), roughness: 0.1, transparent: true, opacity: 0.85 })), 0, 0.56, 0).rotation.x = -Math.PI / 2;
+            break;
+        default:
+            g.add(emojiSprite(f[0], 0.9));
+    }
+    return g;
+}
+
+function themeFor(s) {
+    if (s.activeShop) return ROOM_THEMES[s.activeShop.theme] || ROOM_THEMES.shop;
+    var h = s.activeHouse ? HOUSE_STYLES[s.activeHouse.id] || HOUSE_STYLES.charlie : HOUSE_STYLES.charlie;
+    return { floor: '#d8b07a', wall: h.wall, trim: h.roof };
+}
+
+function buildRoom() {
+    var s = Game.state, R = roomPx(), W = R.w * RU, D = R.h * RU, th = themeFor(s);
+    var sc = new T.Scene();
+    sc.background = lin('#20160f');
+    var cam = new T.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 100);
+    var g = new T.Group(); sc.add(g);
+    // Sol en lattes, murs (fond + côtés), plinthe, fenêtres rondes
+    rbox(g, W + 0.6, 0.3, D + 0.6, 0.12, th.trim, 0, -0.15, 0);
+    rbox(g, W, 0.06, D, 0.04, th.floor, 0, 0.03, 0);
+    for (var i = 1; i < 10; i++) rbox(g, 0.03, 0.02, D, 0.01, '#6e4b2a', -W / 2 + i * W / 10, 0.065, 0, { transparent: true, opacity: 0.18 });
+    rbox(g, W + 0.6, 3.4, 0.3, 0.1, th.wall, 0, 1.7, -D / 2 - 0.15);
+    rbox(g, 0.3, 3.4, D + 0.6, 0.1, th.wall, -W / 2 - 0.15, 1.7, 0);
+    rbox(g, 0.3, 3.4, D + 0.6, 0.1, th.wall, W / 2 + 0.15, 1.7, 0);
+    rbox(g, W, 0.25, 0.08, 0.03, th.trim, 0, 0.13, -D / 2 + 0.02);
+    var glass = new T.MeshStandardMaterial({ color: lin('#a9dcf7'), emissive: lin('#1d2a55'), emissiveIntensity: 0, roughness: 0.15 });
+    [-W / 4, W / 4].forEach(function(x) {
+        put(g, new T.Mesh(geo('wframe', function() { return new T.TorusGeometry(0.42, 0.07, 10, 28); }), mat('#ffffff')), x, 2.1, -D / 2 + 0.02);
+        var gl = new T.Mesh(geo('wglass', function() { return new T.CircleGeometry(0.4, 28); }), glass); gl.position.set(x, 2.1, -D / 2 + 0.01); g.add(gl);
+    });
+    // Tapis de sortie (étoile) en bas au centre, comme dans la pièce 2D
+    var matZ = (R.h / 2 - 40) * RU;
+    rbox(g, 1.4, 0.05, 0.7, 0.2, '#ffd54f', 0, 0.07, matZ);
+    var star = emojiSprite('🌟', 0.6); star.position.set(0, 0.1, matZ); g.add(star);
+    // Enseigne de la boutique sur le mur du fond
+    if (s.activeShop) {
+        var lab = labelSprite(s.activeShop.sign + ' ' + s.activeShop.name, 0.8); lab.position.set(0, 3.2, -D / 2); g.add(lab);
+    }
+    var hemi = new T.HemisphereLight(lin('#fff6e8'), lin('#6b5a48'), 0.75); sc.add(hemi);
+    var top = new T.PointLight(lin('#fff1d6'), 0.9, 20, 1.5); top.position.set(0, 4.5, 1); top.castShadow = true; top.shadow.mapSize.set(1024, 1024); sc.add(top);
+    room3d = { scene: sc, camera: cam, hemi: hemi, top: top, glass: glass, items: new T.Group(), key: '', charlie: makeCharlie(), fx: null, fxText: '', W: W, D: D };
+    sc.add(room3d.items);
+    sc.add(room3d.charlie);
+    room3d.charlie.scale.setScalar(1.05);
+    // Caméra : de face, en hauteur, toute la pièce dans le cadre
+    cam.position.set(0, 9.2, D / 2 + 7.6);
+    cam.lookAt(0, 0.6, 0.4);
+    resizeRoom();
+}
+function resizeRoom() {
+    if (!room3d) return;
+    room3d.camera.aspect = window.innerWidth / window.innerHeight;
+    // Sur téléphone (écran étroit), champ plus large pour que toute la pièce tienne
+    room3d.camera.fov = window.innerWidth < window.innerHeight ? 62 : 40;
+    room3d.camera.updateProjectionMatrix();
+}
+
+// Ce qui doit être dessiné dans la pièce : meubles, décor de boutique, commerçant, lit du villageois, boules à neige
+function roomKey() {
+    var s = Game.state, parts = [s.activeHouse ? s.activeHouse.id : (s.activeShop ? s.activeShop.id : ''), Game.time.isNight() ? 'n' : 'd'];
+    if (s.activeHouse) (s.houseFurniture[s.activeHouse.id] || []).forEach(function(f) { parts.push(f[0] + f[1] + ',' + f[2] + (f[4] ? '*' : '') + ((!f[3] || s.totalTimePlayed - f[3] >= 720000) ? 'r' : '')); });
+    var npc = document.getElementById('shop-npc');
+    if (npc && npc.style.display !== 'none') parts.push('npc' + npc.textContent);
+    parts.push(document.querySelectorAll('#current-room .house-sleeper').length, document.querySelectorAll('#current-room .snow-globe-display').length, document.querySelectorAll('#current-room .shop-decor').length);
+    return parts.join('|');
+}
+function syncRoom() {
+    var s = Game.state, key = roomKey();
+    if (key === room3d.key) return;
+    room3d.key = key;
+    var items = room3d.items;
+    while (items.children.length) items.remove(items.children[0]);
+    var R = roomPx();
+    // Meubles (maisons)
+    if (s.activeHouse) {
+        (s.houseFurniture[s.activeHouse.id] || []).forEach(function(f) {
+            var o = makeFurniture(Game.furniture.typeOf(f[0]), f), p = roomPos(f[1], f[2]);
+            o.position.set(p.x, 0.06, p.z);
+            o.traverse(function(m) { m.userData.f = f; });
+            items.add(o);
+        });
+    }
+    // Décor de boutique (non déplaçable) + commerçant derrière son comptoir
+    document.querySelectorAll('#current-room .shop-decor').forEach(function(el) {
+        var p = roomPos(parseFloat(el.style.left), parseFloat(el.style.top));
+        var sp = emojiSprite(el.textContent.trim(), 1.0); sp.position.set(p.x, 0.06, p.z); items.add(sp);
+    });
+    var npc = document.getElementById('shop-npc');
+    if (npc && npc.style.display !== 'none') {
+        rbox(items, 3.2, 1.0, 0.8, 0.12, '#a0703f', 0, 0.5, -R.h / 2 * RU + 2.3);
+        var ns = emojiSprite(npc.textContent.trim(), 1.5); ns.position.set(0, 0.6, -R.h / 2 * RU + 1.6);
+        ns.userData.el = npc; items.add(ns);
+    }
+    // Lit du villageois (avec le villageois qui dort la nuit)
+    var bed = document.querySelector('#current-room .house-bed');
+    if (bed) {
+        var bp = roomPos(parseFloat(bed.style.left) + 30, parseFloat(bed.style.top) + 40);
+        var b = makeFurniture('bed', ['🛏️']); b.position.set(bp.x, 0.06, bp.z); items.add(b);
+        var sleeper = bed.querySelector('.sleeper-emoji');
+        if (sleeper) {
+            var c = makeCritter(sleeper.textContent.trim()); c.rotation.x = -Math.PI / 2; c.position.set(bp.x, 0.75, bp.z + 0.75); items.add(c);
+            var z = emojiSprite('💤', 0.6); z.position.set(bp.x + 0.6, 1.4, bp.z - 0.6); items.add(z);
+        }
+    }
+    // Boules à neige sur le mur du fond (chez Charlie)
+    document.querySelectorAll('#current-room .snow-globe-display').forEach(function(el) {
+        var p = roomPos(parseFloat(el.style.left), parseFloat(el.style.top));
+        var sp = emojiSprite(el.textContent.trim(), 0.55); sp.position.set(p.x, 1.6, -R.h / 2 * RU + 0.25); items.add(sp);
+    });
+    lightRoom();
+}
+// Lumière de la pièce : chez Charlie, il fait sombre sans lampe allumée (très sombre la nuit)
+function lightRoom() {
+    var s = Game.state, night = Game.time.isNight();
+    var mine = s.activeHouse && s.activeHouse.id === 'charlie';
+    var lampOn = mine && (s.houseFurniture.charlie || []).some(function(f) { var t = Game.furniture.typeOf(f[0]); return (t === 'lamp' || t === 'tv') && f[4]; });
+    room3d.hemi.intensity = mine ? (night ? (lampOn ? 0.18 : 0.06) : (lampOn ? 0.75 : 0.35)) : (night ? 0.45 : 0.75);
+    room3d.top.intensity = mine ? (night ? 0.05 : (lampOn ? 0.9 : 0.35)) : (night ? 0.6 : 0.9);
+    room3d.glass.emissiveIntensity = night ? 0.6 : 0;
+}
+
+function updateRoomCharlie(dt, time) {
+    var s = Game.state, c = room3d.charlie, ic = document.getElementById('interior-charlie');
+    var p = roomPos(s.interiorCharlie.x, s.interiorCharlie.y);
+    var prev = c.userData.prev || p;
+    animateWalker(c, (p.x - prev.x) * 40, (p.z - prev.z) * 40, dt, time);
+    c.userData.prev = p;
+    var y = 0.06, lie = false;
+    if (ic && ic.classList.contains('pose-sleep')) { y = 0.75; lie = true; }
+    else if (ic && ic.classList.contains('pose-bath')) y = -0.15;
+    else if (ic && ic.classList.contains('pose-sit')) y = 0.2;
+    c.rotation.x = lie ? -Math.PI / 2 : 0;
+    c.position.set(p.x, y, p.z + (lie ? 0.5 : 0));
+    // Ce que Charlie tient ou ressent (📖, 💤, 🎵...) au-dessus de sa tête
+    var fx = document.getElementById('charlie-fx'), t = fx && fx.style.display !== 'none' ? fx.textContent : '';
+    if (t !== room3d.fxText) {
+        if (room3d.fx) room3d.scene.remove(room3d.fx);
+        room3d.fx = null; room3d.fxText = t;
+        if (t) { room3d.fx = emojiSprite(t, 0.7); room3d.scene.add(room3d.fx); }
+    }
+    if (room3d.fx) room3d.fx.position.set(p.x + 0.5, 2.2 + Math.sin(time * 4) * 0.08, p.z);
+}
+
+// ── Clics et glisser dans la pièce 3D ──
+var _drag = null;
+function roomPoint(e) {
+    var rect = renderer.domElement.getBoundingClientRect();
+    _ndc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+    _rc.setFromCamera(_ndc, room3d.camera);
+    return _rc;
+}
+function floorToRoom(rc) {
+    var t = -rc.ray.origin.y / rc.ray.direction.y;   // intersection avec le sol (y = 0)
+    if (!(t > 0)) return null;
+    var x = rc.ray.origin.x + rc.ray.direction.x * t, z = rc.ray.origin.z + rc.ray.direction.z * t, R = roomPx();
+    return { x: x / RU + R.w / 2 - 24, y: z / RU + R.h / 2 - 24 };
+}
+function onRoomDown(e) {
+    var s = Game.state;
+    if (s.currentView !== 'interior' || !room3d || _cutscene) return;
+    var rc = roomPoint(e);
+    var hits = rc.intersectObjects(room3d.items.children, true);
+    for (var i = 0; i < hits.length; i++) {
+        var o = hits[i].object;
+        if (o.userData.f) { _drag = { f: o.userData.f, x: e.clientX, y: e.clientY, moved: false }; e.preventDefault(); return; }
+        if (o.userData.el) { o.userData.el.click(); return; }
+    }
+    var p = floorToRoom(rc);
+    if (p) Game.furniture.floorClick(p.x, p.y);
+}
+function onRoomMove(e) {
+    if (!_drag || !room3d) return;
+    if (!_drag.moved && Math.hypot(e.clientX - _drag.x, e.clientY - _drag.y) < 6) return;
+    if (Game.furniture.isBusy()) return;
+    _drag.moved = true;
+    var p = floorToRoom(roomPoint(e)), R = roomPx();
+    if (!p) return;
+    var f = _drag.f;
+    f[1] = Math.max(0, Math.min(R.w - 50, Math.round(p.x / 20) * 20));
+    f[2] = Math.max(0, Math.min(R.h - 50, Math.round(p.y / 20) * 20));
+    var el = Game.furniture.elFor(f);
+    if (el) { el.style.left = f[1] + 'px'; el.style.top = f[2] + 'px'; }
+}
+function onRoomUp() {
+    if (!_drag) return;
+    var d = _drag; _drag = null;
+    if (d.moved) { Game.audio.play('craft'); return; }
+    Game.furniture.interact(d.f, Game.furniture.elFor(d.f));
+}
+
+// ═══════════════════════ Entrer / sortir comme dans Animal Crossing ═══════════════════════
+// Charlie se tourne vers la porte, la tire pour l'ouvrir, entre ; l'écran se ferme en cercle sur lui,
+// puis s'ouvre en cercle dans la pièce. En sortant : il sort, et la porte se referme derrière lui.
+var _cutscene = false, _exitHold = false, _lastBuildingId = null;
+function iris(closing, cx, cy, ms) {
+    return new Promise(function(resolve) {
+        var el = document.getElementById('r3d-iris');
+        if (!el) { el = document.createElement('div'); el.id = 'r3d-iris'; document.body.appendChild(el); }
+        var big = Math.hypot(window.innerWidth, window.innerHeight) * 1.1, t0 = performance.now();
+        el.style.display = 'block';
+        (function step(now) {
+            var k = Math.min(1, (now - t0) / ms), e = k * k * (3 - 2 * k);
+            var r = closing ? big * (1 - e) : big * e;
+            el.style.left = cx + 'px'; el.style.top = cy + 'px';
+            el.style.width = el.style.height = (2 * r) + 'px';
+            if (k < 1) requestAnimationFrame(step);
+            else { if (!closing) el.style.display = 'none'; resolve(); }
+        })(t0);
+    });
+}
+function screenOf(v3) {
+    var v = v3.clone().project(camera);
+    return { x: (v.x + 1) / 2 * window.innerWidth, y: (1 - v.y) / 2 * window.innerHeight };
+}
+function doorRecFor(id) {
+    var found = null;
+    tracked.forEach(function(rec, el) { if (el.id === id) found = rec; });
+    return found;
+}
+function tween(ms, fn) {
+    return new Promise(function(resolve) {
+        var t0 = performance.now();
+        (function step(now) {
+            var k = Math.min(1, (now - t0) / ms);
+            fn(k * k * (3 - 2 * k));
+            if (k < 1) requestAnimationFrame(step); else resolve();
+        })(t0);
+    });
+}
+function setGhosts(v) { charlie.traverse(function(o) { if (o.isMesh && o.material && o.material.depthFunc === T.GreaterDepth) o.visible = v; }); }
+function walkLegs(ud) { ud.step += 0.25; var sw = Math.sin(ud.step) * 0.6; ud.legL.rotation.x = sw; ud.legR.rotation.x = -sw; }
+// Animation d'entrée devant la porte du bâtiment (élément 2D elId)
+function enterAnimation(elId) {
+    var rec = doorRecFor(elId), s = Game.state;
+    var door = rec && rec.obj.userData.door;
+    if (!door) return Promise.resolve();
+    _cutscene = true; _exitHold = true; s.paused = true; setGhosts(false);
+    var ud = charlie.userData, front = new T.Vector3(); door.getWorldPosition(front);
+    var x0 = charlie.position.x, z0 = charlie.position.z, sx = front.x + 0.45, sz = front.z + 0.8;
+    var r0 = charlie.rotation.y, r1 = Math.PI * (r0 >= 0 ? 1 : -1);
+    return tween(380, function(k) {                       // se place devant la porte et se tourne vers elle
+        charlie.position.x = x0 + (sx - x0) * k;
+        charlie.position.z = z0 + (sz - z0) * k;
+        charlie.rotation.y = r0 + (r1 - r0) * k;
+        walkLegs(ud);
+    }).then(function() {
+        ud.facing = charlie.rotation.y;
+        ud.legL.rotation.x = ud.legR.rotation.x = 0;
+        ud.armR.rotation.x = -1.3;                        // tend le bras vers la poignée
+        Game.audio.play('craft');
+        return tween(480, function(k) {                   // tire la porte vers lui
+            door.rotation.y = -1.9 * k;
+            ud.body.position.z = -0.15 * Math.sin(k * Math.PI);
+        });
+    }).then(function() {
+        ud.armR.rotation.x = 0;
+        var p = screenOf(new T.Vector3(front.x + 0.45, 1.3, front.z));
+        iris(true, p.x, p.y, 700);
+        var zz = charlie.position.z;
+        return tween(700, function(k) { charlie.position.z = zz - 1.7 * k; walkLegs(ud); });   // entre
+    }).then(function() {
+        door.rotation.y = 0;
+        ud.body.position.z = 0;
+    });
+}
+function afterEnter() {
+    Game.state.paused = false; _exitHold = false; setGhosts(true);
+    room3d = null;
+    buildRoom();
+    syncRoom();
+    iris(false, window.innerWidth / 2, window.innerHeight * 0.55, 650).then(function() { _cutscene = false; });
+}
+// Animation de sortie : Charlie apparaît dans l'embrasure, sort, et la porte se referme derrière lui
+function exitAnimation(elId) {
+    var rec = doorRecFor(elId), s = Game.state;
+    var door = rec && rec.obj.userData.door;
+    if (!door) { _cutscene = false; return iris(false, window.innerWidth / 2, window.innerHeight / 2, 500); }
+    s.paused = true; _exitHold = true; setGhosts(false);
+    var ud = charlie.userData, front = new T.Vector3(); door.getWorldPosition(front);
+    var ex = s.charlie.x * U, ez = s.charlie.y * U;
+    s.charlie.visualX = s.charlie.x; s.charlie.visualY = s.charlie.y;
+    door.rotation.y = -1.9;
+    charlie.position.set(front.x + 0.45, charlie.position.y, front.z - 0.5);
+    charlie.rotation.y = 0; ud.facing = 0;
+    var p = screenOf(new T.Vector3(front.x + 0.45, 1.3, front.z));
+    iris(false, p.x, p.y, 650);
+    return tween(750, function(k) {                       // sort
+        charlie.position.x = front.x + 0.45 + (ex - front.x - 0.45) * k;
+        charlie.position.z = front.z - 0.5 + (ez - front.z + 0.5) * k;
+        walkLegs(ud);
+    }).then(function() {
+        ud.legL.rotation.x = ud.legR.rotation.x = 0;
+        Game.audio.play('craft');
+        return tween(420, function(k) { door.rotation.y = -1.9 * (1 - k); });   // la porte se referme
+    }).then(function() {
+        _exitHold = false; s.paused = false; setGhosts(true); _cutscene = false;
+    });
+}
+function roomCharlieScreen() {
+    if (!room3d) return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    var v = room3d.charlie.position.clone(); v.y += 1.2; v.project(room3d.camera);
+    return { x: (v.x + 1) / 2 * window.innerWidth, y: (1 - v.y) / 2 * window.innerHeight };
+}
+function wrapBuildings() {
+    var B = Game.buildings, origHouse = B.enterHouse, origShop = B.enterShop, origExit = B.exitHouse;
+    B.enterHouse = function(house) {
+        var self = this, args = arguments;
+        if (_cutscene) return;
+        if (Game.state.currentView !== 'world') return origHouse.apply(self, args);
+        _lastBuildingId = house.id === 'charlie' ? 'house-site' : 'house-' + house.id;
+        enterAnimation(_lastBuildingId).then(function() { origHouse.apply(self, args); afterEnter(); });
+    };
+    B.enterShop = function(shopId) {
+        var self = this, args = arguments, shop = (Game.SHOPS || []).find(function(sh) { return sh.id === shopId; });
+        if (_cutscene) return;
+        if (Game.state.currentView !== 'world' || !shop || (shop.nightOnly && !Game.time.isNight())) return origShop.apply(self, args);
+        _lastBuildingId = shop.loc + '-anchor';
+        enterAnimation(_lastBuildingId).then(function() { origShop.apply(self, args); afterEnter(); });
+    };
+    B.exitHouse = function() {
+        var self = this, args = arguments;
+        if (_cutscene) return;   // la sortie est déjà en cours (le tapis la redemande à chaque image)
+        if (Game.state.currentView !== 'interior') return origExit.apply(self, args);
+        _cutscene = true;
+        var p = roomCharlieScreen();
+        iris(true, p.x, p.y, 600).then(function() {
+            origExit.apply(self, args);
+            room3d = null;
+            return exitAnimation(_lastBuildingId);
+        });
+    };
+}
+
 // ═══════════════════════ Démarrage et boucle ═══════════════════════
 function init() {
     if (started) return;
@@ -965,6 +1386,21 @@ function init() {
     applyPhase();
 
     Game.player.handleClick = handleClick3d;
+    wrapBuildings();
+    // Petit état lisible pour les tests automatiques (animation de porte en cours, ouverture de la porte)
+    Game.r3d.debug = function() {
+        var rec = _lastBuildingId ? doorRecFor(_lastBuildingId) : null, d = rec && rec.obj.userData.door;
+        return { cutscene: _cutscene, door: d ? d.rotation.y : null, room: !!room3d, iris: (document.getElementById('r3d-iris') || {}).style ? document.getElementById('r3d-iris').style.width : '' };
+    };
+    // Position à l'écran d'un meuble de la pièce 3D (tests automatiques)
+    Game.r3d.furnitureScreen = function(f) {
+        if (!room3d) return null;
+        var p = roomPos(f[1], f[2]), v = new T.Vector3(p.x, 0.5, p.z).project(room3d.camera);
+        return { x: (v.x + 1) / 2 * window.innerWidth, y: (1 - v.y) / 2 * window.innerHeight };
+    };
+    canvas.addEventListener('pointerdown', onRoomDown);
+    window.addEventListener('pointermove', onRoomMove);
+    window.addEventListener('pointerup', onRoomUp);
     window.addEventListener('resize', resize); resize();
     camera.position.set(Game.state.charlie.visualX * U, CAM_H, Game.state.charlie.visualY * U + CAM_D);
     _fpsEl = document.createElement('div');
@@ -980,6 +1416,7 @@ function init() {
     requestAnimationFrame(loop);
 }
 function resize() {
+    resizeRoom();
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
@@ -1008,22 +1445,32 @@ function loop(now) {
     var dt = _last ? Math.min(0.1, (now - _last) / 1000) : 0.016;
     _last = now;
     var s = Game.state;
-    if (s.currentView !== 'world') return;   // maisons / boutiques : l'intérieur est en 2D par-dessus
     var time = now / 1000;
+    // Dans une maison ou une boutique : on dessine la pièce en 3D
+    if (s.currentView === 'interior') {
+        if (!room3d) { buildRoom(); syncRoom(); }
+        _scanT += dt;
+        if (_scanT > 0.25) { _scanT = 0; syncRoom(); lightRoom(); }
+        updateRoomCharlie(dt, time);
+        renderer.render(room3d.scene, room3d.camera);
+        return;
+    }
+    if (s.currentView !== 'world') return;
 
     _dtFrame = dt;
-    walkToTarget(dt);
-    collide();
+    if (!_cutscene) { walkToTarget(dt); collide(); }
     _scanT += dt;
     if (_scanT > 0.4) { _scanT = 0; scan(); applyPhase(); }
     syncMoving(time);
 
     // Charlie suit sa position (lissée) du jeu 2D
     var cx = s.charlie.visualX, cy = s.charlie.visualY;
-    animateWalker(charlie, _prev ? cx - _prev.x : 0, _prev ? cy - _prev.y : 0, dt, time);
-    _prev = { x: cx, y: cy };
     var gy = heightAt(cx, cy);
-    charlie.position.set(cx * U, gy, cy * U);
+    if (!_exitHold) {   // pendant l'animation de porte, c'est elle qui place Charlie
+        animateWalker(charlie, _prev ? cx - _prev.x : 0, _prev ? cy - _prev.y : 0, dt, time);
+        charlie.position.set(cx * U, gy, cy * U);
+    }
+    _prev = { x: cx, y: cy };
 
     // Caméra de biais qui suit Charlie ; le soleil (et ses ombres) suit aussi
     if (!_camTarget) { _camTarget = new T.Vector3(); _look = new T.Vector3(); }

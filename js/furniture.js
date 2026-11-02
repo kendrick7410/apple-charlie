@@ -170,6 +170,16 @@ document.addEventListener('pointerdown', function(e) {
     Game.furniture.closeMenu();
 });
 
+// Pour la vue 3D (render3d.js) : marcher vers un point de la pièce, retrouver l'élément d'un meuble
+Game.furniture.floorClick = function(x, y) {
+    if (busy) return;
+    Game.state.interiorTarget = { x: Math.max(20, Math.min(540, x)), y: Math.max(20, Math.min(540, y)) };
+    pending = null;
+    Game.furniture.closeMenu();
+};
+Game.furniture.elFor = function(f) { return elOf(f); };
+Game.furniture.list = function() { return list(); };
+
 // Affiche tous les meubles de la maison active (remplace les anciens)
 Game.furniture.render = function() {
     var r = room();
