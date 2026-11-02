@@ -128,7 +128,7 @@ Game.ui.updateToolbar = function() {
         '🪓': "Hache active ! Double le bois récolté (4 au lieu de 2)",
         '🎣': "Canne active ! Pêche 2x plus rapide",
         '🚿': "Arrosoir ! Clique sur une culture pour l'arroser",
-        '⛏️': "Pelle ! Utilise le bouton Pelle ON/OFF pour tracer des chemins",
+        '⛏️': "Pelle ! Utilise le bouton ⛏️ pour tracer des chemins",
         '🥅': "Filet ! Clique sur un papillon pour le capturer"
     };
     tools.forEach(function(t) {

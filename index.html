@@ -107,14 +107,14 @@
 
         <!-- Save buttons -->
         <div class="save-btns" style="margin-top:6px;">
-            <button onclick="Game.saveGame();Game.ui.notify('Sauvegardé ! 💾')">💾 Sauver</button>
-            <button onclick="Game.audio.toggleMute();this.textContent=Game.audio.isMuted()?'🔇 Son':'🔊 Son'">🔊 Son</button>
-            <button id="shovel-toggle" onclick="Game.tools.toggleShovel()">⛏️ Pelle OFF</button>
-            <button id="crampons-toggle" onclick="Game.tools.toggleCrampons()" style="display:none">🥾 Crampons</button>
-            <button id="swing-move" onclick="Game.tools.moveSwing()" style="display:none">🎠 Placer</button>
-            <button onclick="Game.ui.toggleCollections()">📖 Collection</button>
-            <button onclick="Game.ui.toggleTeleport()">🗺️ Voyage</button>
-            <button onclick="Game.ui.toggleSkins()">🎭 Skins</button>
+            <button onclick="Game.saveGame();Game.ui.notify('Sauvegardé ! 💾')" title="Sauvegarder" aria-label="Sauvegarder">💾</button>
+            <button onclick="Game.audio.toggleMute();this.textContent=Game.audio.isMuted()?'🔇':'🔊'" title="Son" aria-label="Son">🔊</button>
+            <button id="shovel-toggle" onclick="Game.tools.toggleShovel()" title="Pelle (tracer des chemins)" aria-label="Pelle">⛏️</button>
+            <button id="crampons-toggle" onclick="Game.tools.toggleCrampons()" style="display:none" title="Crampons" aria-label="Crampons">🥾</button>
+            <button id="swing-move" onclick="Game.tools.moveSwing()" style="display:none" title="Placer la balançoire" aria-label="Placer la balançoire">🎠</button>
+            <button onclick="Game.ui.toggleCollections()" title="Collection" aria-label="Collection">📖</button>
+            <button onclick="Game.ui.toggleTeleport()" title="Voyage" aria-label="Voyage">🗺️</button>
+            <button onclick="Game.ui.toggleSkins()" title="Skins" aria-label="Skins">🎭</button>
         </div>
     </div>
 

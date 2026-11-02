@@ -1136,7 +1136,19 @@ body.store-mode #current-room .furniture { animation: store-wiggle 0.5s ease-in-
 /* ── Save buttons ── */
 .save-btns {
     display: flex;
-    gap: 4px;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+/* Boutons-icônes compacts (le nom s'affiche au survol) */
+.save-btns button {
+    width: 25px;
+    height: 27px;
+    padding: 0 !important;
+    font-size: 0.9rem !important;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .save-btns button {

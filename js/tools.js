@@ -38,12 +38,12 @@ Game.tools.moveSwing = function() {
 };
 Game.tools.updateCramponsBtn = function() {
     var s = Game.state, sw = document.getElementById('swing-move');
-    if (sw) sw.style.display = s.swing ? '' : 'none';
+    if (sw) sw.style.display = s.swing && s.swing.x === null ? '' : 'none';   // seulement tant qu'elle n'est pas posée
     var btn = document.getElementById('crampons-toggle');
     if (!btn) return;
     btn.style.display = s.tools.crampons ? '' : 'none';
     var on = s.cramponsOn !== false;
-    btn.textContent = on ? '🥾 Crampons ON' : '🥾 Crampons OFF';
+    btn.title = on ? 'Crampons enfilés (cliquer pour les enlever)' : 'Crampons enlevés (cliquer pour les mettre)';
     btn.style.background = on ? '#66bb6a' : '#e8e2c8';
     btn.style.color = on ? 'white' : '#5d4037';
 };
@@ -56,7 +56,7 @@ Game.tools.toggleShovel = function() {
     Game.state.shovelMode = !Game.state.shovelMode;
     var btn = document.getElementById('shovel-toggle');
     if (btn) {
-        btn.textContent = Game.state.shovelMode ? '⛏️ Pelle ON' : '⛏️ Pelle OFF';
+        btn.title = Game.state.shovelMode ? 'Pelle activée' : 'Pelle (tracer des chemins)';
         btn.style.background = Game.state.shovelMode ? '#66bb6a' : '#e8e2c8';
         btn.style.color = Game.state.shovelMode ? 'white' : '#5d4037';
     }
