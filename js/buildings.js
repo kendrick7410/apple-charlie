@@ -96,9 +96,8 @@ Game.buildings.checkProximity = function() {
         }
     }
 
-    // River fishing - wider zone on mobile
-    var riverMargin = isMobile ? 100 : 0;
-    var isNearRiver = cx > (450 - riverMargin) && cx < (750 + riverMargin);
+    // Pêche : au bord de n'importe quelle eau (rivière, lacs, mer)
+    var isNearRiver = Game.buildings.nearWater(cx, cy, isMobile ? 110 : 70);
     var riverPanel = document.getElementById('action-river');
     if (riverPanel) riverPanel.style.display = (isNearRiver && s.season !== 'winter') ? 'flex' : 'none';
 };
@@ -478,6 +477,24 @@ Game.buildings.announceNewPlots = function(newLevel) {
             Game.ui.notify("🏗️ Nouveau chantier ! Tu peux construire : " + sh.name + " " + sh.sign + " (" + sh.cost + " 🧱)", 'info');
         }
     });
+};
+
+// Près de l'eau ? (rivière, lacs, bord de mer)
+var _waterRects = null;
+Game.buildings.nearWater = function(x, y, margin) {
+    if (!_waterRects) {
+        _waterRects = Game.buildRiverSegments().slice();
+        document.querySelectorAll('#game-world .lake-water').forEach(function(el) {
+            _waterRects.push({ x: parseFloat(el.style.left), y: parseFloat(el.style.top), w: el.offsetWidth, h: el.offsetHeight });
+        });
+    }
+    if (Game.world.shorelineY && y > Game.world.shorelineY(x) - margin) return true;
+    for (var i = 0; i < _waterRects.length; i++) {
+        var r = _waterRects[i];
+        var dx = (x - (r.x + r.w / 2)) / (r.w / 2 + margin), dy = (y - (r.y + r.h / 2)) / (r.h / 2 + margin);
+        if (dx * dx + dy * dy < 1) return true;
+    }
+    return false;
 };
 
 })();

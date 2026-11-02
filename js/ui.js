@@ -381,9 +381,9 @@ Game.ui.teleportTo = function(key) {
         fountain: { x: L.fountain.x, y: L.fountain.y + 90 },
         mountain: { x: L.mountain.x, y: L.mountain.y + 230 },
         refuge:   { x: L.mountain.x - 200, y: L.mountain.y + 230 },
-        beach:    { x: L.beach.x, y: L.beach.y - 80 },
+        beach:    { x: 2300, y: L.beach.y - 120 },   // sur le sable, pas dans la rivière
         souvenir: { x: L.souvenirShop.x, y: L.souvenirShop.y + 90 },
-        farm:     { x: L.farm.x, y: L.farm.y - 200 },
+        farm:     { x: L.farm.x, y: L.farm.y + 250 },   // devant les enclos (pas derrière la grange)
         house:    { x: L.charlieHouse.x, y: L.charlieHouse.y + 90 }
     };
     var d = dests[key];

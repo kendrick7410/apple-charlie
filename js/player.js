@@ -138,6 +138,7 @@ Game.player.teleport = function(x, y) {
     s.charlie.visualX = x;
     s.charlie.visualY = y;
     Game.player.updateCamera();
+    if (Game.buildings && Game.buildings.checkProximity) Game.buildings.checkProximity();   // boutons à jour (Entrer, Pêcher...)
 };
 
 // Click-to-move or shovel

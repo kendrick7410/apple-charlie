@@ -36,10 +36,15 @@ Game.mountain.start = function() {
     var s = Game.state;
     var center = { x: s.charlie.x, y: s.charlie.y };
     for (var i = 0; i < M.TOTAL; i++) {
-        var angle = (i / M.TOTAL) * Math.PI * 2 + Math.random() * 0.5;
-        var dist = 160 + Math.random() * 180; // entre 160 et 340 px → toujours visibles
-        var fx = Math.max(120, Math.min(Game.CONFIG.WORLD_W - 120, center.x + Math.cos(angle) * dist));
-        var fy = Math.max(120, Math.min(Game.CONFIG.WORLD_H - 120, center.y + Math.sin(angle) * dist));
+        // On cherche un endroit atteignable (en 3D : pas sur une pente trop raide, pas dans l'eau)
+        var fx, fy;
+        for (var tries = 0; tries < 30; tries++) {
+            var angle = (i / M.TOTAL) * Math.PI * 2 + Math.random() * (0.5 + tries * 0.2);
+            var dist = 160 + Math.random() * 180; // entre 160 et 340 px → toujours visibles
+            fx = Math.max(120, Math.min(Game.CONFIG.WORLD_W - 120, center.x + Math.cos(angle) * dist));
+            fy = Math.max(120, Math.min(Game.CONFIG.WORLD_H - 120, center.y + Math.sin(angle) * dist));
+            if (!Game.r3d || !Game.r3d.reachable || Game.r3d.reachable(fx, fy)) break;
+        }
         var el = document.createElement('div');
         el.className = 'entity mountain-edelweiss';
         el.style.cssText = 'position:absolute;font-size:2rem;z-index:14;filter:drop-shadow(0 0 6px #fff);';

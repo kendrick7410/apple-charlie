@@ -1605,7 +1605,7 @@ html.mode-3d #time-overlay {
 #r3d-slow {
     position: fixed;
     left: 50%;
-    top: 12px;
+    bottom: 14px;
     transform: translateX(-50%);
     z-index: 1300;
     background: #fffef5;

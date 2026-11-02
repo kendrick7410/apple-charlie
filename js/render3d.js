@@ -1105,6 +1105,13 @@ function buildTerrain() {
         cols.push(c.r, c.g, c.b);
     }
     g.setAttribute('color', new T.Float32BufferAttribute(cols, 3));
+    // Couleurs d'hiver : l'herbe se couvre de neige (le sable, les berges et le fond de l'eau restent)
+    var wcols = cols.slice(), SNOWC = lin('#eef3f7'), tc = new T.Color();
+    for (i = 0; i < pos.count; i++) {
+        tc.setRGB(cols[i * 3], cols[i * 3 + 1], cols[i * 3 + 2]);
+        if (tc.g > tc.r * 1.25 && tc.g > tc.b * 1.4 && pos.getY(i) > -0.15) { tc.lerp(SNOWC, 0.82); wcols[i * 3] = tc.r; wcols[i * 3 + 1] = tc.g; wcols[i * 3 + 2] = tc.b; }
+    }
+    groundCols = { normal: new Float32Array(cols), winter: new Float32Array(wcols) };
     g.computeVertexNormals();
     // Carte des hauteurs (pour poser les objets et Charlie sur le sol sans tester tous les triangles)
     heightGrid = { n: seg + 1, cell: W / seg, h: new Float32Array(pos.count) };
@@ -1204,6 +1211,7 @@ function kindOf(el, e) {
         if (e === '🪧' || e === '🏚️') return 'plot';
         return 'house';
     }
+    if (cl.contains('player-path')) return 'path';
     if (cl.contains('villager-sprite')) return 'villager';
     if (cl.contains('farmer-sprite')) return 'farmer';
     if (!el.className) {
@@ -1256,6 +1264,7 @@ function buildFor(el, kind, e, label) {
         case 'boat': obj = makeBoat(); break;
         case 'crate': obj = makeCrate(); break;
         case 'tractor': obj = makeTractor(); break;
+        case 'path': obj = new T.Group(); var tile = rbox(obj, 1.45, 0.06, 1.45, 0.25, '#e3bd7c', 0, 0.03, 0); tile.castShadow = false; break;
         case 'animal': obj = ANIMALS[e](); break;
         case 'decor': obj = DECOR[e](); obj.rotation.y = ((parseFloat(el.style.left) || 0) * 7.3) % (Math.PI * 2); break;
         case 'barn': obj = makeBarn(); break;
@@ -1297,13 +1306,20 @@ function groundPoint(el, kind) {
     var wxy = worldXY(el), x = wxy.x, y = wxy.y;
     var first = el.firstElementChild && !el.firstElementChild.classList.contains('building-label') ? el.firstElementChild : null;
     var w = el.offsetWidth, h = first ? first.offsetHeight : el.offsetHeight;
-    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'dock') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
+    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'dock' || kind === 'path') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
     if (kind === 'barn') return { x: x + w / 2, y: y + 140 };
     if (el.classList.contains('house-exterior') || /-anchor$/.test(el.id)) return { x: x + w / 2, y: y + h * 0.75 };
     return { x: x + w / 2, y: y + h * 0.9 };
 }
 var _ray, _down, _from;
-var heightGrid = null, _rawHeight = false;
+var heightGrid = null, _rawHeight = false, groundCols = null, _groundSeason = null;
+function applySeasonGround() {
+    var w = Game.state.season === 'winter' ? 'winter' : 'normal';
+    if (!groundCols || w === _groundSeason) return;
+    _groundSeason = w;
+    groundMesh.geometry.attributes.color.array.set(groundCols[w]);
+    groundMesh.geometry.attributes.color.needsUpdate = true;
+}
 function rawHeightAt(px, py) { _rawHeight = true; var h = heightAt(px, py); _rawHeight = false; return h; }
 // Hauteur du sol en un point de la carte (interpolée dans la carte des hauteurs)
 function heightAt(px, py) {
@@ -1486,7 +1502,7 @@ function walkToTarget(dt) {
 }
 function scan() {
     tracked.forEach(function(rec) { rec.seen = false; });
-    var els = gameWorld.querySelectorAll(':scope > .entity, :scope > div:not([class]), .farm-pen > div:not(.building-label)');
+    var els = gameWorld.querySelectorAll(':scope > .entity, :scope > div:not([class]), .farm-pen > div:not(.building-label), .player-path');
     for (var i = 0; i < els.length; i++) {
         if (els[i].parentElement.classList.contains('farm-pen')) els[i].classList.add('farm-animal');
         syncElement(els[i]);
@@ -1662,6 +1678,7 @@ function updateSwing(dt, time) {
 function startSwing() {
     var s = Game.state, ud = charlie.userData;
     _swinging = true; _swingT = 0;
+    _camFocus = { x: s.swing.x * U, z: s.swing.y * U + 0.4, zoom: 0.3 };   // la caméra se rapproche de Charlie
     s.charlie.x = s.swing.x; s.charlie.y = s.swing.y + 4;
     if (ud.bigSmile) { ud.bigSmile.visible = true; if (ud.smile) ud.smile.visible = false; }
     Game.audio.playChime && Game.audio.playChime();
@@ -1670,12 +1687,20 @@ function startSwing() {
 function stopSwing() {
     var s = Game.state, ud = charlie.userData;
     _swinging = false;
+    _camFocus = null;   // la caméra reprend sa place
     charlie.rotation.x = 0;
     ud.armL.rotation.z = -0.12; ud.armR.rotation.z = 0.12;
     if (ud.bigSmile) { ud.bigSmile.visible = false; if (ud.smile) ud.smile.visible = true; }
     s.charlie.x = s.swing.x; s.charlie.y = s.swing.y + 70;
 }
 Game.r3d.isSwinging = function() { return _swinging; };
+// Un endroit où Charlie peut aller à pied (pas trop haut sur une montagne, pas dans l'eau profonde)
+Game.r3d.reachable = function(x, y) {
+    if (!groundMesh) return true;
+    var m = mountainHeight(x, y);
+    if (m && m.y - heightAt(x, y) > 0.6) return false;
+    return rawHeightAt(x, y) > -0.3;
+};
 // Une touche de déplacement fait descendre de la balançoire
 window.addEventListener('keydown', function(e) {
     if (_swinging && /^(arrow|[zqsdwa]$)/i.test(e.key)) stopSwing();
@@ -2456,7 +2481,7 @@ function loop(now) {
     _scanT += dt;
     if (_scanT > 0.4) { _scanT = 0; scan(); }
     _phaseT = (_phaseT || 0) + dt;
-    if (_phaseT > 0.2) { _phaseT = 0; applyPhase(); }
+    if (_phaseT > 0.2) { _phaseT = 0; applyPhase(); applySeasonGround(); }
     syncMoving(time);
 
     // Charlie suit sa position (lissée) du jeu 2D
