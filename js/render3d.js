@@ -837,24 +837,39 @@ function quad(o) {
     return g;
 }
 function bird(o) {
+    // Oiseau : corps en goutte, tête reliée, bec, queue en éventail, ailes, pattes à doigts
     var g = new T.Group(), body = new T.Group(); g.add(body);
-    ball(body, 0.35, o.color, 0, 0.45, 0, 0.9, 0.9, 1.1);
-    var head = new T.Group(); head.position.set(0, 0.85, 0.2); body.add(head);
-    ball(head, 0.22, o.head || o.color, 0, 0, 0);
-    put(head, new T.Mesh(geo('beak', function() { return new T.ConeGeometry(0.07, 0.18, 10); }), mat(o.beak || '#f2a33a')), 0, -0.03, 0.24).rotation.x = Math.PI / 2;
-    ball(head, 0.035, '#1a1410', -0.1, 0.06, 0.17); ball(head, 0.035, '#1a1410', 0.1, 0.06, 0.17);
-    if (o.comb) [0, 0.08, -0.08].forEach(function(z, i) { ball(head, 0.06, '#e53935', 0, 0.22 - i * 0.01, z); });
+    var COL = mat(o.color), legY = o.flies ? 0.18 : 0.22;
+    ball(body, 0.34, COL, 0, legY + 0.3, 0, 0.88, 0.85, 1.15);
+    if (o.breast) ball(body, 0.28, o.breast, 0, legY + 0.26, 0.12, 0.8, 0.75, 0.9);
+    var head = new T.Group(); head.position.set(0, legY + 0.62, 0.24); body.add(head);
+    ball(head, 0.21, o.head || o.color, 0, 0, 0);
+    ball(body, 0.17, o.head || o.color, 0, legY + 0.5, 0.17);   // cou
+    put(head, new T.Mesh(geo('beak', function() { return new T.ConeGeometry(0.07, 0.18, 10); }), mat(o.beak || '#f2a33a')), 0, -0.03, 0.25).rotation.x = Math.PI / 2;
+    [-1, 1].forEach(function(sx) { ball(head, 0.035, '#1a1410', sx * 0.11, 0.06, 0.16); ball(head, 0.012, '#ffffff', sx * 0.11 + 0.01, 0.075, 0.19); });
+    if (o.comb) { [0.06, 0, -0.06].forEach(function(z, i) { ball(head, 0.055 - i * 0.008, '#e53935', 0, 0.21 - i * 0.015, z); }); ball(head, 0.045, '#e53935', 0, -0.17, 0.17, 0.8, 1.3, 0.8); }
     var wings = [];
     [-1, 1].forEach(function(sx) {
-        var piv = new T.Group(); piv.position.set(sx * 0.27, 0.55, -0.02); body.add(piv);
-        if (o.flies) ball(piv, 0.22, o.wing || o.color, sx * 0.15 * (o.span || 1), 0, 0, 1.2 * (o.span || 1), 0.25, 0.8);   // ailes déployées
-        else { var w = ball(piv, 0.22, o.wing || o.color, sx * 0.03, -0.02, -0.04, 0.35, 0.75, 1.15); w.rotation.x = 0.25; }   // ailes repliées contre le corps
+        var piv = new T.Group(); piv.position.set(sx * 0.25, legY + 0.38, -0.02); body.add(piv);
+        var w = new T.Group(); piv.add(w);
+        if (o.flies) { ball(w, 0.22, o.wing || o.color, sx * 0.2 * (o.span || 1), 0, -0.02, 1.25 * (o.span || 1), 0.18, 0.75); ball(w, 0.12, o.wing || o.color, sx * 0.42 * (o.span || 1), -0.01, -0.08, 1.2, 0.15, 0.8); }
+        else { var fw = ball(w, 0.22, o.wing || o.color, sx * 0.03, 0, -0.04, 0.35, 0.72, 1.15); fw.rotation.x = 0.25; }
         wings.push(piv);
     });
-    if (o.tail) ball(body, 0.14, o.tail, 0, 0.5, -0.38, 0.8, 0.5, 1.2);
-    [-0.1, 0.1].forEach(function(x) { put(body, new T.Mesh(geo('birdleg', function() { return new T.CylinderGeometry(0.025, 0.025, 0.2, 6); }), mat('#f2a33a')), x, 0.1, 0); });
+    // Queue en éventail
+    var tail = new T.Group(); tail.position.set(0, legY + 0.38, -0.34); body.add(tail);
+    for (var k = -2; k <= 2; k++) { var f = ball(tail, 0.09, o.tail || o.wing || o.color, k * 0.05, 0.05 + Math.abs(k) * -0.01, -0.12, 0.6, 0.25, 1.6); f.rotation.y = k * 0.25; f.rotation.x = o.tail ? -0.6 : -0.25; }
+    // Pattes avec trois doigts
+    var legs = [];
+    [-0.1, 0.1].forEach(function(x) {
+        var lp = new T.Group(); lp.position.set(x, legY, 0.02); body.add(lp);
+        put(lp, new T.Mesh(geo('birdleg', function() { return new T.CylinderGeometry(0.022, 0.022, 0.24, 6); }), mat('#f2a33a')), 0, -legY / 2 + 0.04, 0);
+        [-0.5, 0, 0.5].forEach(function(a) { var toe = put(lp, new T.Mesh(geo('toe', function() { return new T.CylinderGeometry(0.014, 0.014, 0.11, 5); }), mat('#f2a33a')), Math.sin(a) * 0.04, -legY + 0.02, 0.05); toe.rotation.x = Math.PI / 2; toe.rotation.z = a; });
+        legs.push(lp);
+    });
     g.scale.setScalar((o.size || 1) * 0.7);
-    g.userData.wings = wings; g.userData.flies = !!o.flies; g.userData.body = body;
+    g.userData.wings = wings; g.userData.flies = !!o.flies; g.userData.glide = !!o.glide; g.userData.body = body;
+    g.userData.head = head; g.userData.birdLegs = legs; g.userData.tail = tail; g.userData.pecks = !o.flies;
     return g;
 }
 function seaThing(e) {
@@ -863,9 +878,13 @@ function seaThing(e) {
         case '🦀': case '🦞': {
             var red = e === '🦀' ? '#e2533a' : '#c9302c';
             ball(g, 0.32, red, 0, 0.22, 0, 1.3, 0.55, e === '🦞' ? 1.6 : 1);
+            var crabLegs = [];
+            g.userData.crabLegs = crabLegs; g.userData.sideways = e === '🦀';
             [-1, 1].forEach(function(sx) {
-                ball(g, 0.13, red, sx * 0.38, 0.3, 0.32, 1, 0.7, 1.2);
-                for (var j = 0; j < 3; j++) put(g, new T.Mesh(capsuleGeo(0.03, 0.18), mat(red)), sx * 0.35, 0.1, -0.15 + j * 0.15).rotation.z = sx * 1.1;
+                var claw = new T.Group(); claw.position.set(sx * 0.32, 0.26, 0.26); g.add(claw);
+                ball(claw, 0.13, red, sx * 0.06, 0.04, 0.06, 1, 0.7, 1.2); ball(claw, 0.06, red, sx * 0.1, 0.1, 0.18, 0.8, 0.6, 1.4);
+                crabLegs.push(claw);
+                for (var j = 0; j < 3; j++) { var lp = new T.Group(); lp.position.set(sx * 0.3, 0.16, -0.15 + j * 0.15); g.add(lp); put(lp, new T.Mesh(capsuleGeo(0.03, 0.18), mat(red)), sx * 0.08, -0.05, 0).rotation.z = sx * 1.1; crabLegs.push(lp); }
                 put(g, new T.Mesh(geo('eyestalk', function() { return new T.CylinderGeometry(0.02, 0.02, 0.15, 6); }), mat(red)), sx * 0.1, 0.42, 0.2);
                 ball(g, 0.04, '#1a1410', sx * 0.1, 0.5, 0.2);
             });
@@ -912,12 +931,12 @@ var ANIMALS = {
     '🐿️': function() { return quad({ fur: '#c9702e', belly: '#f2dcc0', ears: 'point', tail: 'bushy', size: 0.5, long: 1.05, legLen: 0.05, legR: 0.1, neck: 0.15, headR: 0.34 }); },
     '🦫': function() { return quad({ fur: '#8a5a34', snout: '#b88a5e', nose: '#1a1410', tail: 'flat', size: 0.75, legLen: 0.0, legR: 0.11, neck: 0.05, headR: 0.32 }); },
     '🦔': function() { return quad({ fur: '#c9a27a', snout: '#e8d0b0', nose: '#1a1410', spikes: true, tail: 'none', size: 0.55, legLen: 0.0, legR: 0.09, neck: 0.0, headR: 0.3 }); },
-    '🐔': function() { return bird({ color: '#ffffff', comb: true, wing: '#f2efe8', size: 0.85 }); },
-    '🐓': function() { return bird({ color: '#d9702e', head: '#f0a33a', comb: true, wing: '#8a3b1e', tail: '#2f6b3a', size: 0.95 }); },
+    '🐔': function() { return bird({ color: '#ffffff', comb: true, wing: '#efe9dc', tail: '#f2efe8', size: 0.9 }); },
+    '🐓': function() { return bird({ color: '#d9702e', head: '#f0a33a', breast: '#7a3b1e', comb: true, wing: '#8a3b1e', tail: '#1f5a3a', size: 1.0 }); },
     '🐤': function() { return bird({ color: '#ffd84a', size: 0.5 }); },
     '🐣': function() { var g = bird({ color: '#ffd84a', size: 0.5 }); ball(g, 0.42, '#fffaf0', 0, 0.12, 0, 1, 0.6, 1); return g; },
-    '🐦': function() { return bird({ color: '#5aa7e3', wing: '#2f6ea8', beak: '#f2c94c', size: 0.5, flies: true }); },
-    '🦅': function() { return bird({ color: '#6b4426', head: '#ffffff', beak: '#f2c94c', wing: '#4f3019', span: 2.2, size: 1.0, flies: true }); },
+    '🐦': function() { return bird({ color: '#5aa7e3', breast: '#ffe08a', wing: '#2f6ea8', beak: '#f2c94c', size: 0.5, flies: true }); },
+    '🦅': function() { return bird({ color: '#6b4426', head: '#ffffff', beak: '#f2c94c', wing: '#4f3019', tail: '#ffffff', span: 2.2, size: 1.0, flies: true, glide: true }); },
     '🦇': function() { return bird({ color: '#3d3550', wing: '#2a2438', beak: '#3d3550', span: 1.8, size: 0.6, flies: true }); }
 };
 ANIMALS['🐮'] = ANIMALS['🐄']; ANIMALS['🐖'] = ANIMALS['🐷'];
@@ -1025,6 +1044,10 @@ function smoothMotion(ud, dx, dy, dt, thr) {
 function animateAnimal(obj, dx, dy, dt, time) {
     var ud = obj.userData, moving = smoothMotion(ud, dx, dy, dt, 8);
     ud.step = (ud.step || 0) + dt * 12 * ud.moveAmt;
+    if (ud.sideways && ud.facing !== undefined && moving) ud.facing += Math.PI / 2;   // le crabe marche de côté
+    // Caressé : il se tourne vers Charlie, remue la queue et sautille
+    var petted = ud.petT && time - ud.petT < 2.2;
+    if (petted) ud.facing = Math.atan2(charlie.position.x - obj.position.x, charlie.position.z - obj.position.z);
     if (ud.facing !== undefined) { var turn = Math.atan2(Math.sin(ud.facing - obj.rotation.y), Math.cos(ud.facing - obj.rotation.y)); obj.rotation.y += turn * Math.min(1, dt * 4); }
     // Ça bouge partout : tête qui balance en marchant (ou regarde autour / broute à l'arrêt),
     // queue qui remue, oreilles qui frémissent, respiration
@@ -1034,15 +1057,30 @@ function animateAnimal(obj, dx, dy, dt, time) {
         ud.head.rotation.x = Math.sin(ud.step * 2) * 0.06 * ud.moveAmt + graze * 0.7;
         ud.head.rotation.y = Math.sin(time * 0.7 + ph) * 0.35 * idle;
     }
-    if (ud.tail) { ud.tail.rotation.y = Math.sin(time * (3 + 5 * (ud.moveAmt || 0)) + ph) * 0.5; ud.tail.rotation.x = Math.sin(time * 1.3 + ph) * 0.15; }
+    if (ud.tail) { ud.tail.rotation.y = Math.sin(time * (petted ? 22 : 3 + 5 * (ud.moveAmt || 0)) + ph) * (petted ? 0.8 : 0.5); ud.tail.rotation.x = Math.sin(time * 1.3 + ph) * 0.15; }
+    // Oiseaux au sol : ils picorent et sautillent ; pattes qui avancent
+    if (ud.pecks && ud.head) {
+        var pk = Math.sin(time * 1.1 + ph), peck = pk > 0.75 ? Math.sin((pk - 0.75) * 40) * 0.5 + 0.5 : 0;
+        ud.head.rotation.x = peck * 1.1 * (1 - ud.moveAmt);
+        ud.head.rotation.y = Math.sin(time * 2.1 + ph) * 0.4 * (1 - ud.moveAmt);
+    }
+    if (ud.birdLegs) { var bl = Math.sin(ud.step * 1.5) * 0.7 * ud.moveAmt; ud.birdLegs[0].rotation.x = bl; ud.birdLegs[1].rotation.x = -bl; }
+    if (ud.crabLegs) ud.crabLegs.forEach(function(l, i) { l.rotation.x = Math.sin(time * (moving ? 18 : 2) + i) * (moving ? 0.5 : 0.08); if (i === 0 || i === 4) l.rotation.y = Math.sin(time * 1.5 + i) * 0.25; });
     if (ud.ears) ud.ears.forEach(function(e, i) { e.rotation.z = Math.max(0, Math.sin(time * 2.3 + ph + i * 2)) ** 8 * 0.5 * (i ? -1 : 1); });
     if (ud.body && !ud.flies) ud.body.scale.y = 1 + Math.sin(time * 2 + ph) * 0.015;
     if (ud.legs) { var sw = Math.sin(ud.step) * 0.6 * ud.moveAmt; ud.legs[0].rotation.x = sw; ud.legs[3].rotation.x = sw; ud.legs[1].rotation.x = -sw; ud.legs[2].rotation.x = -sw; }
     if (ud.wings) {
-        var f = ud.butterfly ? Math.sin(time * 14 + obj.id) * 0.9 : (ud.flies ? Math.sin(time * 10 + obj.id) * 0.7 : (moving ? Math.sin(time * 18) * 0.3 : 0));
+        // Vol : battements, ou plané (aigle) avec un battement de temps en temps ; au sol : petits battements en sautillant
+        var flap = ud.glide ? (Math.sin(time * 0.7 + ph) > 0.6 ? Math.sin(time * 9) * 0.6 : 0.12) : Math.sin(time * 10 + obj.id) * 0.7;
+        var f = ud.butterfly ? Math.sin(time * 14 + obj.id) * 0.9 : (ud.flies ? flap : (moving ? Math.sin(time * 18) * 0.3 : (petted ? Math.sin(time * 20) * 0.5 : 0)));
         ud.wings[0].rotation.z = f; ud.wings[1].rotation.z = -f;
     }
-    if (ud.body) ud.body.position.y = ud.flies ? 1.6 + Math.sin(time * 2 + obj.id) * 0.2 : Math.abs(Math.sin(ud.step)) * 0.06 * ud.moveAmt;
+    if (ud.flies && ud.body) {
+        // Les oiseaux qui volent tournent en rond au-dessus de l'endroit où ils sont
+        var ca = time * (ud.glide ? 0.35 : 0.8) + ph, cr = ud.glide ? 2.6 : 1.4;
+        ud.body.position.set(Math.cos(ca) * cr, (ud.glide ? 4.5 : 2.6) + Math.sin(time * 1.3 + ph) * 0.25, Math.sin(ca) * cr);
+        ud.body.rotation.set(0, -ca - obj.rotation.y, (ud.glide ? 0.35 : 0.2));
+    } else if (ud.body) ud.body.position.y = Math.abs(Math.sin(ud.step)) * 0.06 * ud.moveAmt + (petted ? Math.abs(Math.sin(time * 9)) * 0.25 : 0);
     var gy = ud.groundY || 0;
     if (ud.butterfly) obj.position.y = gy + 0.3 + Math.sin(time * 3 + obj.id) * 0.15;
     if (ud.firefly) obj.position.y = gy + Math.sin(time * 2 + obj.id) * 0.3;
@@ -1433,6 +1471,9 @@ function placeRec(el, rec) {
     rec.obj.userData.groundY = gh;
     rec.obj.position.set(p.x * U, rec.kind === 'mountain' ? gh - 0.5 : (rec.kind === 'dock' ? 0 : gh), p.y * U);
     // Décor posé par erreur dans l'eau (palmier dans la rivière...) : on ne l'affiche pas
+    // Pas de décor de plage (transats, parasols...) sur le ponton du port
+    var port = Game.CONFIG.LOCATIONS.port;
+    if ((rec.kind === 'decor' || rec.kind === 'palm') && port && Math.abs(p.x - port.x) < 200 && p.y > port.y - 120) rec.hideInWater = true;
     if ((rec.kind === 'palm' || rec.kind === 'decor' || (rec.kind === 'sprite' && !rec.moving) || (rec.kind === 'rock' && !el.classList.contains('stone'))) && gh < -0.2) rec.hideInWater = true;
 }
 function syncGarden(el, g) {
@@ -1749,6 +1790,11 @@ function stopSwing() {
     s.charlie.x = s.swing.x; s.charlie.y = s.swing.y + 70;
 }
 Game.r3d.isSwinging = function() { return _swinging; };
+Game.r3d.petScreen = function() {   // tests : position à l'écran d'un animal d'enclos
+    var out = null;
+    tracked.forEach(function(rec, el) { if (!out && el.classList.contains('farm-animal') && rec.obj.visible) { var v = rec.obj.position.clone(); v.y += 0.5; v.project(camera); out = { x: (v.x + 1) / 2 * innerWidth, y: (1 - v.y) / 2 * innerHeight, px: rec.px, py: rec.py }; } });
+    return out;
+};
 Game.r3d.showcase = function(list) {   // tests : aligne des animaux devant la caméra
     var g = new T.Group(), c = charlie.position;
     (list || Object.keys(ANIMALS)).forEach(function(e, i) { var a = ANIMALS[e](); a.position.set(c.x - 6 + (i % 7) * 2, c.y, c.z - 2 + Math.floor(i / 7) * 2.5); a.rotation.y = 0.6; g.add(a); });
@@ -1839,6 +1885,17 @@ function animateWalker(obj, dx, dy, dt, time) {
     ud.body.position.y = Math.abs(Math.sin(ud.step)) * 0.07 * ud.moveAmt;
     ud.head.rotation.y = Math.sin(time * 1.1 + obj.id) * 0.15;
     return moving;
+}
+
+// Caresser un animal : s'il est près, cœurs + petit son ; sinon Charlie marche jusqu'à lui
+function petAnimal(rec) {
+    var s = Game.state, d = Math.hypot(s.charlie.x - rec.px, s.charlie.y - rec.py);
+    if (d > 160) { _walkTarget = { x: rec.px, y: rec.py + 50 }; _stuck = 0; return; }
+    rec.obj.userData.petT = performance.now() / 1000;
+    Game.particles.spawnWorld('❤️', rec.px, rec.py - 30, { count: 4, spread: 40, vy: -70 });
+    if (Game.audio.playChime) Game.audio.playChime();
+    var today = Math.floor((s.totalTimePlayed || 0) / 720000);
+    if (rec.pettedDay !== today) { rec.pettedDay = today; Game.xp.add(1); }
 }
 
 // ═══════════════════════ Lumière du jour et de la nuit ═══════════════════════
@@ -1942,6 +1999,8 @@ function handleClick3d(e) {
         if (o === groundMesh) break;
         var el = o.userData && o.userData.el ? clickableEl(o.userData.el) : null;
         if (el) { el.click(); return; }
+        var rec = o.userData && o.userData.el ? tracked.get(o.userData.el) : null;
+        if (rec && rec.kind === 'animal' && !rec.obj.userData.flies && !rec.obj.userData.butterfly) { petAnimal(rec); return; }
     }
     // 2) sinon : le point du sol → Charlie y marche (ou la pelle pose un chemin)
     var g = _rc.intersectObject(groundMesh, false)[0];
