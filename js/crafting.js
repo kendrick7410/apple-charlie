@@ -9,7 +9,7 @@ Game.crafting.craftFurniture = function(recipeId) {
     var s = Game.state;
     var recipe = Game.RECIPES[recipeId];
     if (!recipe) return;
-    if (!s.activeHouse) return;  // furniture crafting only inside houses
+    if (!s.activeHouse || s.activeHouse.id !== 'charlie') return;  // on fabrique ses meubles chez soi
 
     if (s.inventory.wood >= recipe.wood && s.inventory.stone >= recipe.stone) {
         s.inventory.wood -= recipe.wood;
@@ -22,21 +22,15 @@ Game.crafting.craftFurniture = function(recipeId) {
             s.houseFurniture[s.activeHouse.id] = [];
         }
         s.houseFurniture[s.activeHouse.id].push([recipe.emoji, fx, fy]);
-
-        var div = document.createElement('div');
-        div.className = 'furniture';
-        div.textContent = recipe.emoji;
-        div.style.left = fx + 'px';
-        div.style.top = fy + 'px';
-        document.getElementById('current-room').appendChild(div);
+        Game.furniture.render();   // tout de suite déplaçable et utilisable
 
         Game.xp.add(10);
         Game.audio.play('craft');
         Game.particles.spawn('✨', window.innerWidth / 2, window.innerHeight / 2, { count: 3, spread: 40 });
         Game.ui.update();
-        Game.ui.notify("Fabriqué ! ✨");
+        Game.ui.notify(recipe.emoji + " fabriqué ! Clique dessus pour l'utiliser, fais-le glisser pour le déplacer ✨");
     } else {
-        Game.ui.notify("Pas assez de matériaux !");
+        Game.ui.notify("Pas assez de bois 🪵 ou de pierre ! Il faut " + recipe.wood + " bois et " + recipe.stone + " pierre");
         Game.audio.play('error');
     }
 };

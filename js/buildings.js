@@ -111,23 +111,13 @@ Game.buildings.enterHouse = function(house) {
     if (leftoverPurpose) leftoverPurpose.style.display = 'none';
     var leftoverNpc = document.getElementById('shop-npc');
     if (leftoverNpc) { leftoverNpc.style.display = 'none'; leftoverNpc.onclick = null; }
-    // Clear old furniture
-    var old = room.querySelectorAll('.furniture');
-    for (var i = 0; i < old.length; i++) old[i].remove();
+    // On fabrique des meubles seulement chez soi ; chez les villageois on utilise les leurs
+    var craftButtons = document.getElementById('craft-buttons');
+    if (craftButtons) craftButtons.style.display = house.id === 'charlie' ? '' : 'none';
 
-    // Load furniture from state (draggable)
-    var furnitureList = s.houseFurniture[house.id] || house.furniture;
-    furnitureList.forEach(function(f, idx) {
-        var div = document.createElement('div');
-        div.className = 'furniture';
-        div.textContent = f[0];
-        div.style.left = f[1] + 'px';
-        div.style.top = f[2] + 'px';
-        div.style.cursor = 'grab';
-        div.dataset.fIdx = idx;
-        Game.buildings.makeDraggable(div, house.id, idx);
-        room.appendChild(div);
-    });
+    // Meubles de la maison : utilisables, déplaçables (voir furniture.js)
+    if (!s.houseFurniture[house.id]) s.houseFurniture[house.id] = house.furniture.map(function(f){ return f.slice(); });
+    Game.furniture.render();
 
     // Étagère de boules à neige (uniquement chez Charlie)
     var oldGlobes = room.querySelectorAll('.snow-globe-display');
@@ -325,6 +315,8 @@ Game.buildings.exitHouse = function() {
     var s = Game.state;
     s.currentView = 'world';
     document.getElementById('interior-view').style.display = 'none';
+    Game.furniture.closeMenu();
+    document.getElementById('current-room').classList.remove('room-dark', 'room-lamp');
 
     // Clean up shop interior if we were in one
     if (s.activeShop) {
@@ -353,45 +345,6 @@ Game.buildings.exitHouse = function() {
     s.activeHouse = null;
     s.activeShop = null;
     Game.player.updateCamera();
-};
-
-Game.buildings.makeDraggable = function(el, houseId, fIdx) {
-    var dragging = false;
-    var offsetX, offsetY;
-    el.addEventListener('mousedown', function(e) {
-        e.stopPropagation();
-        dragging = true;
-        el.style.cursor = 'grabbing';
-        var room = document.getElementById('current-room');
-        var rect = room.getBoundingClientRect();
-        offsetX = e.clientX - rect.left - parseInt(el.style.left);
-        offsetY = e.clientY - rect.top - parseInt(el.style.top);
-    });
-    document.addEventListener('mousemove', function(e) {
-        if (!dragging) return;
-        var room = document.getElementById('current-room');
-        var rect = room.getBoundingClientRect();
-        var nx = e.clientX - rect.left - offsetX;
-        var ny = e.clientY - rect.top - offsetY;
-        // Snap to 20px grid
-        nx = Math.round(nx / 20) * 20;
-        ny = Math.round(ny / 20) * 20;
-        nx = Math.max(0, Math.min(540, nx));
-        ny = Math.max(0, Math.min(540, ny));
-        el.style.left = nx + 'px';
-        el.style.top = ny + 'px';
-    });
-    document.addEventListener('mouseup', function() {
-        if (!dragging) return;
-        dragging = false;
-        el.style.cursor = 'grab';
-        // Save position
-        var s = Game.state;
-        if (s.houseFurniture[houseId] && s.houseFurniture[houseId][fIdx]) {
-            s.houseFurniture[houseId][fIdx][1] = parseInt(el.style.left);
-            s.houseFurniture[houseId][fIdx][2] = parseInt(el.style.top);
-        }
-    });
 };
 
 Game.buildings.buildHouse = function() {

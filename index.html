@@ -25,7 +25,7 @@
 
         <!-- Interior Crafting Panel -->
         <div id="interior-craft-bar" style="position:fixed;bottom:10px;display:flex;flex-direction:column;align-items:center;gap:6px;z-index:5500;">
-            <div class="ui-card" style="padding:10px;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
+            <div id="craft-buttons" class="ui-card" style="padding:10px;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
                 <button onclick="Game.crafting.craftFurniture('chair')" class="btn-animal btn-craft">🪑 Chaise (2🪵)</button>
                 <button onclick="Game.crafting.craftFurniture('table')" class="btn-animal btn-craft">🪵 Table (4🪵)</button>
                 <button onclick="Game.crafting.craftFurniture('bookshelf')" class="btn-animal btn-craft">📚 Biblio (5🪵,2🧱)</button>
@@ -33,9 +33,10 @@
                 <button onclick="Game.crafting.craftFurniture('bed')" class="btn-animal btn-craft">🛏️ Lit (6🪵)</button>
                 <button onclick="Game.crafting.craftFurniture('lamp')" class="btn-animal btn-craft">💡 Lampe (1🪵,2🧱)</button>
                 <button onclick="Game.crafting.craftFurniture('mirror')" class="btn-animal btn-craft">🪞 Miroir (2🪵,3🧱)</button>
+                <button onclick="Game.crafting.craftFurniture('stove')" class="btn-animal btn-craft">🍳 Cuisinière (3🪵,4🧱)</button>
             </div>
-            <div style="color:white;background:rgba(0,0,0,0.5);padding:4px 16px;border-radius:999px;font-size:0.7rem;">
-                Marche sur le tapis 🌟 pour sortir
+            <div id="craft-hint" style="color:white;background:rgba(0,0,0,0.5);padding:4px 16px;border-radius:999px;font-size:0.7rem;">
+                Clique sur un meuble pour l'utiliser (ou touche E) • Fais-le glisser pour le déplacer • Tapis 🌟 = sortir
             </div>
         </div>
     </div>
@@ -347,6 +348,7 @@
 <script src="js/world.js"></script>
 <script src="js/entities.js"></script>
 <script src="js/buildings.js"></script>
+<script src="js/furniture.js"></script>
 <script src="js/villagers.js"></script>
 <script src="js/inventory.js"></script>
 <script src="js/crafting.js"></script>

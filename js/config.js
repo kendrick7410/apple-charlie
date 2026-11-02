@@ -553,7 +553,8 @@ Game.RECIPES = {
     bed:    { emoji: '🛏️', label: 'Lit',     wood: 6, stone: 0 },
     lamp:   { emoji: '💡', label: 'Lampe',   wood: 1, stone: 2 },
     rug:    { emoji: '🟫', label: 'Tapis',   wood: 3, stone: 0 },
-    mirror: { emoji: '🪞', label: 'Miroir',  wood: 2, stone: 3 }
+    mirror: { emoji: '🪞', label: 'Miroir',  wood: 2, stone: 3 },
+    stove:  { emoji: '🍳', label: 'Cuisinière', wood: 3, stone: 4 }
 };
 
 Game.COOKING_RECIPES = {

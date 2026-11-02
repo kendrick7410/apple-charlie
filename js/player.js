@@ -161,6 +161,7 @@ Game.player.handleClick = function(e) {
 Game.player.updateInterior = function(dt) {
     var s = Game.state;
     if (s.currentView !== 'interior') return;
+    Game.furniture.fitRoom();
 
     var speed = Game.CONFIG.PLAYER_SPEED * 0.8;
     var keys = s.keysDown;
@@ -171,7 +172,17 @@ Game.player.updateInterior = function(dt) {
     if (keys['ArrowLeft'] || keys['q'] || keys['a'] || keys['Q'] || keys['A']) dx = -1;
     if (keys['ArrowRight'] || keys['d'] || keys['D']) dx = 1;
 
-    if (dx !== 0 && dy !== 0) { dx *= 0.7071; dy *= 0.7071; }
+    // Pas de touche appuyée : marche vers l'endroit touché / cliqué
+    if (dx !== 0 || dy !== 0) {
+        s.interiorTarget = null;
+    } else if (s.interiorTarget) {
+        var tx = s.interiorTarget.x - s.interiorCharlie.x, ty = s.interiorTarget.y - s.interiorCharlie.y;
+        var td = Math.hypot(tx, ty);
+        if (td < speed) { s.interiorTarget = null; }
+        else { dx = tx / td; dy = ty / td; }
+    }
+
+    if (dx !== 0 && dy !== 0 && !s.interiorTarget) { dx *= 0.7071; dy *= 0.7071; }
 
     s.interiorCharlie.x += dx * speed;
     s.interiorCharlie.y += dy * speed;
@@ -184,8 +195,11 @@ Game.player.updateInterior = function(dt) {
         ic.style.top = s.interiorCharlie.y + 'px';
     }
 
+    Game.furniture.update(dt);
+
     // Exit check
     if (s.interiorCharlie.y > 480 && s.interiorCharlie.x > 230 && s.interiorCharlie.x < 370) {
+        s.interiorTarget = null;
         Game.buildings.exitHouse();
     }
 };

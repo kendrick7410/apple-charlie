@@ -43,14 +43,9 @@ Game.engine.init = function() {
     viewport.addEventListener('touchstart', function(e) {
         if (e.touches.length === 1) {
             // Simulate mouse event for touch
+            // (on garde la cible du toucher pour ignorer les boutons, comme à la souris)
             var touch = e.touches[0];
-            var mouseEvent = new MouseEvent('mousedown', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            mouseEvent.clientX = touch.clientX;
-            mouseEvent.clientY = touch.clientY;
-            handleMoveInput(mouseEvent);
+            handleMoveInput({ clientX: touch.clientX, clientY: touch.clientY, target: e.target });
         }
     });
 

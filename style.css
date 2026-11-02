@@ -78,6 +78,7 @@ html, body {
 .room {
     width: 600px;
     height: 600px;
+    flex-shrink: 0;   /* garde sa taille : sur petit écran elle est zoomée (furniture.fitRoom) */
     background: var(--floor);
     border: 15px solid #8b5e3c;
     position: relative;
@@ -95,6 +96,110 @@ html, body {
 .furniture {
     position: absolute;
     font-size: 3rem;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    z-index: 2;
+    transition: transform 0.15s, filter 0.15s;
+}
+
+/* Meuble assez proche pour être utilisé */
+.furniture.near {
+    filter: drop-shadow(0 0 8px #ffe082) drop-shadow(0 0 3px #ffb300);
+    transform: scale(1.08);
+}
+
+/* Plante ou bibliothèque prête (fleurs à cueillir, livre à lire) */
+.furniture.ready::after {
+    content: '✨';
+    position: absolute;
+    top: -12px;
+    right: -14px;
+    font-size: 1.1rem;
+    animation: furniture-ready 1.4s ease-in-out infinite;
+}
+@keyframes furniture-ready {
+    0%, 100% { transform: scale(0.8); opacity: 0.6; }
+    50% { transform: scale(1.15); opacity: 1; }
+}
+
+.furniture.dragging {
+    cursor: grabbing;
+    transform: scale(1.2);
+    filter: drop-shadow(0 8px 6px rgba(0,0,0,0.35));
+    z-index: 4;
+}
+
+.furniture.lamp-on {
+    filter: drop-shadow(0 0 14px #fff176) drop-shadow(0 0 30px rgba(255,235,59,0.8));
+}
+
+/* La nuit : maison sombre sans lampe, lumière chaude avec une lampe allumée */
+.room::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0;
+    transition: opacity 0.6s, background 0.6s;
+}
+.room.room-dark::after {
+    background: rgba(10, 15, 45, 0.62);
+    opacity: 1;
+}
+.room.room-lamp::after {
+    background: radial-gradient(circle at 50% 45%, rgba(255,214,120,0.18), rgba(30,20,50,0.25) 75%);
+    opacity: 1;
+}
+
+/* Menu d'un meuble */
+#furniture-menu {
+    position: fixed;
+    z-index: 5600;
+    width: 230px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+#furniture-menu .fm-title {
+    font-weight: bold;
+    color: #e65100;
+    font-size: 0.95rem;
+    padding-right: 26px;
+}
+#furniture-menu .fm-help {
+    font-size: 0.72rem;
+    color: #5d4037;
+    line-height: 1.3;
+}
+#furniture-menu .btn-animal {
+    font-size: 0.78rem;
+    padding: 6px 10px;
+    text-align: left;
+}
+#furniture-menu .fm-store {
+    background: #a1887f;
+}
+#furniture-menu .fm-locked {
+    opacity: 0.55;
+}
+#furniture-menu .fm-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    border: none;
+    background: #ef9a9a;
+    color: #fff;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-weight: bold;
 }
 
 .exit-mat {
@@ -1050,13 +1155,8 @@ button {
         box-shadow: 0 4px 0 rgba(0,0,0,0.05);
     }
 
-    /* Room interior responsive */
-    .room {
-        width: 95vw;
-        height: 95vw;
-        max-width: 500px;
-        max-height: 500px;
-    }
+    /* Room interior responsive : la pièce garde 600px et est réduite par
+       Game.furniture.fitRoom (transform: scale) pour que meubles et Charlie restent dedans */
 
     /* Center and enlarge joystick for touch */
     #joystick {
@@ -1233,5 +1333,35 @@ button {
     #interior-view .ui-card {
         max-width: 100% !important;
         overflow-x: auto;
+    }
+}
+
+/* Téléphone : la barre de fabrication devient une bande qu'on fait défiler,
+   pour ne plus cacher la pièce */
+@media (max-width: 768px) {
+    #interior-view > #interior-craft-bar {
+        bottom: 8px !important;
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        transform: none !important;
+    }
+    #craft-buttons {
+        flex-wrap: nowrap !important;
+        justify-content: flex-start !important;
+        overflow-x: auto;
+        max-width: 100%;
+        padding: 6px !important;
+    }
+    #craft-buttons .btn-craft {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        font-size: 0.7rem;
+        padding: 6px 10px;
+        min-height: 0;
+    }
+    #craft-hint {
+        font-size: 0.6rem !important;
+        text-align: center;
     }
 }
