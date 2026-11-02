@@ -88,10 +88,21 @@ function titleHero() {
         var cam = new T.PerspectiveCamera(30, 1, 0.1, 50);
         cam.position.set(0, 1.5, 6.2); cam.lookAt(0, 1.05, 0);
         var ud = hero.userData;
+        // Charlie regarde le joueur ; on le fait tourner en le faisant glisser (souris ou doigt)
+        var rotY = 0, spinV = 0, dragX = null;
+        cv.style.cursor = 'grab';
+        cv.style.touchAction = 'none';
+        cv.title = 'Fais-moi tourner !';
+        cv.addEventListener('pointerdown', function(e) { dragX = e.clientX; spinV = 0; cv.style.cursor = 'grabbing'; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+        cv.addEventListener('pointermove', function(e) { if (dragX === null) return; var d = e.clientX - dragX; dragX = e.clientX; rotY += d * 0.012; spinV = d * 0.012; });
+        function release() { dragX = null; cv.style.cursor = 'grab'; }
+        cv.addEventListener('pointerup', release);
+        cv.addEventListener('pointercancel', release);
         (function spin(now) {
             if (!cv.isConnected) { r.dispose(); if (r.forceContextLoss) r.forceContextLoss(); return; }
             var t = now / 1000;
-            hero.rotation.y = Math.sin(t * 0.6) * 0.6;
+            if (dragX === null && Math.abs(spinV) > 0.0005) { rotY += spinV; spinV *= 0.92; }   // petit élan quand on lâche
+            hero.rotation.y = rotY;
             ud.armR.rotation.x = 0;
             ud.armR.rotation.z = 2.35 + Math.sin(t * 7) * 0.3;   // coucou : bras levé sur le côté, la main qui se balance
             ud.body.position.y = Math.abs(Math.sin(t * 2.2)) * 0.06;
@@ -190,7 +201,7 @@ function labelSprite(text, h) {
     var tex = labelTexture(text);
     var s = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, depthTest: false, sizeAttenuation: false }));
     s.center.set(0.5, 0);
-    h = 0.036 * h / 0.55;
+    h = 0.025 * h / 0.55;   // écriture discrète
     s.scale.set(h * tex.userData.aspect, h, 1);
     s.renderOrder = 10;
     return s;
@@ -335,6 +346,8 @@ function makeCritter(e) {
     return root;
 }
 
+// Taille des bâtiments (plus petits = plus d'espace entre eux dans le village)
+var HOUSE_S = 0.62, SHOP_S = 0.72, SITE_S = 0.62;
 // Maisons : murs arrondis, toit doux, porte en arche, fenêtres rondes (les fenêtres s'allument la nuit)
 var windowGlass = [];
 var HOUSE_STYLES = {
@@ -391,7 +404,7 @@ var SHOP_STYLES = {
 };
 function makeShop(id, signEmoji) {
     var st = SHOP_STYLES[id] || SHOP_STYLES.shop;
-    var g = makeHouse(st, 0.95);
+    var g = makeHouse(st, SHOP_S);
     for (var i = 0; i < 6; i++) {
         rbox(g, 0.72, 0.12, 0.9, 0.05, i % 2 ? '#ffffff' : st.awning, -1.8 + i * 0.72, 2.55, 2.05).rotation.x = 0.45;
     }
@@ -407,7 +420,7 @@ function makeConstruction() {
     rbox(g, 0.18, 0.16, 3.0, 0.06, '#b07d45', -1.7, 2.45, 0); rbox(g, 0.18, 0.16, 3.0, 0.06, '#b07d45', 1.7, 2.45, 0);
     rbox(g, 0.9, 0.6, 0.7, 0.1, '#e0b062', 0.6, 0.55, 0.4); rbox(g, 0.7, 0.45, 0.6, 0.1, '#d9534f', -0.6, 0.45, -0.3);
     ball(g, 0.35, '#f2c94c', -0.2, 0.4, 1.0, 1, 0.8, 1);
-    g.scale.setScalar(0.8);
+    g.scale.setScalar(SITE_S);
     return g;
 }
 // Panneau « terrain à bâtir »
@@ -455,14 +468,56 @@ function makeFlower(e) {
     ball(g, 0.08, '#f9a825', 0, 0.52, 0);
     return g;
 }
-function makeMountain(h) {
-    var g = new T.Group(), pts = [], i, u;
-    g.userData.baseR = h * 0.75;
-    for (i = 0; i <= 16; i++) { u = i / 16; pts.push(new T.Vector2(Math.max(0.001, (1 - Math.pow(u, 1.35)) * h * 0.75), u * h)); }
-    put(g, new T.Mesh(new T.LatheGeometry(pts, 32), mat('#8d8f99', { roughness: 0.9 })), 0, 0, 0);
-    var cap = [];
-    for (i = 0; i <= 10; i++) { u = 0.62 + (i / 10) * 0.38; cap.push(new T.Vector2(Math.max(0.001, (1 - Math.pow(u, 1.35)) * h * 0.75 + 0.06), h * u)); }
-    put(g, new T.Mesh(new T.LatheGeometry(cap, 32), mat('#f4f8fc', { roughness: 0.7 })), 0, 0.02, 0);
+// Montagne détaillée : forme de roche irrégulière, sommets secondaires, strates de couleur,
+// neige au bord découpé et herbe au pied (couleurs par sommet, une seule forme par pic)
+function mountainPeak(h, R) {
+    var pts = [], NU = 26, i;
+    for (i = 0; i <= NU; i++) {
+        var u = i / NU;
+        pts.push(new T.Vector2(Math.max(0.001, (1 - Math.pow(u, 1.15)) * h * 0.62 * (1 - 0.18 * Math.sin(u * Math.PI))), u * h));
+    }
+    var g = new T.LatheGeometry(pts, 56);
+    var pos = g.attributes.position, cols = [], c = new T.Color();
+    var ph = [R() * 6, R() * 6, R() * 6, R() * 6];
+    var ROCK1 = lin('#7b7d86'), ROCK2 = lin('#9c9ea6'), DARK = lin('#5d5a58'), SNOW = lin('#f6f9fc'), GRASS = lin('#6f9a4a');
+    for (i = 0; i < pos.count; i++) {
+        var x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i), u = y / h, a = Math.atan2(z, x);
+        // Relief : arêtes et creux autour du pic, plus marqués vers le bas
+        var n = Math.sin(a * 5 + ph[0] + u * 3) * 0.55 + Math.sin(a * 11 + ph[1] - u * 5) * 0.3 + Math.sin(a * 23 + ph[2] + u * 9) * 0.15;
+        var k = 1 + n * 0.16 * (1 - u * 0.6);
+        pos.setX(i, x * k); pos.setZ(i, z * k);
+        pos.setY(i, y + Math.sin(a * 7 + ph[3]) * 0.04 * h * (1 - u) * u * 4);
+        // Couleurs : strates de roche, neige au-dessus d'une ligne découpée, herbe au pied
+        c.copy(ROCK1).lerp(ROCK2, 0.5 + 0.5 * Math.sin(y * 2.3 + n * 2));
+        if (n < -0.35) c.lerp(DARK, 0.5);
+        var snowLine = 0.56 + Math.sin(a * 6 + ph[1]) * 0.07 + Math.sin(a * 13 + ph[2]) * 0.04;
+        if (u > snowLine) c.copy(SNOW);
+        else if (u > snowLine - 0.05) c.lerp(SNOW, 0.5);
+        if (u < 0.1) c.lerp(GRASS, (0.1 - u) / 0.1 * 0.85);
+        cols.push(c.r, c.g, c.b);
+    }
+    g.setAttribute('color', new T.Float32BufferAttribute(cols, 3));
+    g.computeVertexNormals();
+    var m = new T.Mesh(g, new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.92 }));
+    m.castShadow = true; m.receiveShadow = true;
+    return m;
+}
+function makeMountain(h, seed) {
+    var g = new T.Group(), R = rand(seed || 7);
+    g.userData.baseR = h * 0.62;
+    g.add(mountainPeak(h, R));
+    // Deux sommets secondaires collés au pic principal
+    [[0.62, 0.42, 0.18], [0.5, -0.36, -0.22]].forEach(function(sp) {
+        var sub = mountainPeak(h * sp[0], R);
+        sub.position.set(h * sp[1], 0, h * sp[2]);
+        g.add(sub);
+    });
+    // Quelques rochers au pied
+    for (var i = 0; i < 5; i++) {
+        var a = R() * Math.PI * 2, d = h * (0.55 + R() * 0.15);
+        var rk = ball(g, h * (0.04 + R() * 0.03), '#8d8f99', Math.cos(a) * d, h * 0.02, Math.sin(a) * d, 1.3, 0.7, 1);
+        rk.rotation.y = R() * 3;
+    }
     return g;
 }
 function makeFountain() {
@@ -677,7 +732,7 @@ function houseIdOf(el) { return el.id === 'house-site' ? 'charlie' : el.id.repla
 function buildFor(el, kind, e, label) {
     var obj, size = (parseFloat(getComputedStyle(el).fontSize) || 32) * U;
     switch (kind) {
-        case 'house': obj = makeHouse(HOUSE_STYLES[houseIdOf(el)] || HOUSE_STYLES.charlie, 0.8); break;
+        case 'house': obj = makeHouse(HOUSE_STYLES[houseIdOf(el)] || HOUSE_STYLES.charlie, HOUSE_S); break;
         case 'shop': {
             var shop = (Game.SHOPS || []).find(function(s) { return s.loc + '-anchor' === el.id; });
             obj = makeShop(shop ? shop.id : 'shop', (shop && shop.sign) || e || '🏪'); break;
@@ -690,7 +745,7 @@ function buildFor(el, kind, e, label) {
             obj = makeTree(kind === 'tree' ? 'green' : kind, kind === 'tree' && el.dataset.hasApple === 'true', Math.max(0.7, Math.min(1.3, size / 1.1))); break;
         case 'rock': obj = makeRock(Math.max(0.6, Math.min(1.6, size / 0.8))); break;
         case 'flower': obj = makeFlower(e); break;
-        case 'mountain': obj = makeMountain(Math.max(4, size * 1.4)); break;
+        case 'mountain': obj = makeMountain(Math.max(8, size * 2.6), Math.round((parseFloat(el.style.left) || 1) + (parseFloat(el.style.top) || 1)) % 99991 + 1); break;
         case 'palm': obj = makePalm(Math.max(0.8, size / 1.2)); break;
         case 'villager': {
             var em = el.querySelector('.villager-emoji');
@@ -714,7 +769,7 @@ function buildFor(el, kind, e, label) {
         houseLights.push(glow);
     }
     if (label && kind !== 'flower') {
-        var top = { house: 4.6, shop: 5.6, construction: 3, plot: 2.2, fountain: 2.6, garden: 1.2, villager: 2.3, farmer: 2.3, barn: 4.8, mountain: Math.max(4, size * 1.4) + 0.5 }[kind] || (kind === 'sprite' ? size * 1.3 : 3.5);
+        var top = { house: 4.6 * HOUSE_S / 0.8, shop: 5.6 * SHOP_S / 0.95, construction: 3 * SITE_S / 0.8, plot: 2.2, fountain: 2.6, garden: 1.2, villager: 2.3, farmer: 2.3, barn: 4.8, mountain: Math.max(8, size * 2.6) + 0.6 }[kind] || (kind === 'sprite' ? size * 1.3 : 3.5);
         var lab = labelSprite(label, 0.55); lab.position.y = top; obj.add(lab);
     }
     obj.traverse(function(o) { o.userData.el = o.userData.el || el; });
@@ -779,7 +834,7 @@ function doorPoint(el, kind) {
     return null;
 }
 // Profondeur (en px) entre la porte et le centre du modèle, selon sa taille
-var DOOR_BACK = { house: 62, shop: 74, construction: 55, plot: 0 };
+var DOOR_BACK = { house: 48, shop: 56, construction: 43, plot: 0 };   // ≈ demi-profondeur du socle, selon la taille
 function placeRec(el, rec) {
     var p = groundPoint(el, rec.kind);
     var door = DOOR_BACK[rec.kind] !== undefined ? doorPoint(el, rec.kind) : null;
@@ -812,16 +867,16 @@ function colliderFor(el, kind, obj) {
     var sc = obj.scale.x;
     switch (kind) {
         // Bâtiments : la taille de ce qu'on voit (toit qui dépasse, socle), pas seulement les murs
-        case 'house':        return { hw: 2.9 * 0.8 * 0.9 / U, hd: 3.8 * 0.8 / 2 / U };
-        case 'shop':         return { hw: 2.9 * 0.95 * 0.9 / U, hd: 3.8 * 0.95 / 2 / U };
-        case 'construction': return { hw: 4 * 0.8 / 2 / U, hd: 3.4 * 0.8 / 2 / U };
+        case 'house':        return { hw: 2.9 * HOUSE_S * 0.9 / U, hd: 3.8 * HOUSE_S / 2 / U };
+        case 'shop':         return { hw: 2.9 * SHOP_S * 0.9 / U, hd: 3.8 * SHOP_S / 2 / U };
+        case 'construction': return { hw: 4 * SITE_S / 2 / U, hd: 3.4 * SITE_S / 2 / U };
         case 'barn':         return { hw: 2.5 / U, hd: 1.9 / U };
         case 'field':        return { hw: el.offsetWidth / 2, hd: el.offsetHeight / 2 };
         case 'fountain':     return { r: 2.45 / U };
         case 'plot':         return { r: 8 };
         case 'tree': case 'autumn': case 'pine': case 'snowpine': return { r: 0.9 * sc / U };   // le feuillage, pas seulement le tronc
         case 'palm':         return { r: 0.3 * sc / U };
-        case 'mountain':     return { r: obj.userData.baseR ? obj.userData.baseR / U * 0.8 : 60 };
+        case 'mountain':     return { r: obj.userData.baseR ? obj.userData.baseR / U * 0.45 : 60 };   // le cœur du pic : on peut marcher sur les pentes (edelweiss)
         case 'hay':          return { r: 0.55 * sc / U };
         case 'villager': case 'farmer': return { r: 14 };
         case 'rock':         return el.classList.contains('stone') ? null : { r: 0.45 * sc / U };
