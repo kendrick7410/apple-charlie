@@ -784,40 +784,56 @@ function makeGarden(el) {
 // ═══════════════════════ Animaux en 3D ═══════════════════════
 // Un modèle rond par animal du jeu (ferme, nature, montagne, plage). userData.legs / wings servent à l'animation.
 function quad(o) {
-    // Quadrupède générique : corps, tête, 4 pattes, queue
+    // Quadrupède : chaque partie s'emboîte dans la suivante (pattes → corps → cou → tête, queue)
     var g = new T.Group(), body = new T.Group(); g.add(body);
-    var FUR = mat(o.fur), s = o.size || 1, L = o.long || 1.35;
-    ball(body, 0.5, FUR, 0, 0.62, 0, 1.0, 0.78, L);
-    if (o.belly) ball(body, 0.42, o.belly, 0, 0.55, 0.05, 0.9, 0.6, L * 0.9);
-    if (o.spots) o.spots.forEach(function(p) { ball(body, 0.18, o.spotColor || '#2b2b2b', p[0], 0.7 + p[1], p[2], 1, 0.6, 1); });
-    var head = new T.Group(); head.position.set(0, 0.95, 0.62 * L); body.add(head);
-    ball(head, 0.32, FUR, 0, 0, 0);
-    if (o.snout) ball(head, 0.16, o.snout, 0, -0.08, 0.27, 1.2, 0.85, 0.8);
-    ball(head, 0.045, '#1a1410', -0.13, 0.08, 0.27); ball(head, 0.045, '#1a1410', 0.13, 0.08, 0.27);
-    if (o.nose) ball(head, 0.05, o.nose, 0, -0.04, o.snout ? 0.4 : 0.31);
-    [-1, 1].forEach(function(sx) {
-        var ear;
-        if (o.ears === 'long') { ear = put(head, new T.Mesh(capsuleGeo(0.07, 0.38), FUR), sx * 0.12, 0.42, -0.04); ear.rotation.z = -sx * 0.15; }
-        else if (o.ears === 'point') { ear = put(head, new T.Mesh(geo('earcone', function() { return new T.ConeGeometry(0.16, 0.3, 16); }), FUR), sx * 0.2, 0.3, 0); ear.rotation.z = -sx * 0.35; ear.scale.setScalar(0.75); }
-        else if (o.ears === 'floppy') { ear = ball(head, 0.13, o.earColor || o.fur, sx * 0.3, 0.05, 0, 0.5, 1.2, 0.9); ear.rotation.z = sx * 0.5; }
-        else ball(head, 0.1, o.earColor || o.fur, sx * 0.24, 0.24, -0.02);
-        if (o.horns) { var h = put(head, new T.Mesh(geo('horn', function() { return new T.ConeGeometry(0.05, 0.28, 10); }), mat(o.horns)), sx * 0.13, 0.33, -0.05); h.rotation.z = -sx * 0.3; h.rotation.x = -0.3; }
-        if (o.antlers) { var an = new T.Group(); an.position.set(sx * 0.14, 0.3, -0.05); head.add(an); put(an, new T.Mesh(capsuleGeo(0.03, 0.4), mat('#8a6a43')), 0, 0.2, 0).rotation.z = -sx * 0.4; put(an, new T.Mesh(capsuleGeo(0.025, 0.2), mat('#8a6a43')), sx * 0.12, 0.28, 0).rotation.z = sx * 0.4; }
-    });
-    if (o.beard) ball(head, 0.07, o.beard, 0, -0.26, 0.18, 0.8, 1.5, 0.8);
+    var FUR = mat(o.fur), LEGM = mat(o.legs || o.fur), s = o.size || 1;
+    var legLen = (o.legLen || 0.22) + 0.25, br = 0.5, bl = o.long || 1.35, lr = o.legR || 0.11;
+    var H = legLen + br * 0.62;                                  // hauteur du centre du corps
+    ball(body, br, FUR, 0, H, 0, 1.0, 0.82, bl);
+    if (o.belly) ball(body, br * 0.86, o.belly, 0, H - 0.08, 0.04, 0.92, 0.72, bl * 0.9);
+    if (o.spots) o.spots.forEach(function(p) { ball(body, 0.17, o.spotColor || '#2b2b2b', p[0] * 1.1, H + 0.12 + p[1], p[2], 1, 0.55, 1); });
+    // Pattes : la hanche est DANS le corps, le pied touche le sol
     var legs = [];
-    [[-0.26, 0.42], [0.26, 0.42], [-0.26, -0.42], [0.26, -0.42]].forEach(function(p) {
-        var piv = new T.Group(); piv.position.set(p[0], 0.45, p[1] * L); body.add(piv);
-        put(piv, new T.Mesh(capsuleGeo(0.09, o.legLen || 0.22), mat(o.legs || o.fur)), 0, -0.22, 0);
+    [[-1, 1], [1, 1], [-1, -1], [1, -1]].forEach(function(q) {
+        var hipY = H - 0.12;
+        var piv = new T.Group(); piv.position.set(q[0] * br * 0.52, hipY, q[1] * br * bl * 0.58); body.add(piv);
+        var len = Math.max(0.05, hipY - 2 * lr);
+        put(piv, new T.Mesh(capsuleGeo(lr, len), LEGM), 0, -hipY / 2, 0);
+        ball(piv, lr * 1.25, o.hoof || o.legs || o.fur, 0, -hipY + lr * 0.9, 0.04, 1, 0.75, 1.2);   // sabot / patte
         legs.push(piv);
     });
-    if (o.tail === 'bushy') { var t = ball(body, 0.3, FUR, 0, 1.0, -0.75 * L, 0.8, 1.3, 0.8); t.rotation.x = 0.5; if (o.tailTip) ball(body, 0.16, o.tailTip, 0, 1.3, -0.85 * L); }
-    else if (o.tail === 'flat') ball(body, 0.26, '#5a4030', 0, 0.45, -0.85 * L, 0.9, 0.2, 1.2);
-    else if (o.tail === 'curl') put(body, new T.Mesh(geo('curl', function() { return new T.TorusGeometry(0.08, 0.03, 8, 16, Math.PI * 1.5); }), FUR), 0, 0.8, -0.7 * L).rotation.y = Math.PI / 2;
-    else if (o.tail !== 'none') ball(body, 0.1, o.tailColor || o.fur, 0, 0.75, -0.68 * L);
-    if (o.spikes) for (var k = 0; k < 14; k++) { var a = (k / 14) * Math.PI - Math.PI / 2, sp = put(body, new T.Mesh(geo('spike', function() { return new T.ConeGeometry(0.05, 0.16, 8); }), mat('#5a4636')), Math.sin(a) * 0.4, 0.7 + Math.cos(a) * 0.32, (k % 3 - 1) * 0.25); sp.rotation.z = -a * 0.9; }
+    // Cou : trois boules du haut de l'avant du corps jusqu'à la tête (sans trou)
+    var nx = br * bl * 0.72, ny = H + br * 0.38, nl = o.neck !== undefined ? o.neck : 0.32;
+    var hx = nx + nl * 0.55, hy = ny + nl;
+    for (var k = 0; k <= 2; k++) { var t = k / 2; ball(body, br * (0.48 - t * 0.12), FUR, 0, ny + (hy - ny) * t * 0.85, nx + (hx - nx) * t * 0.85); }
+    var head = new T.Group(); head.position.set(0, hy, hx); body.add(head);
+    var hr = o.headR || 0.32;
+    ball(head, hr, FUR, 0, 0, 0);
+    if (o.snout) ball(head, hr * 0.55, o.snout, 0, -hr * 0.25, hr * 0.78, 1.15, 0.85, 0.9);
+    ball(head, hr * 0.14, '#1a1410', -hr * 0.42, hr * 0.22, hr * 0.8); ball(head, hr * 0.14, '#1a1410', hr * 0.42, hr * 0.22, hr * 0.8);
+    ball(head, hr * 0.05, '#ffffff', -hr * 0.38, hr * 0.28, hr * 0.92); ball(head, hr * 0.05, '#ffffff', hr * 0.46, hr * 0.28, hr * 0.92);
+    if (o.nose) ball(head, hr * 0.15, o.nose, 0, -hr * 0.12, o.snout ? hr * 1.2 : hr * 0.98);
+    var ears = [];
+    [-1, 1].forEach(function(sx) {
+        var ep = new T.Group(); ep.position.set(sx * hr * 0.6, hr * 0.62, -hr * 0.05); head.add(ep); ears.push(ep);
+        var ear;
+        if (o.ears === 'long') { ear = put(ep, new T.Mesh(capsuleGeo(0.07, 0.38), FUR), 0, 0.25, 0); ear.rotation.z = -sx * 0.12; ball(ear, 0.045, o.inner || '#ffc0cb', 0, 0, 0.05, 1, 4, 0.4); }
+        else if (o.ears === 'point') { ear = put(ep, new T.Mesh(geo('earcone', function() { return new T.ConeGeometry(0.16, 0.3, 16); }), FUR), 0, 0.08, 0); ear.rotation.z = -sx * 0.3; ear.scale.setScalar(hr / 0.42); }
+        else if (o.ears === 'floppy') { ep.position.set(sx * hr * 0.85, hr * 0.2, 0); ear = ball(ep, hr * 0.38, o.earColor || o.fur, 0, -hr * 0.2, 0, 0.5, 1.3, 0.9); ear.rotation.z = sx * 0.35; }
+        else ball(ep, hr * 0.32, o.earColor || o.fur, 0, 0, 0, 1, 1, 0.6);
+        if (o.horns) { var h = put(head, new T.Mesh(geo('horn', function() { return new T.ConeGeometry(0.05, 0.28, 10); }), mat(o.horns)), sx * hr * 0.38, hr * 0.9, -hr * 0.1); h.rotation.z = -sx * 0.35; h.rotation.x = -0.3; }
+        if (o.antlers) { var an = new T.Group(); an.position.set(sx * hr * 0.4, hr * 0.85, -hr * 0.1); head.add(an); put(an, new T.Mesh(capsuleGeo(0.03, 0.45), mat('#8a6a43')), 0, 0.22, 0).rotation.z = -sx * 0.4; put(an, new T.Mesh(capsuleGeo(0.025, 0.2), mat('#8a6a43')), sx * 0.12, 0.33, 0.04).rotation.z = sx * 0.5; }
+    });
+    if (o.beard) ball(head, hr * 0.22, o.beard, 0, -hr * 0.85, hr * 0.55, 0.8, 1.5, 0.8);
+    // Queue accrochée à l'arrière du corps
+    var tail = new T.Group(); tail.position.set(0, H + br * 0.3, -br * bl * 0.92); body.add(tail);
+    if (o.tail === 'bushy') { var tb = ball(tail, 0.28, FUR, 0, 0.2, -0.15, 0.8, 1.3, 0.8); tb.rotation.x = 0.6; if (o.tailTip) ball(tail, 0.15, o.tailTip, 0, 0.45, -0.32); }
+    else if (o.tail === 'flat') ball(tail, 0.26, '#5a4030', 0, -0.2, -0.2, 0.9, 0.2, 1.2);
+    else if (o.tail === 'curl') put(tail, new T.Mesh(geo('curl', function() { return new T.TorusGeometry(0.08, 0.03, 8, 16, Math.PI * 1.5); }), FUR), 0, 0, -0.05).rotation.y = Math.PI / 2;
+    else if (o.tail !== 'none') { var tt = put(tail, new T.Mesh(capsuleGeo(0.04, 0.35), FUR), 0, -0.2, -0.06); tt.rotation.x = 0.35; ball(tail, 0.07, o.tailColor || o.fur, 0, -0.42, -0.14); }
+    if (o.spikes) for (var j = 0; j < 16; j++) { var a = (j / 16) * Math.PI - Math.PI / 2, sp = put(body, new T.Mesh(geo('spike', function() { return new T.ConeGeometry(0.05, 0.18, 8); }), mat('#5a4636')), Math.sin(a) * br * 0.85, H + Math.cos(a) * br * 0.7, ((j % 4) - 1.5) * 0.18); sp.rotation.z = -a * 0.9; }
     g.scale.setScalar(s * 0.75);
-    g.userData.legs = legs; g.userData.body = body;
+    g.userData.legs = legs; g.userData.body = body; g.userData.head = head; g.userData.tail = tail; g.userData.ears = ears; g.userData.headY = hy;
     return g;
 }
 function bird(o) {
@@ -830,8 +846,9 @@ function bird(o) {
     if (o.comb) [0, 0.08, -0.08].forEach(function(z, i) { ball(head, 0.06, '#e53935', 0, 0.22 - i * 0.01, z); });
     var wings = [];
     [-1, 1].forEach(function(sx) {
-        var piv = new T.Group(); piv.position.set(sx * 0.3, 0.55, 0); body.add(piv);
-        ball(piv, 0.22, o.wing || o.color, sx * 0.15 * (o.span || 1), 0, 0, 1.2 * (o.span || 1), 0.25, 0.8);
+        var piv = new T.Group(); piv.position.set(sx * 0.27, 0.55, -0.02); body.add(piv);
+        if (o.flies) ball(piv, 0.22, o.wing || o.color, sx * 0.15 * (o.span || 1), 0, 0, 1.2 * (o.span || 1), 0.25, 0.8);   // ailes déployées
+        else { var w = ball(piv, 0.22, o.wing || o.color, sx * 0.03, -0.02, -0.04, 0.35, 0.75, 1.15); w.rotation.x = 0.25; }   // ailes repliées contre le corps
         wings.push(piv);
     });
     if (o.tail) ball(body, 0.14, o.tail, 0, 0.5, -0.38, 0.8, 0.5, 1.2);
@@ -884,17 +901,17 @@ function seaThing(e) {
     return g;
 }
 var ANIMALS = {
-    '🐄': function() { return quad({ fur: '#f7f4ef', spots: [[-0.2, 0.05, 0.2], [0.25, 0.1, -0.2], [0, 0.2, -0.4]], snout: '#f2b8b8', horns: '#efe3c8', size: 1.3, tail: 'thin' }); },
-    '🐷': function() { return quad({ fur: '#f7b6c2', snout: '#ef97a8', nose: '#d97a8c', ears: 'point', tail: 'curl', size: 0.95, legLen: 0.12 }); },
-    '🐐': function() { return quad({ fur: '#f1ece2', horns: '#a39377', beard: '#e8e0d0', ears: 'floppy', size: 0.95, tail: 'thin' }); },
-    '🦌': function() { return quad({ fur: '#b07a46', belly: '#e9d6b8', antlers: true, ears: 'point', size: 1.2, legLen: 0.4, tail: 'thin', tailColor: '#ffffff' }); },
-    '🐻': function() { return quad({ fur: '#7a4f2e', snout: '#c9a27a', nose: '#1a1410', size: 1.4, long: 1.1, tail: 'thin' }); },
-    '🦊': function() { return quad({ fur: '#e8792e', belly: '#fff3e6', snout: '#fff3e6', nose: '#1a1410', ears: 'point', tail: 'bushy', tailTip: '#ffffff', size: 0.8, legs: '#3a2a20' }); },
-    '🐆': function() { return quad({ fur: '#e9e2d4', spots: [[-0.2, 0.05, 0.25], [0.2, 0.1, 0], [-0.15, 0.15, -0.3], [0.25, 0, -0.45]], spotColor: '#6b6258', snout: '#f4efe6', nose: '#c98a8a', tail: 'bushy', size: 1.0 }); },
-    '🐇': function() { return quad({ fur: '#f2f0ee', ears: 'long', nose: '#ff9aa8', tail: 'thin', size: 0.55, long: 1.1, legLen: 0.1 }); },
-    '🐿️': function() { return quad({ fur: '#c9702e', belly: '#f2dcc0', ears: 'point', tail: 'bushy', size: 0.5, long: 1.05, legLen: 0.12 }); },
-    '🦫': function() { return quad({ fur: '#8a5a34', snout: '#b88a5e', nose: '#1a1410', tail: 'flat', size: 0.75, legLen: 0.1 }); },
-    '🦔': function() { return quad({ fur: '#c9a27a', snout: '#e8d0b0', nose: '#1a1410', spikes: true, tail: 'none', size: 0.55, legLen: 0.08 }); },
+    '🐄': function() { return quad({ fur: '#f7f4ef', spots: [[-0.35, 0.05, 0.2], [0.4, 0.0, -0.2], [0.1, 0.15, -0.45]], snout: '#f2b8b8', nose: '#d98a8a', horns: '#efe3c8', hoof: '#3a2a20', size: 1.3, legLen: 0.32, legR: 0.12, neck: 0.18, headR: 0.34, tail: 'thin', ears: 'floppy' }); },
+    '🐷': function() { return quad({ fur: '#f7b6c2', snout: '#ef97a8', nose: '#d97a8c', ears: 'point', tail: 'curl', size: 0.95, legLen: 0.05, legR: 0.12, neck: 0.05, headR: 0.34, hoof: '#c97a8a' }); },
+    '🐐': function() { return quad({ fur: '#f1ece2', horns: '#a39377', beard: '#e8e0d0', ears: 'floppy', size: 0.95, legLen: 0.32, legR: 0.08, neck: 0.32, headR: 0.28, hoof: '#4a3a2a', tail: 'thin' }); },
+    '🦌': function() { return quad({ fur: '#b07a46', belly: '#e9d6b8', antlers: true, ears: 'point', size: 1.2, legLen: 0.55, legR: 0.07, neck: 0.5, headR: 0.27, snout: '#c99a6a', nose: '#1a1410', hoof: '#3a2a20', long: 1.25, tail: 'thin', tailColor: '#ffffff' }); },
+    '🐻': function() { return quad({ fur: '#7a4f2e', snout: '#c9a27a', nose: '#1a1410', size: 1.4, long: 1.15, legLen: 0.12, legR: 0.16, neck: 0.08, headR: 0.36, hoof: '#4a2f1a', tail: 'none' }); },
+    '🦊': function() { return quad({ fur: '#e8792e', belly: '#fff3e6', snout: '#fff3e6', nose: '#1a1410', ears: 'point', tail: 'bushy', tailTip: '#ffffff', size: 0.8, legLen: 0.22, legR: 0.07, neck: 0.2, headR: 0.3, legs: '#3a2a20', hoof: '#2a1d14' }); },
+    '🐆': function() { return quad({ fur: '#e9e2d4', spots: [[-0.35, 0.05, 0.25], [0.35, 0.1, 0], [-0.3, 0.15, -0.3], [0.38, 0, -0.45]], spotColor: '#6b6258', snout: '#f4efe6', nose: '#c98a8a', tail: 'bushy', size: 1.0, legLen: 0.22, legR: 0.09, neck: 0.15, headR: 0.3 }); },
+    '🐇': function() { return quad({ fur: '#f2f0ee', ears: 'long', nose: '#ff9aa8', tail: 'none', size: 0.55, long: 1.1, legLen: 0.02, legR: 0.11, neck: 0.12, headR: 0.34 }); },
+    '🐿️': function() { return quad({ fur: '#c9702e', belly: '#f2dcc0', ears: 'point', tail: 'bushy', size: 0.5, long: 1.05, legLen: 0.05, legR: 0.1, neck: 0.15, headR: 0.34 }); },
+    '🦫': function() { return quad({ fur: '#8a5a34', snout: '#b88a5e', nose: '#1a1410', tail: 'flat', size: 0.75, legLen: 0.0, legR: 0.11, neck: 0.05, headR: 0.32 }); },
+    '🦔': function() { return quad({ fur: '#c9a27a', snout: '#e8d0b0', nose: '#1a1410', spikes: true, tail: 'none', size: 0.55, legLen: 0.0, legR: 0.09, neck: 0.0, headR: 0.3 }); },
     '🐔': function() { return bird({ color: '#ffffff', comb: true, wing: '#f2efe8', size: 0.85 }); },
     '🐓': function() { return bird({ color: '#d9702e', head: '#f0a33a', comb: true, wing: '#8a3b1e', tail: '#2f6b3a', size: 0.95 }); },
     '🐤': function() { return bird({ color: '#ffd84a', size: 0.5 }); },
@@ -1009,6 +1026,17 @@ function animateAnimal(obj, dx, dy, dt, time) {
     var ud = obj.userData, moving = smoothMotion(ud, dx, dy, dt, 8);
     ud.step = (ud.step || 0) + dt * 12 * ud.moveAmt;
     if (ud.facing !== undefined) { var turn = Math.atan2(Math.sin(ud.facing - obj.rotation.y), Math.cos(ud.facing - obj.rotation.y)); obj.rotation.y += turn * Math.min(1, dt * 4); }
+    // Ça bouge partout : tête qui balance en marchant (ou regarde autour / broute à l'arrêt),
+    // queue qui remue, oreilles qui frémissent, respiration
+    var ph = obj.id * 1.7;
+    if (ud.head) {
+        var idle = 1 - (ud.moveAmt || 0), graze = idle * Math.max(0, Math.sin(time * 0.35 + ph)) ;
+        ud.head.rotation.x = Math.sin(ud.step * 2) * 0.06 * ud.moveAmt + graze * 0.7;
+        ud.head.rotation.y = Math.sin(time * 0.7 + ph) * 0.35 * idle;
+    }
+    if (ud.tail) { ud.tail.rotation.y = Math.sin(time * (3 + 5 * (ud.moveAmt || 0)) + ph) * 0.5; ud.tail.rotation.x = Math.sin(time * 1.3 + ph) * 0.15; }
+    if (ud.ears) ud.ears.forEach(function(e, i) { e.rotation.z = Math.max(0, Math.sin(time * 2.3 + ph + i * 2)) ** 8 * 0.5 * (i ? -1 : 1); });
+    if (ud.body && !ud.flies) ud.body.scale.y = 1 + Math.sin(time * 2 + ph) * 0.015;
     if (ud.legs) { var sw = Math.sin(ud.step) * 0.6 * ud.moveAmt; ud.legs[0].rotation.x = sw; ud.legs[3].rotation.x = sw; ud.legs[1].rotation.x = -sw; ud.legs[2].rotation.x = -sw; }
     if (ud.wings) {
         var f = ud.butterfly ? Math.sin(time * 14 + obj.id) * 0.9 : (ud.flies ? Math.sin(time * 10 + obj.id) * 0.7 : (moving ? Math.sin(time * 18) * 0.3 : 0));
@@ -1721,6 +1749,11 @@ function stopSwing() {
     s.charlie.x = s.swing.x; s.charlie.y = s.swing.y + 70;
 }
 Game.r3d.isSwinging = function() { return _swinging; };
+Game.r3d.showcase = function(list) {   // tests : aligne des animaux devant la caméra
+    var g = new T.Group(), c = charlie.position;
+    (list || Object.keys(ANIMALS)).forEach(function(e, i) { var a = ANIMALS[e](); a.position.set(c.x - 6 + (i % 7) * 2, c.y, c.z - 2 + Math.floor(i / 7) * 2.5); a.rotation.y = 0.6; g.add(a); });
+    scene.add(g); Game.r3d._show = g;
+};
 Game.r3d.shopSlotScreen = function(i) {   // tests automatiques
     var sl = shopSlots[i]; if (!sl || !room3d) return null;
     var v = new T.Vector3(); sl.group.getWorldPosition(v); v.project(room3d.camera);
