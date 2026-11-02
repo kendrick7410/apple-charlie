@@ -58,7 +58,7 @@ window.addEventListener('DOMContentLoaded', function() {
             var fonts = document.fonts && document.fonts.load ? document.fonts.load('64px "Noto Color Emoji"', '🌳') : Promise.resolve();
             return Promise.race([fonts, new Promise(function(r) { setTimeout(r, 2500); })]);
         }).then(init).catch(function(err) {
-            console.warn('3D indisponible', err);
+            console.warn('3D indisponible', err, err && err.stack);
             document.documentElement.classList.remove('mode-3d');
         });
     };
@@ -548,15 +548,51 @@ function makeFountain() {
     return g;
 }
 function makePalm(s) {
-    var g = new T.Group(), i;
-    for (i = 0; i < 6; i++) ball(g, 0.2 - i * 0.012, '#b08356', Math.sin(i * 0.4) * 0.05 * i, 0.25 + i * 0.42, 0, 1, 1.3, 1);
-    var top = 2.6;
-    for (i = 0; i < 6; i++) {
-        var leaf = ball(g, 0.75, '#46a346', Math.cos(i / 6 * Math.PI * 2) * 0.6, top, Math.sin(i / 6 * Math.PI * 2) * 0.6, 1, 0.12, 0.35);
-        leaf.rotation.y = -i / 6 * Math.PI * 2; leaf.rotation.z = -0.35;
+    var g = new T.Group(), i, top = new T.Vector3();
+    // Tronc courbé et effilé, en segments avec de petits anneaux (écorce de palmier)
+    var pts = [];
+    for (i = 0; i <= 8; i++) { var u = i / 8; pts.push(new T.Vector3(Math.sin(u * 1.4) * 0.45, u * 2.7, 0)); }
+    var curve = new T.CatmullRomCurve3(pts);
+    put(g, new T.Mesh(geo('palmtrunk', function() {
+        var tg = new T.TubeGeometry(curve, 24, 0.17, 10, false);
+        var p = tg.attributes.position;   // effiler vers le haut
+        for (var k = 0; k < p.count; k++) { var y = p.getY(k), u = Math.max(0, Math.min(1, y / 2.7)), f = 1 - u * 0.4, c = curve.getPointAt(u); p.setX(k, c.x + (p.getX(k) - c.x) * f); p.setZ(k, c.z + (p.getZ(k) - c.z) * f); }
+        tg.computeVertexNormals(); return tg;
+    }), mat('#b08356')), 0, 0, 0);
+    for (i = 1; i < 8; i++) { var cp = curve.getPointAt(i / 8); put(g, new T.Mesh(geo('palmring', function() { return new T.TorusGeometry(0.16, 0.035, 6, 14); }), mat('#8f6a43')), cp.x, cp.y, cp.z).rotation.x = Math.PI / 2; }
+    curve.getPointAt(1, top);
+    // Palmes arquées
+    for (i = 0; i < 7; i++) {
+        var a = i / 7 * Math.PI * 2, leaf = new T.Group(); leaf.position.copy(top); leaf.rotation.y = -a; g.add(leaf);
+        for (var k = 0; k < 4; k++) ball(leaf, 0.32 - k * 0.04, '#46a346', 0.3 + k * 0.32, 0.05 - k * k * 0.06, 0, 1.3, 0.18, 0.55);
     }
-    ball(g, 0.14, '#7a5230', 0.15, top - 0.15, 0.1); ball(g, 0.14, '#7a5230', -0.12, top - 0.18, -0.05);
+    ball(g, 0.15, '#7a5230', top.x + 0.12, top.y - 0.12, 0.1); ball(g, 0.15, '#7a5230', top.x - 0.1, top.y - 0.16, -0.08);
     g.scale.setScalar(s);
+    return g;
+}
+// Port : ponton en planches sur pilotis, bateau de marchandise, caisses
+function makeDock(w, len) {
+    var g = new T.Group(), n = Math.round(len / 0.55);
+    for (var i = 0; i < n; i++) rbox(g, w, 0.12, 0.48, 0.04, i % 2 ? '#a67c52' : '#94693f', 0, 0.3, -len / 2 + 0.28 + i * (len - 0.56) / Math.max(1, n - 1));
+    for (i = 0; i <= Math.floor(len / 2.2); i++) [-w / 2 + 0.1, w / 2 - 0.1].forEach(function(x) { put(g, new T.Mesh(geo('pile', function() { return new T.CylinderGeometry(0.1, 0.1, 1.4, 10); }), mat('#7a5530')), x, -0.3, -len / 2 + 0.3 + i * 2.2); });
+    return g;
+}
+function makeBoat() {
+    var g = new T.Group(), hull = new T.Group(); g.add(hull);
+    rbox(hull, 2.2, 0.8, 5.2, 0.4, '#d9443b', 0, 0.25, 0);
+    rbox(hull, 2.0, 0.12, 5.0, 0.3, '#f4ede0', 0, 0.68, 0);
+    rbox(hull, 1.4, 1.1, 1.6, 0.25, '#ffffff', 0, 1.3, 0.9);
+    rbox(hull, 1.5, 0.14, 1.7, 0.1, '#2f5d8a', 0, 1.9, 0.9);
+    put(hull, new T.Mesh(new T.CylinderGeometry(0.22, 0.26, 0.9, 16), mat('#2f5d8a')), 0, 2.35, 0.5);
+    [-0.4, 0.4].forEach(function(x) { put(hull, new T.Mesh(geo('porthole', function() { return new T.TorusGeometry(0.14, 0.04, 8, 16); }), mat('#2f5d8a')), x + (x > 0 ? 0.31 : -0.31), 1.35, 0.9).rotation.y = Math.PI / 2; });
+    [[-0.5, -1.2], [0.45, -1.4], [0, -0.6]].forEach(function(p) { rbox(hull, 0.6, 0.5, 0.6, 0.06, '#c98f5a', p[0], 0.98, p[1]); });
+    g.userData.hull = hull;
+    return g;
+}
+function makeCrate() {
+    var g = new T.Group();
+    rbox(g, 0.7, 0.6, 0.7, 0.06, '#c98f5a', 0, 0.3, 0);
+    rbox(g, 0.74, 0.08, 0.08, 0.02, '#8a5a3c', 0, 0.45, 0.33); rbox(g, 0.74, 0.08, 0.08, 0.02, '#8a5a3c', 0, 0.15, 0.33);
     return g;
 }
 // Ferme : grange rouge, bottes de foin, champs cultivés
@@ -615,7 +651,7 @@ function makeGarden(el) {
 
 // ═══════════════════════ Décor fixe (sol, mer, rivière, chemins) ═══════════════════════
 // Texture d'eau : bleu, reflets ondulés et petites taches d'écume (répétée, on la fait défiler)
-var riverTex = null, seaTex = null;
+var riverTex = null, seaTex = null, lakeTex = null;
 function waterTexture(base) {
     var c = document.createElement('canvas'); c.width = c.height = 256;
     var g = c.getContext('2d');
@@ -648,8 +684,17 @@ function buildTerrain() {
     var pens = Array.prototype.map.call(world.querySelectorAll('.farm-pen'), rectOf);
     var MZ = { x: 2650, y: 300, w: 1750, h: 1450 };   // zone des montagnes (comme entities.js)
     // Rivière et lacs : on creuse leur lit dans le sol (berges en pente)
-    var waters = Game.buildRiverSegments().map(function(sg) { return { x: sg.x, y: sg.y, w: sg.w, h: sg.h }; })
-        .concat(Array.prototype.map.call(world.querySelectorAll('.lake-water'), rectOf));
+    var rsegs = Game.buildRiverSegments();
+    var waters = rsegs.map(function(sg, i) {
+        // Direction du courant : vers le morceau suivant du même bras (sinon on prolonge le précédent)
+        var a = sg, b = rsegs[i + 1], dx, dy;
+        if (b && Math.hypot(b.x - a.x, b.y - a.y) < 220) { dx = b.x - a.x; dy = b.y - a.y; }
+        else { var pv = rsegs[i - 1] || a; dx = a.x - pv.x; dy = a.y - pv.y; }
+        var d = Math.hypot(dx, dy) || 1;
+        return { x: sg.x, y: sg.y, w: sg.w, h: sg.h, dx: dx / d, dy: dy / d };
+    });
+    var lakes = Array.prototype.map.call(world.querySelectorAll('.lake-water'), rectOf);
+    waters = waters.concat(lakes);
     var BANK = lin('#a88d5c'), BED = lin('#6b7a52');
     var seg = 300;
     var g = new T.PlaneGeometry(W * U, H * U, seg, seg);
@@ -681,7 +726,7 @@ function buildTerrain() {
             if (py < wr.y - 200 || py > wr.y + wr.h + 200) continue;
             var ev = inEllipse(px, py, wr); if (ev < ew) ew = ev;
         }
-        if (ew < 1) { var dep = Math.min(1, (1 - ew) / 0.45); h -= 0.6 * dep * dep * (3 - 2 * dep); c.lerp(BED, dep); }
+        if (ew < 1) { var dep = Math.min(1, (1 - ew) / 0.45); dep = dep * dep * (3 - 2 * dep); h = h * (1 - dep) - 0.6 * dep; c.lerp(BED, dep); }
         if (ew < 1.35) c.lerp(BANK, Math.max(0, 1 - Math.abs(ew - 1) / 0.35) * 0.7);
         pos.setY(i, h);
         cols.push(c.r, c.g, c.b);
@@ -708,18 +753,26 @@ function buildTerrain() {
     var verts = [], uvs = [];
     function ellipse(r, y) {
         var cx = (r.x + r.w / 2) * U, cz = (r.y + r.h / 2) * U, rx = r.w / 2 * U * 1.04, rz = r.h / 2 * U * 1.04, n = 20;
-        function v(x, z) { verts.push(x, y, z); uvs.push(x / 4, z / 4); }
+        // Repère de la texture aligné sur le courant : v suit l'eau qui descend, u la travers
+        var fx = r.dx === undefined ? 0 : r.dx, fz = r.dy === undefined ? 1 : r.dy;
+        function v(x, z) { verts.push(x, y, z); uvs.push((x * fz - z * fx) / 4, (x * fx + z * fz) / 4); }
         for (var k = 0; k < n; k++) {
             var a1 = k / n * Math.PI * 2, a2 = (k + 1) / n * Math.PI * 2;
             v(cx, cz); v(cx + Math.cos(a2) * rx, cz + Math.sin(a2) * rz); v(cx + Math.cos(a1) * rx, cz + Math.sin(a1) * rz);
         }
     }
-    waters.forEach(function(r) { ellipse(r, -0.16); });
-    var wg = new T.BufferGeometry();
-    wg.setAttribute('position', new T.Float32BufferAttribute(verts, 3));
-    wg.setAttribute('uv', new T.Float32BufferAttribute(uvs, 2));
-    wg.computeVertexNormals();
-    var waterMesh = new T.Mesh(wg, WATER); waterMesh.receiveShadow = true; scene.add(waterMesh);
+    function waterMeshOf(list, material) {
+        verts = []; uvs = [];
+        list.forEach(function(r) { ellipse(r, -0.16); });
+        var wg = new T.BufferGeometry();
+        wg.setAttribute('position', new T.Float32BufferAttribute(verts, 3));
+        wg.setAttribute('uv', new T.Float32BufferAttribute(uvs, 2));
+        wg.computeVertexNormals();
+        var m = new T.Mesh(wg, material); m.receiveShadow = true; scene.add(m);
+    }
+    waterMeshOf(waters.slice(0, rsegs.length), WATER);
+    lakeTex = waterTexture('#3aa6dc');
+    waterMeshOf(lakes, new T.MeshStandardMaterial({ map: lakeTex, roughness: 0.1, metalness: 0.1 }));
 
     // Chemins de sable (rectangles aux coins arrondis)
     var PATH = mat('#e3bd7c', { roughness: 1 });
@@ -746,7 +799,7 @@ function buildTerrain() {
 // ═══════════════════════ Pont carte 2D → 3D ═══════════════════════
 var tracked = new Map();      // élément 2D → objet 3D
 var gameWorld = null;
-var MOVING = /villager-sprite|creature|sea-creature|mtn-animal|farmer-sprite|farm-escaped|farm-animal|wasp/;
+var MOVING = /villager-sprite|creature|sea-creature|mtn-animal|farmer-sprite|farm-escaped|farm-animal|wasp|cargo-boat/;
 
 function emojiOf(el) {
     for (var i = 0; i < el.childNodes.length; i++) {
@@ -778,8 +831,11 @@ function kindOf(el, e) {
         if (el.querySelector(':scope > div') && /🌽|🌾/.test(el.textContent) && el.offsetWidth > 120) return 'field';
         if (!el.textContent.trim() && /repeating-linear-gradient/.test(el.style.background) && el.offsetWidth < 90) return 'hay';
         if (e === '🚜') return 'sprite';
+        if (/a67c52|166, 124, 82/.test(el.style.backgroundImage)) return 'dock';   // ponton du port
         return 'skip';
     }
+    if (cl.contains('cargo-boat')) return 'boat';
+    if (cl.contains('cargo-crate')) return 'crate';
     if (cl.contains('snowy-pine')) return 'snowpine';
     if (cl.contains('tree')) return e === '🌲' ? 'pine' : (e === '🍂' ? 'autumn' : 'tree');
     if (cl.contains('stone') || e === '🪨') return 'rock';
@@ -813,6 +869,9 @@ function buildFor(el, kind, e, label) {
             obj = makeCritter(em ? em.textContent.trim() : e); break;
         }
         case 'farmer': obj = makeFarmer(); break;
+        case 'dock': obj = makeDock(el.offsetWidth * U, el.offsetHeight * U); break;
+        case 'boat': obj = makeBoat(); break;
+        case 'crate': obj = makeCrate(); break;
         case 'barn': obj = makeBarn(); break;
         case 'hay': obj = makeHay(el.offsetWidth * U); break;
         case 'field': obj = makeField(el); break;
@@ -853,7 +912,7 @@ function groundPoint(el, kind) {
     var wxy = worldXY(el), x = wxy.x, y = wxy.y;
     var first = el.firstElementChild && !el.firstElementChild.classList.contains('building-label') ? el.firstElementChild : null;
     var w = el.offsetWidth, h = first ? first.offsetHeight : el.offsetHeight;
-    if (kind === 'garden' || kind === 'fountain' || kind === 'field') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
+    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'dock') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
     if (kind === 'barn') return { x: x + w / 2, y: y + 140 };
     if (el.classList.contains('house-exterior') || /-anchor$/.test(el.id)) return { x: x + w / 2, y: y + h * 0.75 };
     return { x: x + w / 2, y: y + h * 0.9 };
@@ -884,7 +943,7 @@ function syncElement(el) {
     }
     rec.seen = true;
     if (rec.col === undefined) rec.col = colliderFor(el, kind, rec.obj);
-    rec.obj.visible = el.style.display !== 'none';
+    rec.obj.visible = el.style.display !== 'none' && !rec.hideInWater;
     if (!rec.moving) placeRec(el, rec);
     if (kind === 'garden') syncGarden(el, rec.obj);
 }
@@ -906,12 +965,22 @@ function doorPoint(el, kind) {
 // Profondeur (en px) entre la porte et le centre du modèle, selon sa taille
 var DOOR_BACK = { house: 48, shop: 56, construction: 43, plot: 0 };   // ≈ demi-profondeur du socle, selon la taille
 function placeRec(el, rec) {
+    if (rec.kind === 'boat') {   // sur l'eau, il se balance doucement
+        var bp = groundPoint(el, 'boat'), t = performance.now() / 1000;
+        rec.px = bp.x; rec.py = bp.y;
+        rec.obj.position.set(bp.x * U, -0.25 + Math.sin(t * 1.6) * 0.06, bp.y * U);
+        rec.obj.userData.hull.rotation.z = Math.sin(t * 1.3) * 0.05;
+        return;
+    }
     var p = groundPoint(el, rec.kind);
     var door = DOOR_BACK[rec.kind] !== undefined ? doorPoint(el, rec.kind) : null;
     if (door) p = { x: door.x, y: door.y - DOOR_BACK[rec.kind] };
     if (rec.px === p.x && rec.py === p.y) return;
     rec.px = p.x; rec.py = p.y;
-    rec.obj.position.set(p.x * U, rec.kind === 'mountain' ? heightAt(p.x, p.y) - 0.5 : heightAt(p.x, p.y), p.y * U);
+    var gh = heightAt(p.x, p.y);
+    rec.obj.position.set(p.x * U, rec.kind === 'mountain' ? gh - 0.5 : (rec.kind === 'dock' ? 0 : gh), p.y * U);
+    // Décor posé par erreur dans l'eau (palmier dans la rivière...) : on ne l'affiche pas
+    if ((rec.kind === 'palm' || (rec.kind === 'sprite' && !rec.moving) || (rec.kind === 'rock' && !el.classList.contains('stone'))) && gh < -0.2) rec.hideInWater = true;
 }
 function syncGarden(el, g) {
     var cells = el.querySelectorAll('.garden-cell');
@@ -1705,6 +1774,7 @@ function loop(now) {
     // La rivière coule vers la mer (vers le bas de la carte), la mer ondule
     if (riverTex) { riverTex.offset.y -= dt * 0.35; riverTex.offset.x = Math.sin(time * 0.6) * 0.04; }
     if (seaTex) { seaTex.offset.x += dt * 0.03; seaTex.offset.y = Math.sin(time * 0.5) * 0.08; }
+    if (lakeTex) { lakeTex.offset.x = Math.sin(time * 0.4) * 0.06; lakeTex.offset.y = Math.cos(time * 0.3) * 0.06; }   // un lac ondule sans couler
     _scanT += dt;
     if (_scanT > 0.4) { _scanT = 0; scan(); applyPhase(); }
     syncMoving(time);
