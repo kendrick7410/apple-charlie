@@ -60,16 +60,23 @@ function isMine() { var h = Game.state.activeHouse; return !!h && h.id === 'char
 
 // Réduit la pièce pour qu'elle tienne dans l'écran (téléphone), barre du bas comprise
 var _fitKey = '';
-Game.furniture.fitRoom = function() {
+Game.furniture.fitRoom = function(force) {
     var r = room();
     if (!r) return;
-    var key = window.innerWidth + 'x' + window.innerHeight;
-    if (key === _fitKey) return;
+    var inShop = document.body.classList.contains('in-shop');
+    var key = window.innerWidth + 'x' + window.innerHeight + (inShop ? 's' : 'h');
+    if (key === _fitKey && !force) return;
     _fitKey = key;
+    var W = window.innerWidth, H = window.innerHeight;
+    var phone = W <= 768;
     var full = r.offsetWidth || 630;
-    var k = Math.min(1, (window.innerWidth - 16) / full, (window.innerHeight - 170) / full);
+    // Téléphone : la pièce se colle en haut ; en boutique, le panneau d'achat prend le bas de l'écran
+    var availH = phone ? (inShop ? H * 0.36 : H - 180) : H - 170;
+    var k = Math.min(1, (W - 16) / full, availH / full);
     r.style.transform = k < 1 ? 'scale(' + k.toFixed(3) + ')' : '';
-    r.style.transformOrigin = 'center 40%';
+    r.style.transformOrigin = phone ? 'center top' : 'center 40%';
+    var view = document.getElementById('interior-view');
+    if (view) view.classList.toggle('fit-top', phone);
 };
 window.addEventListener('resize', function() { _fitKey = ''; Game.furniture.fitRoom(); });
 

@@ -1402,3 +1402,30 @@ button {
 body.no-touch #joystick {
     display: none !important;
 }
+
+/* Téléphone : pièce collée en haut, panneau de boutique en bas d'écran (lisible en entier) */
+@media (max-width: 768px) {
+    #interior-view.fit-top {
+        align-items: flex-start;
+        padding-top: 10px;
+        box-sizing: border-box;
+    }
+    body.in-shop [id^="action-"] {
+        left: 8px !important;
+        right: 8px !important;
+        bottom: 8px !important;
+        top: auto !important;
+        max-height: 58vh;
+        overflow-y: auto;
+    }
+    body.in-shop [id^="action-"] .ui-card {
+        max-width: none !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    body.in-shop .shop-btn,
+    body.in-shop .cook-btn {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+}

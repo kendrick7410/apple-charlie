@@ -201,7 +201,7 @@ Game.SHOPS = [
       npc: '👩‍🍳', purpose: "Ici tu cuis du pain 🍞 et tu cuisines des plats (tartes, sushis...) à revendre.",
       decor: [['🥖',70,140],['🥐',150,130],['🧁',460,150],['🍰',250,110],['🔥',110,430],['🪵',440,440],['🌾',60,310],['🛒',460,310]] },
     { id: 'shop', name: 'Magasin', sign: '🏪', loc: 'shop', panel: 'action-shop', theme: 'shop',
-      npc: '🧓', purpose: "Achète des outils 🪓, des graines 🌱 et des matériaux 🧱 avec tes clochettes.",
+      npc: '🧓', purpose: "Achète des outils 🪓 et des graines 🌱. Pour les matériaux 🧱 : paie en clochettes ou échange tes pierres 🪨 !",
       decor: [['📦',70,140],['🧺',460,140],['🪜',250,110],['🏷️',60,310],['🛒',460,310],['💰',110,440],['🧱',440,440],['🪴',250,440]] },
     { id: 'fishShop', name: 'Poissonnerie', sign: '🐟', loc: 'fishShop', panel: 'action-fishShop', theme: 'fishShop', level: 20, cost: 20,
       npc: '🧑‍🍳', purpose: "Dépose tes poissons 🐟 : ils se vendent tout seuls, reviens collecter tes clochettes 💰.",
@@ -581,6 +581,9 @@ Game.CROPS = {
     wheat:      { emoji: '🌾', label: 'Blé',        growTime: 1.5, sell: 10, xp: 12, season: ['spring','summer'] },
     strawberry: { emoji: '🍓', label: 'Fraise',     growTime: 1.2, sell: 12, xp: 15, season: ['spring','summer'] }
 };
+
+// Au Magasin : échanger des pierres 🪨 et du bois 🪵 contre 1 matériau 🧱
+Game.STONE_TO_MATERIAL = { stone: 4, wood: 2 };
 
 Game.SHOP_ITEMS = [
     { type: 'tool', id: 'axe' },

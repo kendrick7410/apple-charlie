@@ -208,6 +208,8 @@ Game.buildings.enterShop = function(shopId) {
     s.activeShop = shop;
     s.activeHouse = null;
     s.interiorCharlie = { x: 280, y: 440 };
+    document.body.classList.add('in-shop');   // téléphone : panneau d'achat en bas d'écran
+    Game.furniture.fitRoom(true);
 
     var room = document.getElementById('current-room');
 
@@ -329,6 +331,7 @@ Game.buildings.exitHouse = function() {
     document.getElementById('interior-view').style.display = 'none';
     Game.furniture.closeMenu();
     document.getElementById('current-room').classList.remove('room-dark', 'room-lamp');
+    document.body.classList.remove('in-shop');
 
     // Clean up shop interior if we were in one
     if (s.activeShop) {

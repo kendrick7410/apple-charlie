@@ -163,6 +163,9 @@ Game.ui.updateShop = function() {
         } else if (item.type === 'material') {
             html += '<button class="shop-btn" onclick="Game.inventory.buyFromShop({type:\'material\',id:\'materials\',price:' + item.price + '})">' +
                 '🧱 Matériaux (' + item.price + '💰)</button>';
+            // Échange : les pierres ramassées servent à fabriquer des matériaux
+            html += '<button class="shop-btn" onclick="Game.inventory.stoneToMaterial()">' +
+                '🪨' + Game.STONE_TO_MATERIAL.stone + ' + 🪵' + Game.STONE_TO_MATERIAL.wood + ' → 🧱1 (échanger)</button>';
         }
     });
     panel.innerHTML = html;

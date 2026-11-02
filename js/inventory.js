@@ -87,6 +87,23 @@ Game.inventory.buyFromShop = function(item) {
     }
 };
 
+// Échange au Magasin : pierres + bois → 1 matériau
+Game.inventory.stoneToMaterial = function() {
+    var s = Game.state, c = Game.STONE_TO_MATERIAL;
+    if (s.inventory.stone < c.stone || s.inventory.wood < c.wood) {
+        Game.ui.notify("Il te faut " + c.stone + " pierres 🪨 et " + c.wood + " bois 🪵 (tu as " + s.inventory.stone + " 🪨, " + s.inventory.wood + " 🪵)");
+        Game.audio.play('error');
+        return;
+    }
+    s.inventory.stone -= c.stone;
+    s.inventory.wood -= c.wood;
+    s.inventory.materials++;
+    Game.xp.add(3);
+    Game.audio.play('craft');
+    Game.ui.update();
+    Game.ui.notify("🔨 Échange : +1 matériau 🧱");
+};
+
 // Vendre tout son bois à la fontaine du village
 Game.inventory.sellWood = function() {
     var s = Game.state;
