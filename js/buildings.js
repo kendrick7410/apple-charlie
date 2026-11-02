@@ -329,8 +329,7 @@ Game.buildings.exitHouse = function() {
     var s = Game.state;
     s.currentView = 'world';
     document.getElementById('interior-view').style.display = 'none';
-    Game.furniture.closeMenu();
-    document.getElementById('current-room').classList.remove('room-dark', 'room-lamp');
+    Game.furniture.reset();
     document.body.classList.remove('in-shop');
 
     // Clean up shop interior if we were in one

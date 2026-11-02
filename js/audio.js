@@ -52,6 +52,22 @@ Game.audio.play = function(soundName) {
     osc.stop(ctx.currentTime + def.dur);
 };
 
+// Une note de musique (piano de la maison)
+Game.audio.playNote = function(freq, dur) {
+    if (muted || !ctx) return;
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + dur);
+};
+
 // Play a chime (collect sound with rising pitch)
 Game.audio.playChime = function() {
     if (muted || !ctx) return;

@@ -1,6 +1,7 @@
-// ── furniture.js ── Meubles utiles dans les maisons : utiliser, déplacer, ranger ──
+// ── furniture.js ── Meubles vivants dans les maisons : on les voit servir ──
 // Chaque meuble est stocké dans Game.state.houseFurniture[houseId] sous la forme
-// [emoji, x, y, dernierUsage, lampeAllumee] (les 2 derniers sont optionnels).
+// [emoji, x, y, dernierUsage, allume] (les 2 derniers sont optionnels).
+// Cliquer un meuble : Charlie marche jusqu'à lui et l'utilise. Le glisser : le déplacer.
 (function(){
 "use strict";
 
@@ -10,19 +11,40 @@ var USE_RADIUS = 110;          // distance pour pouvoir utiliser un meuble
 var DAY_MS = 12 * 60 * 1000;   // 1 jour de jeu = 12 minutes réelles (2h de jeu par minute)
 var DRAG_THRESHOLD = 6;        // en dessous, c'est un clic ; au-dessus, on déplace
 var BREAD_APPLES = 2;          // un pain cuit à la cuisinière coûte 2 pommes
+var SLEEP_FROM = 17;           // comme dans Minecraft : on peut dormir dès le soir (17h → 6h)
 
 var BOOK_FACTS = [
     "Les loutres se tiennent la main en dormant pour ne pas dériver. 🦦",
     "Le Cervin mesure 4478 mètres de haut ! 🏔️",
-    "Une pieuvre a trois cœurs. 🐙",
+    "Une pieuvre a trois cœurs et du sang bleu. 🐙",
     "Les abeilles dansent pour dire aux autres où sont les fleurs. 🐝",
     "Les escargots peuvent dormir pendant trois ans. 🐌",
     "Le miel ne se périme jamais, même après des milliers d'années. 🍯",
     "Les chats passent environ 70 % de leur vie à dormir. 🐱",
     "Un éclair est cinq fois plus chaud que la surface du Soleil. ⚡",
     "Les flamants roses sont roses à cause de ce qu'ils mangent. 🦩",
-    "Les dauphins se donnent des noms en sifflant. 🐬"
+    "Les dauphins se donnent des noms en sifflant. 🐬",
+    "Un colibri bat des ailes jusqu'à 80 fois par seconde. 🐦",
+    "La Lune s'éloigne de la Terre de 4 cm chaque année. 🌙",
+    "Les vaches ont des meilleures amies et stressent quand on les sépare. 🐄",
+    "Les étoiles de mer n'ont pas de cerveau. ⭐",
+    "Un nuage peut peser plus de 500 tonnes. ☁️",
+    "Les koalas dorment jusqu'à 22 heures par jour. 🐨",
+    "Les fourmis ne dorment jamais vraiment, elles font de mini-siestes. 🐜",
+    "Un bébé girafe mesure déjà presque 2 mètres à la naissance. 🦒",
+    "Il y a plus d'arbres sur Terre que d'étoiles dans notre galaxie. 🌳",
+    "Les pingouins offrent un caillou à celle qu'ils aiment. 🐧"
 ];
+
+var TV_SHOWS = [
+    ['🐸', "Les aventures de Grenouille"], ['🚀', "Voyage dans l'espace"], ['⚽', "Le grand match"],
+    ['🌋', "Les volcans du monde"], ['🐧', "La vie des pingouins"], ['🏴‍☠️', "Les pirates"],
+    ['🦖', "Le temps des dinosaures"], ['🌈', "La météo arc-en-ciel"]
+];
+
+// Notes du piano : Do Ré Mi Fa Sol La Si Do
+var NOTES = [['Do', 261.6], ['Ré', 293.7], ['Mi', 329.6], ['Fa', 349.2], ['Sol', 392.0], ['La', 440.0], ['Si', 493.9], ['Do', 523.3]];
+var SONG = [0, 0, 0, 1, 2, 1, 0, 2, 1, 1, 0];   // Au clair de la lune
 
 // Le type de meuble (clé de Game.RECIPES) à partir de son emoji
 Game.furniture.typeOf = function(emoji) {
@@ -30,33 +52,87 @@ Game.furniture.typeOf = function(emoji) {
     return null;
 };
 
-// Ce que fait chaque meuble (texte du bouton + petite explication)
-var ACTIONS = {
-    table:     "🍽️ Manger à table",
-    chair:     "🪑 S'asseoir",
-    bookshelf: "📖 Lire un livre",
-    plant:     "🌻 Cueillir des fleurs",
-    bed:       "😴 Dormir",
-    lamp:      "💡 Allumer / éteindre",
-    mirror:    "🪞 Changer de tenue",
-    stove:     "🍳 Cuisiner"
-};
+// Petite explication de chaque meuble (bulle au survol + message à la fabrication)
 var HELP = {
-    table:     "Manger ici rassasie +50 %, et le double si une chaise 🪑 est collée à la table !",
-    chair:     "Place-la à côté d'une table 🪵 pour manger deux fois mieux.",
-    bookshelf: "+25 XP une fois par jour. La nuit, il faut une lampe allumée 💡.",
-    plant:     "Donne 2 fleurs 🌻 une fois par jour.",
-    bed:       "La nuit, dors jusqu'au matin ☀️.",
-    lamp:      "La nuit, la maison est sombre sans lampe allumée.",
-    mirror:    "Essaie tes skins 🎭.",
-    stove:     "Cuis du pain 🍞 et des plats sans aller à la boulangerie."
+    table:     "Mange à table : +50 % de faim, et le double avec une chaise 🪑 collée !",
+    chair:     "Assieds-toi ! Collée à une table 🪵, tes repas comptent double.",
+    bookshelf: "Lis un livre 📖 (+25 XP par jour). La nuit, il faut de la lumière 💡.",
+    plant:     "Cueille 2 fleurs 🌻 chaque jour.",
+    bed:       "Dors la nuit (dès 17h) pour passer directement au matin ☀️.",
+    lamp:      "Sans lampe allumée, la maison est sombre (et très noire la nuit).",
+    mirror:    "Change de tenue 🎭.",
+    stove:     "Cuis du pain 🍞 et des plats.",
+    tv:        "Allume la télé et regarde une émission (+10 XP par jour).",
+    piano:     "Joue de la musique 🎵 (+10 XP par jour).",
+    bath:      "Prends un bain 🛁 (+15 XP par jour)."
 };
 
+Game.furniture.help = function(type) { return HELP[type]; };
+
 function room() { return document.getElementById('current-room'); }
+function charlieEl() { return document.getElementById('interior-charlie'); }
 // Échelle d'affichage de la pièce (réduite sur téléphone)
 function scale() { var r = room(); return r.offsetWidth ? r.getBoundingClientRect().width / r.offsetWidth : 1; }
 // Un meuble de villageois lui appartient : on peut l'utiliser et le déplacer, pas le ranger
 function isMine() { var h = Game.state.activeHouse; return !!h && h.id === 'charlie'; }
+function list() {
+    var s = Game.state;
+    return s.activeHouse ? (s.houseFurniture[s.activeHouse.id] || []) : [];
+}
+function now() { return Game.state.totalTimePlayed || 0; }
+function readyAgain(f) { return !f[3] || now() - f[3] >= DAY_MS; }
+function minutesLeft(f) { return Math.max(1, Math.ceil((DAY_MS - (now() - f[3])) / 60000)); }
+function dist(f) {
+    var ic = Game.state.interiorCharlie;
+    return Math.hypot(ic.x - f[1], ic.y - f[2]);
+}
+function elOf(f) {
+    var els = room().querySelectorAll('.furniture');
+    for (var i = 0; i < els.length; i++) if (els[i]._f === f) return els[i];
+    return null;
+}
+function canSleepNow() { var h = Game.state.gameHour; return h >= SLEEP_FROM || h < 6; }
+
+// ── Ce que fait Charlie en ce moment (lire, dormir, bain, piano) : il ne bouge pas ──
+var busy = null;
+Game.furniture.isBusy = function() { return !!busy; };
+
+// Pose de Charlie (assis, couché, dans le bain...) et objet au-dessus de lui (📖, 🎵, 💤)
+function setPose(pose) {
+    var ic = charlieEl();
+    if (!ic) return;
+    ic.classList.remove('pose-sit', 'pose-sleep', 'pose-bath');
+    if (pose) ic.classList.add('pose-' + pose);
+}
+function setFx(emoji, cls) {
+    var fx = document.getElementById('charlie-fx');
+    if (!fx) {
+        fx = document.createElement('div');
+        fx.id = 'charlie-fx';
+        room().appendChild(fx);
+    }
+    fx.textContent = emoji || '';
+    fx.className = cls || '';
+    fx.style.display = emoji ? 'block' : 'none';
+    placeFx();
+}
+function placeFx() {
+    var fx = document.getElementById('charlie-fx');
+    if (!fx) return;
+    var ic = Game.state.interiorCharlie;
+    fx.style.left = (ic.x + 26) + 'px';
+    fx.style.top = (ic.y - 34) + 'px';
+}
+// Place Charlie sur / à côté d'un meuble
+function moveCharlieTo(x, y) {
+    var s = Game.state;
+    s.interiorCharlie.x = x;
+    s.interiorCharlie.y = y;
+    s.interiorTarget = null;
+    var ic = charlieEl();
+    if (ic) { ic.style.left = x + 'px'; ic.style.top = y + 'px'; }
+    placeFx();
+}
 
 // Réduit la pièce pour qu'elle tienne dans l'écran (téléphone), barre du bas comprise
 var _fitKey = '';
@@ -83,26 +159,16 @@ window.addEventListener('resize', function() { _fitKey = ''; Game.furniture.fitR
 // Toucher / cliquer le sol d'une pièce : Charlie marche jusque-là (indispensable sur téléphone)
 document.addEventListener('pointerdown', function(e) {
     var r = room();
-    if (!r || Game.state.currentView !== 'interior') return;
-    if (e.target !== r && !e.target.classList.contains('exit-mat')) return;
+    if (!r || Game.state.currentView !== 'interior' || busy) return;
+    if (e.target !== r && e.target.id !== 'room-light' && !e.target.classList.contains('exit-mat')) return;
     var rect = r.getBoundingClientRect(), k = scale();
     Game.state.interiorTarget = {
         x: Math.max(20, Math.min(540, (e.clientX - rect.left) / k - 24)),
         y: Math.max(20, Math.min(540, (e.clientY - rect.top) / k - 24))
     };
+    pending = null;
     Game.furniture.closeMenu();
 });
-function list() {
-    var s = Game.state;
-    return s.activeHouse ? (s.houseFurniture[s.activeHouse.id] || []) : [];
-}
-function now() { return Game.state.totalTimePlayed || 0; }
-function readyAgain(f) { return !f[3] || now() - f[3] >= DAY_MS; }
-function minutesLeft(f) { return Math.max(1, Math.ceil((DAY_MS - (now() - f[3])) / 60000)); }
-function dist(f) {
-    var ic = Game.state.interiorCharlie;
-    return Math.hypot(ic.x - f[1], ic.y - f[2]);
-}
 
 // Affiche tous les meubles de la maison active (remplace les anciens)
 Game.furniture.render = function() {
@@ -113,25 +179,29 @@ Game.furniture.render = function() {
     var old = r.querySelectorAll('.furniture');
     for (var i = 0; i < old.length; i++) old[i].remove();
     list().forEach(function(f) {
+        var type = Game.furniture.typeOf(f[0]);
         var div = document.createElement('div');
         div.className = 'furniture';
         div.textContent = f[0];
         div.style.left = f[1] + 'px';
         div.style.top = f[2] + 'px';
-        if (Game.furniture.typeOf(f[0]) === 'lamp' && f[4]) div.classList.add('lamp-on');
+        div.title = type ? Game.RECIPES[type].label + ' : ' + HELP[type] : 'Décoration';
+        if ((type === 'lamp' || type === 'tv') && f[4]) div.classList.add(type + '-on');
         div._f = f;
         attachPointer(div, f);
         r.appendChild(div);
+        if (type === 'tv' && f[4]) showTvScreen(div, true);
     });
     Game.furniture.updateLight();
 };
 
-// Glisser pour déplacer, cliquer pour ouvrir le menu (souris ET doigt)
+// Glisser pour déplacer, cliquer pour utiliser (souris ET doigt)
 function attachPointer(el, f) {
     var start = null, dragging = false, offX = 0, offY = 0;
     el.addEventListener('pointerdown', function(e) {
         e.stopPropagation();
         e.preventDefault();
+        if (busy) return;
         var rect = room().getBoundingClientRect(), k = scale();
         start = { x: e.clientX, y: e.clientY };
         offX = (e.clientX - rect.left) / k - f[1];
@@ -151,6 +221,8 @@ function attachPointer(el, f) {
         el.style.left = nx + 'px';
         el.style.top = ny + 'px';
         f[1] = nx; f[2] = ny;   // sauvegardé avec la maison
+        var t = Game.furniture.typeOf(f[0]);
+        if ((t === 'lamp' || t === 'tv') && f[4]) Game.furniture.updateLight();   // la lumière suit
     });
     el.addEventListener('pointerup', function() {
         if (!start) return;
@@ -160,66 +232,49 @@ function attachPointer(el, f) {
             el.classList.remove('dragging');
             Game.audio.play('craft');
         } else {
-            Game.furniture.openMenu(f, el);
+            Game.furniture.interact(f, el);
         }
     });
     el.addEventListener('pointercancel', function() { start = null; dragging = false; el.classList.remove('dragging'); });
 }
 
-// ── Petit menu sous le meuble ──
-Game.furniture.closeMenu = function() {
-    var m = document.getElementById('furniture-menu');
-    if (m) m.remove();
-};
+// ── Cliquer un meuble : ranger (mode rangement), l'utiliser, ou marcher jusqu'à lui ──
+var pending = null;   // meuble à utiliser dès que Charlie arrive
+var storeMode = false;
 
-Game.furniture.openMenu = function(f, el, extraHtml) {
-    Game.furniture.closeMenu();
+Game.furniture.interact = function(f, el) {
+    if (busy) return;
     var type = Game.furniture.typeOf(f[0]);
-    var menu = document.createElement('div');
-    menu.id = 'furniture-menu';
-    menu.className = 'ui-card';
-    var html = '<button class="fm-close">✕</button>';
-    html += '<div class="fm-title">' + f[0] + ' ' + (type ? Game.RECIPES[type].label : 'Décoration') + '</div>';
-    if (type) {
-        html += '<div class="fm-help">' + HELP[type] + '</div>';
-        if (!extraHtml) {
-            html += '<button class="btn-animal fm-use">' + ACTIONS[type] + '</button>';
-            if (isMine()) html += '<button class="btn-animal fm-store">📦 Ranger (rend le bois et la pierre)</button>';
-        }
-    } else {
-        html += '<div class="fm-help">Un objet de décoration. Fais-le glisser pour le déplacer !</div>';
-    }
-    if (extraHtml) html += extraHtml;
-    menu.innerHTML = html;
-    menu.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
-    var use = menu.querySelector('.fm-use');
-    if (use) use.onclick = function() { Game.furniture.use(f, el); };
-    var store = menu.querySelector('.fm-store');
-    if (store) store.onclick = function() { Game.furniture.store(f); };
-    menu.querySelector('.fm-close').onclick = Game.furniture.closeMenu;
-    // Positionné sous le meuble (à l'écran, pour rester lisible même si la pièce est réduite)
-    document.body.appendChild(menu);
-    var b = (el && el.isConnected) ? el.getBoundingClientRect() : room().getBoundingClientRect();
-    var W = window.innerWidth, H = window.innerHeight;
-    var left = Math.max(8, Math.min(W - menu.offsetWidth - 8, b.left + b.width / 2 - menu.offsetWidth / 2));
-    var top = b.bottom + 6;
-    if (top + menu.offsetHeight > H - 8) top = Math.max(8, b.top - menu.offsetHeight - 6);
-    menu.style.left = left + 'px';
-    menu.style.top = top + 'px';
-};
-
-// ── Utiliser un meuble ──
-Game.furniture.use = function(f, el) {
-    var type = Game.furniture.typeOf(f[0]);
-    if (!type) return;
-    if (dist(f) > USE_RADIUS) {
-        Game.ui.notify("Approche-toi du meuble pour l'utiliser 🚶");
-        Game.audio.play('error');
+    if (storeMode && isMine()) { Game.furniture.store(f); return; }
+    if (!type) {
+        Game.ui.notify(f[0] + " C'est une décoration : fais-la glisser pour la déplacer !");
         return;
     }
+    if (dist(f) <= USE_RADIUS) {
+        Game.furniture.use(f, el);
+    } else {
+        // Charlie marche jusqu'au meuble, puis l'utilise
+        Game.state.interiorTarget = { x: Math.max(20, Math.min(540, f[1])), y: Math.max(20, Math.min(540, f[2] + 55)) };
+        pending = f;
+    }
+};
+
+Game.furniture.use = function(f, el) {
+    var type = Game.furniture.typeOf(f[0]);
+    if (!type || busy) return;
+    Game.furniture.closeMenu();
     var fn = USES[type];
-    if (fn) fn(f, el);
+    if (fn) fn(f, el || elOf(f));
     Game.ui.update();
+};
+
+// Mode rangement (bouton 📦 de la barre) : cliquer un meuble le range et rend ses matériaux
+Game.furniture.toggleStoreMode = function(force) {
+    storeMode = force === undefined ? !storeMode : !!force;
+    document.body.classList.toggle('store-mode', storeMode);
+    var btn = document.getElementById('store-mode-btn');
+    if (btn) btn.textContent = storeMode ? '✅ Fini de ranger' : '📦 Ranger un meuble';
+    if (storeMode) Game.ui.notify("📦 Clique sur un meuble pour le ranger (tu récupères le bois et la pierre)");
 };
 
 // Ranger un meuble : on récupère tout le bois et la pierre
@@ -238,6 +293,22 @@ Game.furniture.store = function(f) {
     Game.ui.notify(f[0] + " rangé : +" + rcp.wood + " bois 🪵, +" + rcp.stone + " pierre 🪨");
 };
 
+// Quand on quitte la maison : tout s'arrête proprement
+Game.furniture.reset = function() {
+    busy = null;
+    pending = null;
+    Game.furniture.closeMenu();
+    closePanel('book-view');
+    closePanel('piano-view');
+    var fade = document.getElementById('sleep-fade');
+    if (fade) fade.remove();
+    setPose(null);
+    setFx('');
+    Game.furniture.toggleStoreMode(false);
+    var light = document.getElementById('room-light');
+    if (light) light.style.display = 'none';
+};
+
 function nearestOfType(type, from, maxDist) {
     var best = null, bd = maxDist;
     list().forEach(function(o) {
@@ -248,13 +319,78 @@ function nearestOfType(type, from, maxDist) {
     return best;
 }
 
-function lampLit() {
-    return list().some(function(o) { return Game.furniture.typeOf(o[0]) === 'lamp' && o[4]; });
+// Sources de lumière allumées : lampes (grand cercle) et télé (petit cercle bleuté)
+function lights() {
+    var out = [];
+    list().forEach(function(o) {
+        var t = Game.furniture.typeOf(o[0]);
+        if (t === 'lamp' && o[4]) out.push({ x: o[1] + 24, y: o[2] + 24, r: 250, warm: true });
+        if (t === 'tv' && o[4]) out.push({ x: o[1] + 24, y: o[2] + 24, r: 140, warm: false });
+    });
+    return out;
+}
+function hasLight() { return lights().length > 0; }
+
+function sparkle(f, emoji, count) {
+    var r = room().getBoundingClientRect(), k = scale();
+    Game.particles.spawn(emoji, r.left + (f[1] + 24) * k, r.top + (f[2] + 10) * k, { count: count || 4, spread: 30, vy: -60 });
 }
 
-function sparkle(f, emoji) {
-    var r = room().getBoundingClientRect(), k = scale();
-    Game.particles.spawn(emoji, r.left + (f[1] + 24) * k, r.top + (f[2] + 10) * k, { count: 4, spread: 30, vy: -60 });
+// ── Petit menu (table, cuisinière) ──
+Game.furniture.closeMenu = function() {
+    var m = document.getElementById('furniture-menu');
+    if (m) m.remove();
+};
+
+function openMenu(f, el, html) {
+    Game.furniture.closeMenu();
+    var type = Game.furniture.typeOf(f[0]);
+    var menu = document.createElement('div');
+    menu.id = 'furniture-menu';
+    menu.className = 'ui-card';
+    menu.innerHTML = '<button class="fm-close">✕</button>' +
+        '<div class="fm-title">' + f[0] + ' ' + Game.RECIPES[type].label + '</div>' +
+        '<div class="fm-help">' + HELP[type] + '</div>' + html;
+    menu.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    menu.querySelector('.fm-close').onclick = Game.furniture.closeMenu;
+    // Positionné sous le meuble (à l'écran, pour rester lisible même si la pièce est réduite)
+    document.body.appendChild(menu);
+    var b = (el && el.isConnected) ? el.getBoundingClientRect() : room().getBoundingClientRect();
+    var W = window.innerWidth, H = window.innerHeight;
+    var left = Math.max(8, Math.min(W - menu.offsetWidth - 8, b.left + b.width / 2 - menu.offsetWidth / 2));
+    var top = b.bottom + 6;
+    if (top + menu.offsetHeight > H - 8) top = Math.max(8, b.top - menu.offsetHeight - 6);
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+}
+
+// ── Grands panneaux (livre, piano) ──
+function openPanel(id, html) {
+    closePanel(id);
+    var p = document.createElement('div');
+    p.id = id;
+    p.className = 'furniture-panel';
+    p.innerHTML = html;
+    p.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+    document.body.appendChild(p);
+    return p;
+}
+function closePanel(id) {
+    var p = document.getElementById(id);
+    if (p) p.remove();
+}
+
+// ── Télé : l'émission défile sur l'écran ──
+function showTvScreen(el, on) {
+    var scr = el.querySelector('.tv-screen');
+    if (!on) { if (scr) scr.remove(); return; }
+    if (!scr) {
+        scr = document.createElement('div');
+        scr.className = 'tv-screen';
+        el.appendChild(scr);
+    }
+    var show = TV_SHOWS[Math.floor(Math.random() * TV_SHOWS.length)];
+    scr.innerHTML = '<span class="tv-emoji">' + show[0] + '</span><span class="tv-title">' + show[1] + '</span>';
 }
 
 var USES = {
@@ -272,7 +408,8 @@ var USES = {
                 ' (+' + Math.round(food.hunger * mult) + ')</button>';
         });
         if (!any) html += '<div class="fm-help">Tu n\'as rien à manger. Cueille des pommes 🍎 ou cuisine un plat !</div>';
-        Game.furniture.openMenu(f, el, html);
+        if (chair) { moveCharlieTo(chair[1], chair[2] - 6); setPose('sit'); }
+        openMenu(f, el, html);
         var btns = document.querySelectorAll('#furniture-menu .fm-eat');
         for (var i = 0; i < btns.length; i++) {
             btns[i].onclick = function() {
@@ -284,48 +421,71 @@ var USES = {
                 if (s.hunger > before) {
                     s.hunger = Math.min(Game.CONFIG.HUNGER_MAX, s.hunger + Math.round(food.hunger * (mult - 1)));
                     Game.ui.update();
+                    setFx(food.emoji, 'fx-pop');
+                    setTimeout(function() { if (!busy) setFx(''); }, 900);
                 }
                 USES.table(f, el);   // rafraîchit la liste
             };
         }
     },
 
-    // S'asseoir : petit repos (+5 XP une fois par jour) et rappel de l'astuce table
+    // S'asseoir : Charlie s'assoit sur la chaise (+5 XP une fois par jour)
     chair: function(f) {
+        moveCharlieTo(f[1], f[2] - 6);
+        setPose('sit');
         var table = nearestOfType('table', f, 90);
         var bonus = readyAgain(f);
-        if (bonus) {
-            f[3] = now();
-            Game.xp.add(5);
-            Game.audio.playChime();
-            sparkle(f, '💤');
-        }
-        Game.ui.notify((table ? "🪑 Tu te reposes à table. Manger ici rassasie deux fois plus !"
-                              : "🪑 Tu te reposes. Astuce : colle la chaise à une table 🪵 pour mieux manger !") + (bonus ? " (+5 XP)" : ""));
-        Game.furniture.closeMenu();
+        if (bonus) { f[3] = now(); Game.xp.add(5); Game.audio.playChime(); }
+        Game.ui.notify((table ? "🪑 Assis à table : clique la table 🪵 pour manger (repas x2) !"
+                              : "🪑 Tu t'assois. Astuce : colle la chaise à une table 🪵 !") + (bonus ? " (+5 XP)" : ""));
     },
 
-    // Lire un livre : +25 XP une fois par jour ; la nuit, il faut une lampe allumée
+    // Bibliothèque : Charlie prend un livre, on le voit lire, le livre s'ouvre
     bookshelf: function(f) {
-        if (Game.time.isNight() && !lampLit()) {
+        if (Game.time.isNight() && !hasLight()) {
             Game.ui.notify("Il fait trop noir pour lire ! Allume une lampe 💡");
             Game.audio.play('error');
             return;
         }
-        if (!readyAgain(f)) {
-            Game.ui.notify("Tu as déjà lu aujourd'hui 📚 Reviens dans " + minutesLeft(f) + " min");
-            return;
+        busy = 'read';
+        moveCharlieTo(f[1] + 10, f[2] + 55);
+        setFx('📖', 'fx-read');
+        Game.audio.play('craft');
+        var page = Math.floor(Math.random() * BOOK_FACTS.length);
+        var p = openPanel('book-view',
+            '<div class="book">' +
+                '<div class="book-page left"><div class="book-title">📖 Le Grand Livre<br>du Village</div><div class="book-text"></div></div>' +
+                '<div class="book-page right"><div class="book-text"></div><div class="book-num"></div></div>' +
+            '</div>' +
+            '<div class="book-actions">' +
+                '<button class="btn-animal book-prev">◀ Page</button>' +
+                '<button class="btn-animal book-close">Fermer le livre</button>' +
+                '<button class="btn-animal book-next">Page ▶</button>' +
+            '</div>');
+        function show() {
+            var texts = p.querySelectorAll('.book-text');
+            texts[0].textContent = BOOK_FACTS[page % BOOK_FACTS.length];
+            texts[1].textContent = BOOK_FACTS[(page + 1) % BOOK_FACTS.length];
+            p.querySelector('.book-num').textContent = 'page ' + (page % BOOK_FACTS.length + 1) + ' / ' + BOOK_FACTS.length;
         }
-        f[3] = now();
-        Game.xp.add(25);
-        Game.audio.playChime();
-        sparkle(f, '✨');
-        Game.ui.notify("📖 " + BOOK_FACTS[Math.floor(Math.random() * BOOK_FACTS.length)] + " (+25 XP)");
-        Game.furniture.closeMenu();
+        show();
+        p.querySelector('.book-next').onclick = function() { page += 2; show(); Game.audio.play('collect'); };
+        p.querySelector('.book-prev').onclick = function() { page = (page - 2 + BOOK_FACTS.length * 10) % BOOK_FACTS.length; show(); Game.audio.play('collect'); };
+        p.querySelector('.book-close').onclick = function() {
+            closePanel('book-view');
+            busy = null;
+            setFx('');
+        };
+        if (readyAgain(f)) {
+            f[3] = now();
+            Game.xp.add(25);
+            Game.ui.notify("📖 Tu apprends des choses ! +25 XP");
+        }
     },
 
     // Plante : 2 fleurs une fois par jour
     plant: function(f) {
+        moveCharlieTo(f[1] + 40, f[2] + 20);
         if (!readyAgain(f)) {
             Game.ui.notify("La plante repousse 🌱 Reviens dans " + minutesLeft(f) + " min");
             return;
@@ -334,44 +494,64 @@ var USES = {
         Game.state.inventory.flowers += 2;
         Game.xp.add(4);
         Game.audio.playChime();
-        sparkle(f, '🌻');
+        sparkle(f, '🌻', 6);
+        setFx('🌻', 'fx-pop');
+        setTimeout(function() { if (!busy) setFx(''); }, 1200);
         Game.ui.notify("🌻 +2 fleurs cueillies !");
-        Game.furniture.closeMenu();
     },
 
-    // Lit : la nuit, dormir jusqu'au matin
-    bed: function() {
+    // Lit (comme dans Minecraft) : la nuit, Charlie se couche et on passe au matin
+    bed: function(f) {
         var s = Game.state;
-        if (!Game.time.isNight()) {
-            Game.ui.notify("Tu n'as pas sommeil ☀️ Reviens dormir la nuit 🌙");
+        if (!canSleepNow()) {
+            Game.ui.notify("Tu ne peux dormir que le soir et la nuit 🌙 (dès " + SLEEP_FROM + "h). Il est " + s.gameHour + "h ☀️");
             return;
         }
-        s.gameHour = 7;
-        s.gameMinute = 0;
-        Game.xp.add(10);
-        Game.audio.playChime();
-        Game.ui.notify("😴 Bonne nuit... ☀️ Bonjour ! Tu as dormi jusqu'à 7h (+10 XP)");
-        Game.furniture.closeMenu();
-        Game.furniture.updateLight();
+        busy = 'sleep';
+        moveCharlieTo(f[1] + 4, f[2] + 4);
+        setPose('sleep');
+        setFx('💤', 'fx-zzz');
+        var fade = document.createElement('div');
+        fade.id = 'sleep-fade';
+        fade.innerHTML = '<div class="sleep-text">💤 Bonne nuit...</div>';
+        document.body.appendChild(fade);
+        requestAnimationFrame(function() { fade.classList.add('dark'); });
+        setTimeout(function() {
+            s.gameHour = 7;
+            s.gameMinute = 0;
+            Game.furniture.updateLight();
+            fade.querySelector('.sleep-text').textContent = '☀️ Bonjour ! Il est 7h';
+            Game.audio.playChime();
+        }, 2200);
+        setTimeout(function() { fade.classList.remove('dark'); }, 3600);
+        setTimeout(function() {
+            fade.remove();
+            busy = null;
+            setPose(null);
+            setFx('');
+            moveCharlieTo(Math.min(540, f[1] + 70), f[2] + 30);
+            Game.xp.add(10);
+            Game.ui.notify("☀️ Bien dormi ! C'est le matin (+10 XP)");
+        }, 4400);
     },
 
-    // Lampe : allume / éteint
+    // Lampe : allume / éteint (la lumière éclaire un cercle autour d'elle)
     lamp: function(f, el) {
         f[4] = !f[4];
         if (el) el.classList.toggle('lamp-on', !!f[4]);
         Game.audio.play('craft');
-        Game.ui.notify(f[4] ? "💡 Lampe allumée" : "Lampe éteinte");
         Game.furniture.updateLight();
-        Game.furniture.closeMenu();
     },
 
-    // Miroir : ouvre les skins
-    mirror: function() {
-        Game.furniture.closeMenu();
+    // Miroir : on se regarde et on change de tenue
+    mirror: function(f) {
+        moveCharlieTo(f[1], f[2] + 55);
+        setFx('✨', 'fx-pop');
+        setTimeout(function() { if (!busy) setFx(''); }, 1000);
         Game.ui.toggleSkins();
     },
 
-    // Cuisinière : cuisiner à la maison
+    // Cuisinière : pain et plats
     stove: function(f, el) {
         var icons = { apples: '🍎', fish: '🐟', flowers: '🌻', bread: '🍞' };
         // Le pain se cuit aussi à la maison (indispensable avant la boulangerie, niveau 15)
@@ -384,10 +564,10 @@ var USES = {
             html += '<button class="btn-animal fm-cook' + (locked ? ' fm-locked' : '') + '" data-recipe="' + id + '">' +
                 (locked ? '🔒 ' : '') + r.emoji + ' ' + r.label + ' (' + need.trim() + ')' + (locked ? ' niv.' + r.level : '') + '</button>';
         }
-        Game.furniture.openMenu(f, el, html);
+        openMenu(f, el, html);
         var btns = document.querySelectorAll('#furniture-menu .fm-cook');
         for (var i = 0; i < btns.length; i++) {
-            btns[i].onclick = function() { Game.crafting.cook(this.dataset.recipe); };
+            btns[i].onclick = function() { Game.crafting.cook(this.dataset.recipe); sparkle(f, '🔥', 3); };
         }
         document.querySelector('#furniture-menu .fm-bread').onclick = function() {
             var s = Game.state;
@@ -400,28 +580,188 @@ var USES = {
             s.inventory.bread++;
             Game.xp.add(5);
             Game.audio.play('craft');
+            sparkle(f, '🍞', 3);
             Game.ui.update();
             Game.ui.notify("Pain frais ! 🍞");
         };
+    },
+
+    // Télé : allumer / éteindre ; une émission défile à l'écran
+    tv: function(f, el) {
+        f[4] = !f[4];
+        if (el) { el.classList.toggle('tv-on', !!f[4]); showTvScreen(el, !!f[4]); }
+        Game.audio.play('craft');
+        Game.furniture.updateLight();
+        if (f[4]) {
+            moveCharlieTo(f[1], Math.min(540, f[2] + 90));
+            setPose('sit');
+            var title = el ? el.querySelector('.tv-title') : null;
+            if (readyAgain(f)) {
+                f[3] = now();
+                Game.xp.add(10);
+                Game.ui.notify("📺 Tu regardes : " + (title ? title.textContent : "une émission") + " (+10 XP)");
+            }
+        }
+    },
+
+    // Piano : un vrai clavier qui joue des notes
+    piano: function(f) {
+        busy = 'piano';
+        moveCharlieTo(f[1], Math.min(540, f[2] + 50));
+        setPose('sit');
+        setFx('🎵', 'fx-music');
+        var played = 0;
+        var keys = NOTES.map(function(n, i) {
+            return '<button class="piano-key" data-i="' + i + '">' + n[0] + '<small>' + (i + 1) + '</small></button>';
+        }).join('');
+        var p = openPanel('piano-view',
+            '<div class="piano-title">🎹 Joue du piano ! (touches 1 à 8 du clavier)</div>' +
+            '<div class="piano-keys">' + keys + '</div>' +
+            '<div class="book-actions">' +
+                '<button class="btn-animal piano-song">🎶 Au clair de la lune</button>' +
+                '<button class="btn-animal piano-close">Fermer</button>' +
+            '</div>');
+        function play(i) {
+            Game.audio.playNote(NOTES[i][1], 0.5);
+            var k = p.querySelector('.piano-key[data-i="' + i + '"]');
+            if (k) { k.classList.add('down'); setTimeout(function() { k.classList.remove('down'); }, 180); }
+            sparkle(f, i % 2 ? '🎵' : '🎶', 1);
+            played++;
+            if (played === 6 && readyAgain(f)) {
+                f[3] = now();
+                Game.xp.add(10);
+                Game.ui.notify("🎹 Bravo, quel musicien ! +10 XP");
+            }
+        }
+        p.querySelectorAll('.piano-key').forEach(function(b) {
+            b.onclick = function() { play(parseInt(this.dataset.i, 10)); };
+        });
+        p.querySelector('.piano-song').onclick = function() {
+            SONG.forEach(function(i, n) { setTimeout(function() { if (document.getElementById('piano-view')) play(i); }, n * 380); });
+        };
+        p.querySelector('.piano-close').onclick = function() {
+            closePanel('piano-view');
+            busy = null;
+            setFx('');
+        };
+    },
+
+    // Baignoire : Charlie prend un bain, avec des bulles
+    bath: function(f) {
+        busy = 'bath';
+        moveCharlieTo(f[1] + 4, f[2] - 8);
+        setPose('bath');
+        setFx('🧼', 'fx-pop');
+        Game.audio.play('fish');
+        var n = 0;
+        var bubbles = setInterval(function() {
+            sparkle(f, ['💧', '✨', '🫧'][n % 2], 2);
+            n++;
+        }, 350);
+        setTimeout(function() {
+            clearInterval(bubbles);
+            busy = null;
+            setPose(null);
+            setFx('✨', 'fx-pop');
+            setTimeout(function() { if (!busy) setFx(''); }, 1000);
+            moveCharlieTo(Math.min(540, f[1] + 70), f[2] + 30);
+            if (readyAgain(f)) {
+                f[3] = now();
+                Game.xp.add(15);
+                Game.ui.notify("🛁 Tout propre ! ✨ (+15 XP)");
+            } else {
+                Game.ui.notify("🛁 Tout propre ! ✨");
+            }
+        }, 3000);
     }
 };
 
-// ── La nuit, la maison est sombre sauf si une lampe est allumée ──
+// Clavier : touches 1 à 8 pour le piano, Échap pour fermer
+window.addEventListener('keydown', function(e) {
+    var s = Game.state;
+    if (!s || s.currentView !== 'interior') return;
+    if (busy === 'piano' && e.key >= '1' && e.key <= '8') {
+        var k = document.querySelector('#piano-view .piano-key[data-i="' + (parseInt(e.key, 10) - 1) + '"]');
+        if (k) k.click();
+        return;
+    }
+    if (e.key === 'Escape') {
+        var close = document.querySelector('#piano-view .piano-close, #book-view .book-close');
+        if (close) close.click();
+        Game.furniture.closeMenu();
+    }
+});
+
+// ── Lumière : la maison est sombre sans lampe allumée (très sombre la nuit),
+//    chaque lampe éclaire un cercle autour d'elle ──
 Game.furniture.updateLight = function() {
     var r = room();
     if (!r) return;
+    var c = document.getElementById('room-light');
+    if (!c) {
+        c = document.createElement('canvas');
+        c.id = 'room-light';
+        r.appendChild(c);
+    }
+    // Taille réelle de l'intérieur de la pièce (bordure exclue)
+    var W = r.clientWidth || 570, H = r.clientHeight || 570;
+    if (c.width !== W) c.width = W;
+    if (c.height !== H) c.height = H;
     var s = Game.state;
-    var inHouse = s.currentView === 'interior' && !!s.activeHouse;
-    var night = inHouse && Game.time.isNight();
-    r.classList.toggle('room-dark', night && !lampLit());
-    r.classList.toggle('room-lamp', night && lampLit());
+    // Seulement chez Charlie : les villageois ont déjà leur lumière
+    if (s.currentView !== 'interior' || !isMine()) { c.style.display = 'none'; return; }
+    var night = Game.time.isNight();
+    var src = lights();
+    var base = night ? 0.85 : (src.length ? 0 : 0.45);
+    if (base === 0) { c.style.display = 'none'; return; }
+    c.style.display = 'block';
+    var g = c.getContext('2d');
+    g.globalCompositeOperation = 'source-over';
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = 'rgba(10, 14, 40, ' + base + ')';
+    g.fillRect(0, 0, W, H);
+    // On "perce" la nuit autour de chaque lumière
+    g.globalCompositeOperation = 'destination-out';
+    src.forEach(function(l) {
+        var grd = g.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r);
+        grd.addColorStop(0, 'rgba(0,0,0,1)');
+        grd.addColorStop(0.5, 'rgba(0,0,0,0.85)');
+        grd.addColorStop(1, 'rgba(0,0,0,0)');
+        g.fillStyle = grd;
+        g.fillRect(0, 0, W, H);
+    });
+    // Un peu de couleur chaude (lampe) ou bleutée (télé)
+    g.globalCompositeOperation = 'source-over';
+    src.forEach(function(l) {
+        var grd = g.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r * 0.8);
+        grd.addColorStop(0, l.warm ? 'rgba(255, 200, 90, 0.22)' : 'rgba(120, 180, 255, 0.2)');
+        grd.addColorStop(1, 'rgba(0,0,0,0)');
+        g.fillStyle = grd;
+        g.fillRect(0, 0, W, H);
+    });
 };
 
-// Appelé à chaque image dans une maison : surligne les meubles qu'on peut utiliser
-var _lightTimer = 0;
+// Appelé à chaque image dans une maison
+var _lightTimer = 0, _tvTimer = 0, _lastPos = null;
 Game.furniture.update = function(dt) {
     var s = Game.state;
     if (s.currentView !== 'interior' || !s.activeHouse) return;
+    dt = dt || 16;
+    // Arrivé au meuble cliqué : on l'utilise
+    if (pending) {
+        if (dist(pending) <= USE_RADIUS) { var f0 = pending; pending = null; Game.furniture.use(f0); }
+        else if (!s.interiorTarget) pending = null;
+    }
+    // Charlie se relève quand il marche (sauf s'il est occupé)
+    var ic = s.interiorCharlie;
+    if (!busy && _lastPos && Math.hypot(ic.x - _lastPos.x, ic.y - _lastPos.y) > 3) {
+        setPose(null);
+        var fx = document.getElementById('charlie-fx');
+        if (fx && fx.className !== 'fx-pop') setFx('');
+    }
+    _lastPos = { x: ic.x, y: ic.y };
+    placeFx();
+    // Meubles proches en surbrillance, plante/biblio prêtes avec ✨
     var els = room().querySelectorAll('.furniture');
     for (var i = 0; i < els.length; i++) {
         var f = els[i]._f;
@@ -432,14 +772,20 @@ Game.furniture.update = function(dt) {
         var ready = (type === 'plant' || type === 'bookshelf') && readyAgain(f);
         if (els[i].classList.contains('ready') !== ready) els[i].classList.toggle('ready', ready);
     }
-    _lightTimer += dt || 16;
+    // La télé change d'émission
+    _tvTimer += dt;
+    if (_tvTimer > 3500) {
+        _tvTimer = 0;
+        room().querySelectorAll('.furniture.tv-on').forEach(function(el) { showTvScreen(el, true); });
+    }
+    _lightTimer += dt;
     if (_lightTimer > 1000) { _lightTimer = 0; Game.furniture.updateLight(); }
 };
 
 // Touche E : utilise le meuble le plus proche
 window.addEventListener('keydown', function(e) {
     var s = Game.state;
-    if (!s || s.currentView !== 'interior' || !s.activeHouse) return;
+    if (!s || s.currentView !== 'interior' || !s.activeHouse || busy) return;
     if (e.key !== 'e' && e.key !== 'E') return;
     var best = null, bd = USE_RADIUS;
     list().forEach(function(f) {
@@ -447,9 +793,7 @@ window.addEventListener('keydown', function(e) {
         var d = dist(f);
         if (d <= bd) { bd = d; best = f; }
     });
-    if (!best) return;
-    var els = room().querySelectorAll('.furniture');
-    for (var i = 0; i < els.length; i++) if (els[i]._f === best) Game.furniture.use(best, els[i]);
+    if (best) Game.furniture.use(best);
 });
 
 })();

@@ -99,7 +99,7 @@ Game.engine.initJoystick = function() {
                 // IMPORTANT: Check for collectibles and building proximity after moving
                 Game.buildings.checkProximity();
                 Game.entities.checkCollect();
-            } else if (Game.state.currentView === 'interior') {
+            } else if (Game.state.currentView === 'interior' && !Game.furniture.isBusy()) {
                 Game.state.interiorCharlie.x += dir.dx * (Game.CONFIG.TILE * 0.5);
                 Game.state.interiorCharlie.y += dir.dy * (Game.CONFIG.TILE * 0.5);
                 Game.state.interiorCharlie.x = Math.max(20, Math.min(540, Game.state.interiorCharlie.x));

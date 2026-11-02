@@ -555,7 +555,10 @@ Game.RECIPES = {
     lamp:   { emoji: '💡', label: 'Lampe',   wood: 1, stone: 2 },
     rug:    { emoji: '🟫', label: 'Tapis',   wood: 3, stone: 0 },
     mirror: { emoji: '🪞', label: 'Miroir',  wood: 2, stone: 3 },
-    stove:  { emoji: '🍳', label: 'Cuisinière', wood: 3, stone: 4 }
+    stove:  { emoji: '🍳', label: 'Cuisinière', wood: 3, stone: 4 },
+    tv:     { emoji: '📺', label: 'Télé',       wood: 3, stone: 3 },
+    piano:  { emoji: '🎹', label: 'Piano',      wood: 8, stone: 2 },
+    bath:   { emoji: '🛁', label: 'Baignoire',  wood: 1, stone: 6 }
 };
 
 Game.COOKING_RECIPES = {

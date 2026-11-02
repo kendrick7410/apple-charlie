@@ -159,6 +159,8 @@ Game.player.updateInterior = function(dt) {
     var s = Game.state;
     if (s.currentView !== 'interior') return;
     Game.furniture.fitRoom();
+    Game.furniture.update(dt);
+    if (Game.furniture.isBusy()) return;   // Charlie lit, dort, joue du piano... il ne bouge pas
 
     var speed = Game.CONFIG.PLAYER_SPEED * 0.8 * (dt || 16.67) / 16.67;   // calé sur le temps réel
     var keys = s.keysDown;
@@ -191,8 +193,6 @@ Game.player.updateInterior = function(dt) {
         ic.style.left = s.interiorCharlie.x + 'px';
         ic.style.top = s.interiorCharlie.y + 'px';
     }
-
-    Game.furniture.update(dt);
 
     // Exit check
     if (s.interiorCharlie.y > 480 && s.interiorCharlie.x > 230 && s.interiorCharlie.x < 370) {
