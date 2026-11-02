@@ -14,6 +14,7 @@ Game.ui.init = function() {
 };
 
 Game.ui.update = function() {
+    if (Game.tools && Game.tools.updateCramponsBtn) Game.tools.updateCramponsBtn();   // bouton visible dès qu'on a des crampons
     var s = Game.state;
     setText('apple-count', s.inventory.apples);
     setText('wood-count', s.inventory.wood);

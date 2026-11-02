@@ -81,7 +81,7 @@ function freeSpawn(avoidMountain) {
 
 Game.entities.spawnTree = function(season) {
     season = season || Game.state.season;
-    var pos = freeSpawn(), x = pos.x, y = pos.y;
+    var pos = freeSpawn(true), x = pos.x, y = pos.y;   // pas d'arbres dans les montagnes
 
     var tree = document.createElement('div');
     tree.className = 'entity tree';

@@ -175,12 +175,15 @@ Game.world.createForest = function() {
     label.innerHTML = '<div class="building-label">🌳 Grande Forêt</div>';
     world.appendChild(label);
 
-    // Dense tree cluster (more trees in larger area)
-    for (var i = 0; i < 35; i++) {
+    // Arbres espacés (au moins 150 px entre deux) : on peut marcher entre eux
+    var placed = [];
+    for (var i = 0, tries = 0; i < 24 && tries < 600; tries++) {
         var angle = Math.random() * Math.PI * 2;
-        var dist = Math.random() * 320;
+        var dist = Math.sqrt(Math.random()) * 320;
         var tx = loc.x + Math.cos(angle) * dist;
         var ty = loc.y + Math.sin(angle) * dist;
+        if (placed.some(function(p) { return Math.hypot(p[0] - tx, p[1] - ty) < 150; })) continue;
+        placed.push([tx, ty]); i++;
         var tree = document.createElement('div');
         tree.className = 'entity tree forest-tree';
         tree.style.left = tx + 'px';
@@ -266,8 +269,7 @@ Game.world.createMountainTerrain = function() {
         }
     }
     scatter('🗻', 4,  3.6, 5.2, 0.9, 2);   // sommets enneigés au loin
-    snowyPines(34, 2.2, 4.2);              // grands sapins enneigés
-    snowyPines(16, 1.5, 2.3);              // petits sapins enneigés
+    // (plus de sapins dans les montagnes)
     scatter('🪨', 18, 1.4, 3.0);           // rochers
     scatter('❄️', 12, 1.0, 2.0, 0.85);     // plaques de neige
 };

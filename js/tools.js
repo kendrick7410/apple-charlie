@@ -21,6 +21,24 @@ Game.tools.hasWatering = function() { return Game.state.tools.watering; };
 Game.tools.hasShovel = function() { return Game.state.tools.shovel; };
 Game.tools.hasNet = function() { return Game.state.tools.net; };
 
+// Mettre / enlever les crampons (il faut les avoir achetés)
+Game.tools.toggleCrampons = function() {
+    var s = Game.state;
+    if (!s.tools.crampons) { Game.ui.notify("Tu n'as pas de crampons ! (au Magasin)"); return; }
+    s.cramponsOn = s.cramponsOn === false;
+    Game.tools.updateCramponsBtn();
+    Game.ui.notify(s.cramponsOn ? "🥾 Crampons enfilés : tu peux escalader (avec le piolet) !" : "🥾 Crampons enlevés");
+};
+Game.tools.updateCramponsBtn = function() {
+    var s = Game.state, btn = document.getElementById('crampons-toggle');
+    if (!btn) return;
+    btn.style.display = s.tools.crampons ? '' : 'none';
+    var on = s.cramponsOn !== false;
+    btn.textContent = on ? '🥾 Crampons ON' : '🥾 Crampons OFF';
+    btn.style.background = on ? '#66bb6a' : '#e8e2c8';
+    btn.style.color = on ? 'white' : '#5d4037';
+};
+
 Game.tools.toggleShovel = function() {
     if (!Game.state.tools.shovel) {
         Game.ui.notify("Tu n'as pas de pelle !");

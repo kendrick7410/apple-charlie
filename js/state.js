@@ -33,6 +33,7 @@ Game.state = {
     seaCollection: {},       // animaux de la mer trouvés { id: count }
     mountainCollection: {},  // animaux de la montagne trouvés { id: count }
     summits: {},             // sommets gravis (alpinisme) { 'Le Cervin': true }
+    cramponsOn: true,        // crampons enfilés (quand on les a)
     snowGlobes: [],          // boules à neige possédées [id, ...]
     pizzasTasted: {},        // pizzas de David goûtées { id: count }
     pizzasOwned: {},         // pizzas achetées chez David, gardées pour manger { id: count }
@@ -109,6 +110,7 @@ Game.saveGame = function() {
         seaCollection: Object.assign({}, s.seaCollection),
         mountainCollection: Object.assign({}, s.mountainCollection),
         summits: Object.assign({}, s.summits),
+        cramponsOn: s.cramponsOn,
         snowGlobes: s.snowGlobes.slice(),
         pizzasTasted: Object.assign({}, s.pizzasTasted),
         pizzasOwned: Object.assign({}, s.pizzasOwned),
@@ -160,6 +162,7 @@ Game.loadGame = function() {
         if (data.seaCollection) s.seaCollection = data.seaCollection;
         if (data.mountainCollection) s.mountainCollection = data.mountainCollection;
         if (data.summits) s.summits = data.summits;
+        if (data.cramponsOn !== undefined) s.cramponsOn = data.cramponsOn;
         if (data.snowGlobes) s.snowGlobes = data.snowGlobes;
         if (data.pizzasTasted) s.pizzasTasted = data.pizzasTasted;
         if (data.pizzasOwned) s.pizzasOwned = data.pizzasOwned;
@@ -174,6 +177,8 @@ Game.loadGame = function() {
         if (data.houseFurniture) s.houseFurniture = data.houseFurniture;
         // Ancienne sauvegarde (avant les terrains à bâtir) : on garde tout le village déjà là
         s.builtHouses = data.builtHouses || Game.HOUSES.map(function(h){ return h.id; });
+        // Maisons présentes dès le début (refuge du Cervin) : aussi dans les anciennes parties
+        Game.HOUSES.forEach(function(h) { if (h.start && s.builtHouses.indexOf(h.id) === -1) s.builtHouses.push(h.id); });
         s.builtShops = data.builtShops || Game.SHOPS.map(function(sh){ return sh.id; });
         Game.HOUSES.forEach(function(h) {
             if (!s.houseFurniture[h.id]) s.houseFurniture[h.id] = h.furniture.map(function(f){ return f.slice(); });

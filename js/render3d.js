@@ -687,6 +687,33 @@ function makeBoat() {
     g.userData.hull = hull;
     return g;
 }
+// Gros tracteur vert de la ferme : grandes roues arrière, cabine, capot, pot d'échappement
+function makeTractor() {
+    var g = new T.Group(), GREEN = '#2e9e4a', YEL = '#f2c230';
+    rbox(g, 1.5, 0.7, 2.8, 0.2, GREEN, 0, 1.0, 0.2);                       // châssis
+    rbox(g, 1.2, 0.8, 1.5, 0.25, GREEN, 0, 1.4, 1.0);                      // capot
+    rbox(g, 1.24, 0.12, 0.1, 0.03, '#1d1d22', 0, 1.25, 1.76);              // calandre
+    [-0.4, 0.4].forEach(function(x) { ball(g, 0.12, mat('#fff6c4', { emissive: '#fff0a0', emissiveIntensity: 0.4 }), x, 1.5, 1.77, 1, 1, 0.4); });   // phares
+    // Cabine vitrée
+    rbox(g, 1.5, 0.15, 1.5, 0.08, GREEN, 0, 3.0, -0.5);
+    [[-0.68, -1.18], [0.68, -1.18], [-0.68, 0.18], [0.68, 0.18]].forEach(function(p) { rbox(g, 0.1, 1.6, 0.1, 0.03, '#1d1d22', p[0], 2.2, p[1]); });
+    var glass = new T.MeshStandardMaterial({ color: lin('#bfe6fb'), roughness: 0.1, transparent: true, opacity: 0.45 });
+    put(g, new T.Mesh(new T.BoxGeometry(1.3, 1.4, 1.3), glass), 0, 2.2, -0.5).castShadow = false;
+    rbox(g, 0.6, 0.15, 0.6, 0.05, '#1d1d22', 0, 1.55, -0.6);              // siège
+    put(g, new T.Mesh(geo('exhaust', function() { return new T.CylinderGeometry(0.07, 0.07, 1.4, 10); }), mat('#9aa3ad', { metalness: 0.7, roughness: 0.3 })), 0.45, 2.2, 1.2);
+    // Roues : grosses à l'arrière, petites à l'avant (jantes jaunes)
+    function wheel(r, w, x, z) {
+        var wg = new T.Group(); wg.position.set(x, r, z); g.add(wg);
+        var tire = put(wg, new T.Mesh(new T.CylinderGeometry(r, r, w, 28), mat('#2b2b2b', { roughness: 0.95 })), 0, 0, 0); tire.rotation.z = Math.PI / 2;
+        var rim = put(wg, new T.Mesh(new T.CylinderGeometry(r * 0.55, r * 0.55, w + 0.04, 20), mat(YEL)), 0, 0, 0); rim.rotation.z = Math.PI / 2;
+        for (var k = 0; k < 10; k++) { var a = k / 10 * Math.PI * 2, tread = rbox(wg, w + 0.06, 0.12, 0.2, 0.03, '#1d1d22', 0, Math.cos(a) * r, Math.sin(a) * r); tread.rotation.x = -a; }
+    }
+    wheel(1.0, 0.6, -1.0, -0.6); wheel(1.0, 0.6, 1.0, -0.6);
+    wheel(0.55, 0.4, -0.85, 1.25); wheel(0.55, 0.4, 0.85, 1.25);
+    g.scale.setScalar(0.9);
+    g.rotation.y = 0.6;
+    return g;
+}
 function makeCrate() {
     var g = new T.Group();
     rbox(g, 0.7, 0.6, 0.7, 0.06, '#c98f5a', 0, 0.3, 0);
@@ -1178,7 +1205,7 @@ function kindOf(el, e) {
         if (labelOf(el).indexOf('La Ferme') > -1) return 'barn';
         if (el.querySelector(':scope > div') && /🌽|🌾/.test(el.textContent) && el.offsetWidth > 120) return 'field';
         if (!el.textContent.trim() && /repeating-linear-gradient/.test(el.style.background) && el.offsetWidth < 90) return 'hay';
-        if (e === '🚜') return 'sprite';
+        if (e === '🚜') return 'tractor';
         if (/a67c52|166, 124, 82/.test(el.style.backgroundImage)) return 'dock';   // ponton du port
         return 'skip';
     }
@@ -1222,6 +1249,7 @@ function buildFor(el, kind, e, label) {
         case 'dock': obj = makeDock(el.offsetWidth * U, el.offsetHeight * U); break;
         case 'boat': obj = makeBoat(); break;
         case 'crate': obj = makeCrate(); break;
+        case 'tractor': obj = makeTractor(); break;
         case 'animal': obj = ANIMALS[e](); break;
         case 'decor': obj = DECOR[e](); obj.rotation.y = ((parseFloat(el.style.left) || 0) * 7.3) % (Math.PI * 2); break;
         case 'barn': obj = makeBarn(); break;
@@ -1354,7 +1382,7 @@ function syncGarden(el, g) {
         }
     }
 }
-var _scanT = 0, _dtFrame = 0.016;
+var _scanT = 0, _dtFrame = 0.016, _phaseT = 0;
 
 // ═══════════════════════ Collisions ═══════════════════════
 // Ce qui bloque Charlie : bâtiments (rectangles), arbres, montagnes, villageois... (cercles).
@@ -1373,14 +1401,32 @@ function colliderFor(el, kind, obj) {
         case 'plot':         return { r: 8 };
         case 'tree': case 'autumn': case 'pine': case 'snowpine': return { r: 0.9 * sc / U };   // le feuillage, pas seulement le tronc
         case 'palm':         return { r: 0.3 * sc / U };
-        case 'mountain':     return { r: obj.userData.baseR ? obj.userData.baseR / U * 0.45 : 60 };   // le cœur du pic : on peut marcher sur les pentes (edelweiss)
+        case 'mountain':     return null;   // géré par la hauteur de la pente (blockSteep)
         case 'hay':          return { r: 0.55 * sc / U };
+        case 'tractor':      return { r: 1.9 / U };
         case 'villager': case 'farmer': return { r: 14 };
         case 'rock':         return el.classList.contains('stone') ? null : { r: 0.45 * sc / U };
         default:             return null;
     }
 }
-function canClimb() { var t = Game.state.tools; return !!(t.piolet && t.crampons); }
+function canClimb() { var t = Game.state.tools; return !!(t.piolet && t.crampons && Game.state.cramponsOn !== false); }   // crampons enfilés
+// Sans piolet ni crampons : on peut marcher au pied de la montagne, mais pas là où elle devient haute.
+// On revient à la dernière position permise (en glissant le long de la pente si possible).
+var STEEP = 0.9, _lastOk = null;
+function blockSteep() {
+    var c = Game.state.charlie;
+    if (canClimb()) { _lastOk = { x: c.x, y: c.y }; return; }
+    function tooHigh(x, y) { var m = mountainHeight(x, y); return m && m.y - heightAt(x, y) > STEEP; }
+    if (!tooHigh(c.x, c.y)) { _lastOk = { x: c.x, y: c.y }; return; }
+    if (!_lastOk) return;
+    if (!tooHigh(c.x, _lastOk.y)) c.y = _lastOk.y;
+    else if (!tooHigh(_lastOk.x, c.y)) c.x = _lastOk.x;
+    else { c.x = _lastOk.x; c.y = _lastOk.y; }
+    if (performance.now() - _climbHintT > 9000) {
+        _climbHintT = performance.now();
+        Game.ui.notify("🧗 C'est trop raide ! Pour escalader, il te faut un piolet et des crampons (au Magasin).");
+    }
+}
 var _climbHintT = 0;
 function collide() {
     var c = Game.state.charlie, climb = canClimb();
@@ -1496,7 +1542,7 @@ function climbPose(onMtn, moving, dt, time) {
     // Crampons sous les bottes et piolet dans la main dès qu'on les possède
     var t = Game.state.tools;
     if (t.crampons && !ud.crampons) {
-        ud.crampons = true;
+        ud.crampons = true; ud.cramponMeshes = undefined;
         [ud.legL, ud.legR].forEach(function(leg) { for (var k = 0; k < 4; k++) put(leg, new T.Mesh(geo('crampon', function() { return new T.ConeGeometry(0.03, 0.09, 6); }), mat('#9aa3ad', { metalness: 0.8, roughness: 0.3 })), (k % 2 - 0.5) * 0.16, -0.66, (k < 2 ? 0.15 : -0.05)).rotation.x = Math.PI; });
     }
     if (t.piolet && !ud.piolet) {
@@ -1506,6 +1552,9 @@ function climbPose(onMtn, moving, dt, time) {
         ud.piolet = axe;
     }
     if (ud.piolet) ud.piolet.visible = !!onMtn;
+    if (ud.cramponMeshes === undefined) { ud.cramponMeshes = []; [ud.legL, ud.legR].forEach(function(leg) { leg.traverse(function(o) { if (o.geometry && o.geometry === _geo.crampon) ud.cramponMeshes.push(o); }); }); }
+    var worn = t.crampons && Game.state.cramponsOn !== false;
+    ud.cramponMeshes.forEach(function(m) { m.visible = worn; });
     if (!onMtn) { if (ud.climbLean) { ud.body.rotation.x = 0; ud.climbLean = 0; } return; }
     // Penché vers la pente, il plante le piolet un bras après l'autre
     ud.climbLean = 0.35;
@@ -1639,33 +1688,59 @@ function nightSky() {
 }
 var houseLights = [], _windowLight = 0, _spriteLight = 1;
 var glowMats = [], _glow = 0;   // halos des fenêtres et flaques de lumière (visibles le soir et la nuit)   // lumières des fenêtres (intensité selon l'heure)
+// Jour et nuit qui passent tout doucement : on mélange les réglages entre des « moments clés » de la journée
+var DAY_KEYS = (function() {
+    var night = { top: '#0c1540', bot: '#3a4a8c', fog: '#141c40', hemi: 0.2, sun: 0.3, sunC: '#9db2ff', win: 1.8, lamp: 0.9, spr: 0.42, glow: 1, exp: 0.82, hC: '#9fb2ff', gC: '#1e2a4a', stars: 1 };
+    var dawn  = { top: '#8fb4e8', bot: '#ffd9bf', fog: '#f6d2b8', hemi: 0.5, sun: 0.9, sunC: '#ffc89a', win: 0.4, lamp: 0.3, spr: 0.8, glow: 0.35, exp: 1, hC: '#cfe9ff', gC: '#4d6b2f', stars: 0.15 };
+    var day   = { top: '#5fb3ee', bot: '#d3eefc', fog: '#bfe2f6', hemi: 0.7, sun: 1.3, sunC: '#fff0d0', win: 0, lamp: 0, spr: 1, glow: 0, exp: 1, hC: '#cfe9ff', gC: '#4d6b2f', stars: 0 };
+    var dusk  = { top: '#5a64b0', bot: '#ffae86', fog: '#e7a98f', hemi: 0.4, sun: 0.7, sunC: '#ff9f6a', win: 0.9, lamp: 0.6, spr: 0.65, glow: 0.6, exp: 0.95, hC: '#e8c9ff', gC: '#4d5b3f', stars: 0.1 };
+    return [[0, night], [5, night], [6.5, dawn], [8.5, day], [16, day], [17.5, dusk], [19.5, night], [24, night]];
+})();
+var _skyCanvas = null, _skyTex = null, _starsCanvas = null, _cA = null, _cB = null;
+function mixHex(a, b, t) { _cA.set(a); _cB.set(b); _cA.lerp(_cB, t); return _cA; }
+function dayParams() {
+    var hr = Game.state.gameHour + Game.state.gameMinute / 60, i = 0;
+    while (i < DAY_KEYS.length - 2 && hr >= DAY_KEYS[i + 1][0]) i++;
+    var a = DAY_KEYS[i], b = DAY_KEYS[i + 1], t = (hr - a[0]) / (b[0] - a[0] || 1);
+    t = Math.max(0, Math.min(1, t)); t = t * t * (3 - 2 * t);
+    return { a: a[1], b: b[1], t: t };
+}
 function applyPhase() {
-    var ph = Game.time.getPhase();
-    if (ph === _phase) return;
-    _phase = ph;
-    var P = {
-        day:   { sky: SKIES.day,   fog: '#bfe2f6', hemi: 0.7,  sun: 1.3,  sunC: '#fff0d0', win: 0,   lamp: 0,   spr: 1 },
-        dawn:  { sky: SKIES.dawn,  fog: '#f6d2b8', hemi: 0.5,  sun: 0.9,  sunC: '#ffc89a', win: 0.4, lamp: 0.3, spr: 0.8, glow: 0.35 },
-        dusk:  { sky: SKIES.dusk,  fog: '#e7a98f', hemi: 0.4,  sun: 0.7,  sunC: '#ff9f6a', win: 0.9, lamp: 0.6, spr: 0.65, glow: 0.6 },
-        // Nuit noire : seules les fenêtres des maisons éclairent (Charlie ne porte plus de lumière)
-        // Nuit douce : clair de lune bleuté (on voit tout), fenêtres dorées qui brillent
-        night: { sky: SKIES.night, fog: '#141c40', hemi: 0.2, sun: 0.3, sunC: '#9db2ff', win: 1.8, lamp: 0.9, spr: 0.42, glow: 1, exp: 0.82 }
-    }[ph];
-    scene.background = P.sky;
-    scene.fog.color.copy(lin(P.fog));
-    hemi.intensity = P.hemi;
-    hemi.color.copy(lin(ph === 'night' ? '#9fb2ff' : '#cfe9ff'));
-    hemi.groundColor.copy(lin(ph === 'night' ? '#1e2a4a' : '#4d6b2f'));
-    sun.intensity = P.sun; sun.color.copy(lin(P.sunC));
-    renderer.toneMappingExposure = P.exp || 1;
-    _glow = P.glow || 0;
+    if (!_cA) { _cA = new T.Color(); _cB = new T.Color(); }
+    var d = dayParams(), A = d.a, B = d.b, t = d.t;
+    function n(k) { return A[k] + (B[k] - A[k]) * t; }
+    // Ciel : dégradé redessiné + étoiles et lune qui apparaissent peu à peu
+    if (!_skyCanvas) {
+        _skyCanvas = document.createElement('canvas'); _skyCanvas.width = 512; _skyCanvas.height = 256;
+        _starsCanvas = document.createElement('canvas'); _starsCanvas.width = 512; _starsCanvas.height = 256;
+        var sg = _starsCanvas.getContext('2d'), R = rand(42);
+        for (var i = 0; i < 160; i++) { sg.fillStyle = 'rgba(255,255,255,' + (0.4 + R() * 0.6) + ')'; sg.fillRect(R() * 512, R() * 200, R() > 0.85 ? 2 : 1, R() > 0.85 ? 2 : 1); }
+        var mg = sg.createRadialGradient(420, 50, 0, 420, 50, 40); mg.addColorStop(0, 'rgba(255,250,220,0.5)'); mg.addColorStop(1, 'rgba(255,250,220,0)');
+        sg.fillStyle = mg; sg.fillRect(370, 0, 100, 100);
+        sg.fillStyle = '#fff8dc'; sg.beginPath(); sg.arc(420, 50, 14, 0, 7); sg.fill();
+        _skyTex = new T.CanvasTexture(_skyCanvas); _skyTex.encoding = T.sRGBEncoding;
+    }
+    var g = _skyCanvas.getContext('2d'), grd = g.createLinearGradient(0, 0, 0, 256);
+    grd.addColorStop(0, '#' + mixHex(A.top, B.top, t).getHexString());
+    grd.addColorStop(1, '#' + mixHex(A.bot, B.bot, t).getHexString());
+    g.fillStyle = grd; g.fillRect(0, 0, 512, 256);
+    g.globalAlpha = n('stars'); g.drawImage(_starsCanvas, 0, 0); g.globalAlpha = 1;
+    _skyTex.needsUpdate = true;
+    scene.background = _skyTex;
+    scene.fog.color.copy(lin('#' + mixHex(A.fog, B.fog, t).getHexString()));
+    hemi.intensity = n('hemi');
+    hemi.color.copy(lin('#' + mixHex(A.hC, B.hC, t).getHexString()));
+    hemi.groundColor.copy(lin('#' + mixHex(A.gC, B.gC, t).getHexString()));
+    sun.intensity = n('sun'); sun.color.copy(lin('#' + mixHex(A.sunC, B.sunC, t).getHexString()));
+    renderer.toneMappingExposure = n('exp');
+    _glow = n('glow');
     glowMats.forEach(function(m) { m.opacity = _glow * m.userData.base; });
-    windowGlass.forEach(function(g) { g.emissiveIntensity = P.win; });
-    _windowLight = P.lamp;
+    windowGlass.forEach(function(w) { w.emissiveIntensity = n('win'); });
+    _windowLight = n('lamp');
     houseLights = houseLights.filter(function(l) { return l.parent && l.parent.parent; });   // maisons encore là
-    houseLights.forEach(function(l) { l.intensity = P.lamp; });
-    _spriteLight = P.spr;
-    spriteMats.forEach(function(m) { m.color.setScalar(P.spr); });
+    houseLights.forEach(function(l) { l.intensity = _windowLight; });
+    _spriteLight = n('spr');
+    spriteMats.forEach(function(m) { m.color.setScalar(_spriteLight); });
 }
 
 // ═══════════════════════ Clics : villageois, papillons, jardin, ou marcher ═══════════════════════
@@ -2196,7 +2271,7 @@ function init() {
             room3d.scene.remove(room3d.charlie); room3d.charlie = rc; room3d.scene.add(rc);
         }
     };
-    Game.player.afterMove = function() { if (!_cutscene) collide(); };
+    Game.player.afterMove = function() { if (!_cutscene) { collide(); blockSteep(); } };
     wrapBuildings();
     // Petit état lisible pour les tests automatiques (animation de porte en cours, ouverture de la porte)
     Game.r3d.debug = function() {
@@ -2286,26 +2361,28 @@ function loop(now) {
     if (s.currentView !== 'world') return;
 
     _dtFrame = dt;
-    if (!_cutscene) { walkToTarget(dt); collide(); }
+    if (!_cutscene) { walkToTarget(dt); collide(); blockSteep(); }
     // La rivière coule vers la mer (vers le bas de la carte), la mer ondule
     if (riverTex) { riverTex.offset.y -= dt * 0.35; riverTex.offset.x = Math.sin(time * 0.6) * 0.04; }
     if (seaTex) { seaTex.offset.x += dt * 0.03; seaTex.offset.y = Math.sin(time * 0.5) * 0.08; }
     if (lakeTex) { lakeTex.offset.x = Math.sin(time * 0.4) * 0.06; lakeTex.offset.y = Math.cos(time * 0.3) * 0.06; }   // un lac ondule sans couler
     _scanT += dt;
-    if (_scanT > 0.4) { _scanT = 0; scan(); applyPhase(); }
+    if (_scanT > 0.4) { _scanT = 0; scan(); }
+    _phaseT = (_phaseT || 0) + dt;
+    if (_phaseT > 0.2) { _phaseT = 0; applyPhase(); }
     syncMoving(time);
 
     // Charlie suit sa position (lissée) du jeu 2D
     var cx = s.charlie.visualX, cy = s.charlie.visualY;
     var gy = heightAt(cx, cy);
-    var onMtn = canClimb() ? mountainHeight(cx, cy) : null;
-    if (onMtn && onMtn.y > gy) gy = onMtn.y;
+    var onMtn = mountainHeight(cx, cy);
+    if (onMtn && onMtn.y > gy + 0.02) gy = onMtn.y; else onMtn = null;
     if (!_exitHold) {   // pendant l'animation de porte, c'est elle qui place Charlie
         var moved = animateWalker(charlie, _prev ? cx - _prev.x : 0, _prev ? cy - _prev.y : 0, dt, time);
         charlie.position.set(cx * U, gy, cy * U);
         swim(!onMtn && rawHeightAt(cx, cy) < SWIM_DEPTH, moved, dt, time);
-        climbPose(onMtn, moved, dt, time);
-        if (onMtn) checkSummit(onMtn);
+        climbPose(onMtn && canClimb() && onMtn.y - heightAt(cx, cy) > 0.5 ? onMtn : null, moved, dt, time);
+        if (onMtn && canClimb()) checkSummit(onMtn);
     }
     _prev = { x: cx, y: cy };
 

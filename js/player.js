@@ -74,7 +74,9 @@ Game.player.update = function(dt, now) {
     // On ne marche pas dans la mer : on s'arrête au bord de l'eau (côte courbe)
     if (Game.world.shorelineY) {
         var shore = Game.world.shorelineY(s.charlie.x) - 14;
-        if (s.charlie.y > shore) s.charlie.y = shore;
+        // En 3D on peut entrer dans la mer et nager (jusqu'à une certaine distance du bord)
+        var seaLimit = (Game.r3d && Game.r3d.renderer) ? shore + 450 : shore;
+        if (s.charlie.y > seaLimit) s.charlie.y = seaLimit;
     }
     // Vue 3D : on bute contre les maisons, arbres... AVANT de dessiner (sinon Charlie y entre un instant)
     if (Game.player.afterMove) Game.player.afterMove();
