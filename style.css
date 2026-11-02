@@ -1817,3 +1817,9 @@ body.no-touch #thumbstick { display: none; }
     #rotate-hint .phone { font-size: 4rem; animation: rotate-phone 2s ease-in-out infinite; }
 }
 @keyframes rotate-phone { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+
+/* Choix de la langue (haut des Paramètres) */
+.lang-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 40px 12px 0; border-bottom: 2px dashed #e8e2c8; margin-bottom: 8px; }
+.lang-title { font-weight: bold; color: #6d4c41; margin-right: 4px; }
+.lang-btn { border: 3px solid #e8e2c8; background: #fff; border-radius: 999px; padding: 6px 14px; font-weight: bold; cursor: pointer; font-family: inherit; color: #5d4037; }
+.lang-btn.on { background: #66bb6a; border-color: #43a047; color: #fff; }

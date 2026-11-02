@@ -171,6 +171,7 @@ function emojiTexture(e) {
     return (_tex['e' + e] = t);
 }
 function labelTexture(text) {
+    if (Game.tr) text = Game.tr(text);   // étiquettes 3D dans la langue choisie
     if (_tex['l' + text]) return _tex['l' + text];
     var c = document.createElement('canvas'), g = c.getContext('2d');
     var font = 'bold 34px "Varela Round", "Noto Color Emoji", sans-serif';
