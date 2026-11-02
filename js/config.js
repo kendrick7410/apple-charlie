@@ -207,7 +207,7 @@ Game.SHOPS = [
       npc: '🧑‍🍳', purpose: "Dépose tes poissons 🐟 : ils se vendent tout seuls, reviens collecter tes clochettes 💰.",
       decor: [['🐠',70,140],['🦀',460,150],['🐙',250,110],['🦐',150,130],['🧊',110,440],['⚖️',440,440],['🐟',60,310],['🪣',460,310]] },
     { id: 'museum', name: 'Musée', sign: '🏛️', loc: 'museum', panel: 'action-museum', theme: 'museum', nightOnly: true, level: 30, cost: 30, resident: 'Pedro 🦉',
-      npc: '🦉', purpose: "Le hibou t'achète tes ressources 🍎🪵🧱🌻 contre des clochettes. Donne aussi tes spécimens !",
+      npc: '🦉', purpose: "Le hibou t'achète tes ressources 🍎🪵🪨🌻 contre des clochettes. Donne aussi tes spécimens !",
       decor: [['🖼️',70,140],['🗿',460,140],['🏺',250,110],['🦴',60,310],['💎',460,310],['🕯️',110,440],['📜',440,440],['🔭',250,440]] },
     { id: 'souvenir', name: 'Boutique Souvenir', sign: '🎁', loc: 'souvenirShop', panel: 'action-souvenir', theme: 'souvenir',
       npc: '🧑‍💼', purpose: "Achète des boules à neige à collectionner. Elles décorent ta maison ! ❄️",
@@ -313,7 +313,7 @@ Game.SNOW_GLOBES = [
 Game.OWL_PRICES = {
     apples:      { emoji: '🍎', label: 'Pommes',   price: 3 },
     wood:        { emoji: '🪵', label: 'Bois',     price: 4 },
-    stone:       { emoji: '🧱', label: 'Pierre',   price: 4 },
+    stone:       { emoji: '🪨', label: 'Pierre',   price: 4 },
     flowers:     { emoji: '🌻', label: 'Fleurs',   price: 5 },
     butterflies: { emoji: '🦋', label: 'Papillons',price: 8 }
 };
@@ -372,16 +372,16 @@ Game.VILLAGER_DATA = {
                   quests: [
                       { desc: "Attrape-moi 3 poissons 🐟", need: { fish: 3 }, reward: { money: 40, xp: 50 }, done: "Miam, du poisson !" },
                       { desc: "Il me faut 10 bois 🪵", need: { wood: 10 }, reward: { money: 35, xp: 40 }, done: "Parfait pour mon arbre à chat !" },
-                      { desc: "Ramène 5 pierres 🧱", need: { stone: 5 }, reward: { money: 45, xp: 55 }, done: "Merci, c'est lourd !" },
+                      { desc: "Ramène 5 pierres 🪨", need: { stone: 5 }, reward: { money: 45, xp: 55 }, done: "Merci, c'est lourd !" },
                       // ── Vague 2 ──
                       { desc: "Pêche 6 poissons pour ma réserve 🐟", need: { fish: 6 }, reward: { money: 60, xp: 55 }, done: "Ma réserve est pleine !", unlock: { totalQuests: 3, level: 2 } },
-                      { desc: "Ramène 8 bois et 4 pierres 🪵🧱", need: { wood: 8, stone: 4 }, reward: { money: 70, xp: 65 }, done: "Mon arbre à chat sera immense !", unlock: { totalQuests: 3, level: 2 } },
+                      { desc: "Ramène 8 bois et 4 pierres 🪵🪨", need: { wood: 8, stone: 4 }, reward: { money: 70, xp: 65 }, done: "Mon arbre à chat sera immense !", unlock: { totalQuests: 3, level: 2 } },
                       // ── Vague 3 ──
-                      { desc: "Rapporte 10 poissons et 8 pierres 🐟🧱", need: { fish: 10, stone: 8 }, reward: { money: 95, xp: 80 }, done: "Un palace pour chat !", unlock: { totalQuests: 6, level: 4 } },
-                      { desc: "Trouve 15 bois et 10 pierres 🪵🧱", need: { wood: 15, stone: 10 }, reward: { money: 115, xp: 90 }, done: "Miaou ! C'est parfait !", unlock: { totalQuests: 6, level: 4 } },
+                      { desc: "Rapporte 10 poissons et 8 pierres 🐟🪨", need: { fish: 10, stone: 8 }, reward: { money: 95, xp: 80 }, done: "Un palace pour chat !", unlock: { totalQuests: 6, level: 4 } },
+                      { desc: "Trouve 15 bois et 10 pierres 🪵🪨", need: { wood: 15, stone: 10 }, reward: { money: 115, xp: 90 }, done: "Miaou ! C'est parfait !", unlock: { totalQuests: 6, level: 4 } },
                       // ── Vague 4 ──
                       { desc: "Buffet de luxe : 15 poissons et 10 pommes 🐟🍎", need: { fish: 15, apples: 10 }, reward: { money: 145, xp: 105 }, done: "Le buffet royal du chat !", unlock: { totalQuests: 10, level: 6 } },
-                      { desc: "Tour à chat : 25 bois et 15 pierres 🪵🧱", need: { wood: 25, stone: 15 }, reward: { money: 170, xp: 125 }, done: "Miaou ! La plus haute tour !", unlock: { totalQuests: 10, level: 6 } }
+                      { desc: "Tour à chat : 25 bois et 15 pierres 🪵🪨", need: { wood: 25, stone: 15 }, reward: { money: 170, xp: 125 }, done: "Miaou ! La plus haute tour !", unlock: { totalQuests: 10, level: 6 } }
                   ]},
     'Tom 🐶':   { emoji: '🐶', home: { x: 1500, y: 900  }, greetings: ["Woof !", "T'as du bois ?", "C'est grand dehors !"],
                   dialogues: [
@@ -403,13 +403,13 @@ Game.VILLAGER_DATA = {
                   ],
                   quests: [
                       { desc: "J'ai besoin de 8 bois 🪵", need: { wood: 8 }, reward: { money: 25, xp: 35 }, done: "Génial, je vais construire !" },
-                      { desc: "Trouve-moi 4 pierres 🧱", need: { stone: 4 }, reward: { money: 30, xp: 40 }, done: "Solide comme un roc !" },
+                      { desc: "Trouve-moi 4 pierres 🪨", need: { stone: 4 }, reward: { money: 30, xp: 40 }, done: "Solide comme un roc !" },
                       { desc: "Rapporte 2 poissons et 3 pommes", need: { fish: 2, apples: 3 }, reward: { money: 60, xp: 70 }, done: "Un festin ! Merci !" },
                       // ── Vague 2 ──
                       { desc: "Il me faut 15 bois pour un grand projet 🪵", need: { wood: 15 }, reward: { money: 65, xp: 60 }, done: "Je vais construire un palais !", unlock: { totalQuests: 3, level: 2 } },
-                      { desc: "Rapporte 5 poissons et 6 pierres 🐟🧱", need: { fish: 5, stone: 6 }, reward: { money: 85, xp: 75 }, done: "Merci Charlie, t'es le meilleur !", unlock: { totalQuests: 3, level: 2 } },
+                      { desc: "Rapporte 5 poissons et 6 pierres 🐟🪨", need: { fish: 5, stone: 6 }, reward: { money: 85, xp: 75 }, done: "Merci Charlie, t'es le meilleur !", unlock: { totalQuests: 3, level: 2 } },
                       // ── Vague 3 ──
-                      { desc: "Construis avec 20 bois et 12 pierres 🪵🧱", need: { wood: 20, stone: 12 }, reward: { money: 110, xp: 90 }, done: "Mon palais prend forme !", unlock: { totalQuests: 6, level: 4 } },
+                      { desc: "Construis avec 20 bois et 12 pierres 🪵🪨", need: { wood: 20, stone: 12 }, reward: { money: 110, xp: 90 }, done: "Mon palais prend forme !", unlock: { totalQuests: 6, level: 4 } },
                       { desc: "Festin royal : 8 poissons et 6 pommes 🐟🍎", need: { fish: 8, apples: 6 }, reward: { money: 105, xp: 85 }, done: "Woof ! Le meilleur repas !", unlock: { totalQuests: 6, level: 4 } },
                       // ── Vague 4 ──
                       { desc: "Château : 30 bois et 20 pierres 🏰", need: { wood: 30, stone: 20 }, reward: { money: 160, xp: 120 }, done: "Mon château est magnifique !", unlock: { totalQuests: 10, level: 6 } },
@@ -436,7 +436,7 @@ Game.VILLAGER_DATA = {
                   quests: [
                       // ── Vague 1 : disponible dès le début ──
                       { desc: "Apporte-moi 4 fleurs magiques 🌸", need: { flowers: 4 }, reward: { money: 35, xp: 45 }, done: "Je sens leur énergie !" },
-                      { desc: "Il me faut 5 pierres mystiques 🧱", need: { stone: 5 }, reward: { money: 40, xp: 45 }, done: "Parfait pour mes potions !" },
+                      { desc: "Il me faut 5 pierres mystiques 🪨", need: { stone: 5 }, reward: { money: 40, xp: 45 }, done: "Parfait pour mes potions !" },
                       { desc: "Rapporte 3 poissons lunaires 🐟", need: { fish: 3 }, reward: { money: 45, xp: 50 }, done: "Les esprits te remercient !" },
                       // ── Vague 2 ──
                       { desc: "Collecte 10 fleurs pour un rituel 🌻", need: { flowers: 10 }, reward: { money: 65, xp: 60 }, done: "Le rituel est complet !", unlock: { totalQuests: 3, level: 2 } },

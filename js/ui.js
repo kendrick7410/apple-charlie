@@ -431,24 +431,45 @@ Game.ui.updateCooking = function() {
     panel.innerHTML = html;
 };
 
+// Les messages s'empilent les uns sous les autres (plus de superposition).
+// Un même message répété est regroupé (×2, ×3...) ; les longs restent plus longtemps.
+var NOTIFY_MAX = 4;
 Game.ui.notify = function(msg, type) {
     type = type || 'default';
+    var stack = document.getElementById('notify-stack');
+    if (!stack) {
+        stack = document.createElement('div');
+        stack.id = 'notify-stack';
+        document.body.appendChild(stack);
+    }
+    var duration = Math.min(5000, 1800 + msg.length * 35);
+
+    // Même message déjà affiché : on le regroupe et on relance son minuteur
+    var last = stack.lastElementChild;
+    if (last && last.dataset.msg === msg && !last.classList.contains('leaving')) {
+        last.dataset.count = (parseInt(last.dataset.count, 10) || 1) + 1;
+        last.textContent = msg + '  ×' + last.dataset.count;
+        clearTimeout(last._hide);
+        last._hide = setTimeout(function() { hide(last); }, duration);
+        return;
+    }
+
     var n = document.createElement('div');
     n.className = 'notification notification-' + type;
+    n.dataset.msg = msg;
     n.textContent = msg;
-    document.body.appendChild(n);
+    stack.appendChild(n);
+    // Trop de messages : on enlève les plus anciens
+    while (stack.children.length > NOTIFY_MAX) stack.firstElementChild.remove();
 
-    // Slide in
-    requestAnimationFrame(function() {
-        n.style.opacity = '1';
-        n.style.transform = 'translateX(-50%) translateY(0)';
-    });
+    requestAnimationFrame(function() { n.classList.add('shown'); });
+    n._hide = setTimeout(function() { hide(n); }, duration);
 
-    setTimeout(function() {
-        n.style.opacity = '0';
-        n.style.transform = 'translateX(-50%) translateY(-20px)';
-    }, 1800);
-    setTimeout(function() { n.remove(); }, 2300);
+    function hide(el) {
+        el.classList.add('leaving');
+        el.classList.remove('shown');
+        setTimeout(function() { el.remove(); }, 300);
+    }
 };
 
 Game.ui.updateMuseum = function() {

@@ -1365,3 +1365,34 @@ button {
         text-align: center;
     }
 }
+
+/* Pile de messages : chacun à sa place, en colonne au centre de l'écran */
+#notify-stack {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+    width: max-content;
+    max-width: calc(100vw - 24px);
+}
+#notify-stack .notification {
+    position: static;
+    transform: translateY(10px);
+    text-align: center;
+    max-width: 100%;
+}
+#notify-stack .notification.shown {
+    opacity: 1;
+    transform: translateY(0);
+}
+#notify-stack .notification.leaving {
+    opacity: 0;
+    transform: translateY(-12px);
+}
+#notify-stack .notification { border-radius: 20px; }

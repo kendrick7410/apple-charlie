@@ -228,7 +228,7 @@ Game.furniture.store = function(f) {
     s.inventory.stone += rcp.stone;
     Game.furniture.render();
     Game.ui.update();
-    Game.ui.notify(f[0] + " rangé : +" + rcp.wood + " bois 🪵, +" + rcp.stone + " pierre");
+    Game.ui.notify(f[0] + " rangé : +" + rcp.wood + " bois 🪵, +" + rcp.stone + " pierre 🪨");
 };
 
 function nearestOfType(type, from, maxDist) {

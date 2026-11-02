@@ -28,12 +28,12 @@
             <div id="craft-buttons" class="ui-card" style="padding:10px;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
                 <button onclick="Game.crafting.craftFurniture('chair')" class="btn-animal btn-craft">🪑 Chaise (2🪵)</button>
                 <button onclick="Game.crafting.craftFurniture('table')" class="btn-animal btn-craft">🪵 Table (4🪵)</button>
-                <button onclick="Game.crafting.craftFurniture('bookshelf')" class="btn-animal btn-craft">📚 Biblio (5🪵,2🧱)</button>
-                <button onclick="Game.crafting.craftFurniture('plant')" class="btn-animal btn-craft">🪴 Plante (3🧱)</button>
+                <button onclick="Game.crafting.craftFurniture('bookshelf')" class="btn-animal btn-craft">📚 Biblio (5🪵,2🪨)</button>
+                <button onclick="Game.crafting.craftFurniture('plant')" class="btn-animal btn-craft">🪴 Plante (3🪨)</button>
                 <button onclick="Game.crafting.craftFurniture('bed')" class="btn-animal btn-craft">🛏️ Lit (6🪵)</button>
-                <button onclick="Game.crafting.craftFurniture('lamp')" class="btn-animal btn-craft">💡 Lampe (1🪵,2🧱)</button>
-                <button onclick="Game.crafting.craftFurniture('mirror')" class="btn-animal btn-craft">🪞 Miroir (2🪵,3🧱)</button>
-                <button onclick="Game.crafting.craftFurniture('stove')" class="btn-animal btn-craft">🍳 Cuisinière (3🪵,4🧱)</button>
+                <button onclick="Game.crafting.craftFurniture('lamp')" class="btn-animal btn-craft">💡 Lampe (1🪵,2🪨)</button>
+                <button onclick="Game.crafting.craftFurniture('mirror')" class="btn-animal btn-craft">🪞 Miroir (2🪵,3🪨)</button>
+                <button onclick="Game.crafting.craftFurniture('stove')" class="btn-animal btn-craft">🍳 Cuisinière (3🪵,4🪨)</button>
             </div>
             <div id="craft-hint" style="color:white;background:rgba(0,0,0,0.5);padding:4px 16px;border-radius:999px;font-size:0.7rem;">
                 Clique sur un meuble pour l'utiliser (ou touche E) • Fais-le glisser pour le déplacer • Tapis 🌟 = sortir
@@ -73,7 +73,7 @@
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1px 8px;font-size:0.7rem;margin-top:4px;">
             <span>🍎 Pommes:</span> <span id="apple-count" style="font-weight:bold;color:#e53935;text-align:right;">0</span>
             <span>🪵 Bois:</span>   <span id="wood-count" style="font-weight:bold;color:#795548;text-align:right;">0</span>
-            <span>🧱 Pierre:</span> <span id="stone-count" style="font-weight:bold;color:#757575;text-align:right;">0</span>
+            <span>🪨 Pierre:</span> <span id="stone-count" style="font-weight:bold;color:#757575;text-align:right;">0</span>
             <span>🍞 Pains:</span>  <span id="bread-count" style="font-weight:bold;color:#bf8c3e;text-align:right;">0</span>
             <span>🐟 Poissons:</span> <span id="fish-count" style="font-weight:bold;color:#1e88e5;text-align:right;">0</span>
             <span>🌻 Fleurs:</span> <span id="flower-count" style="font-weight:bold;color:#e91e63;text-align:right;">0</span>
@@ -83,7 +83,7 @@
             <span>💰 Clochettes:</span> <span id="money-count" style="font-weight:bold;color:#f9a825;">0</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:0.75rem;">
-            <span>🔨 Matériaux:</span> <span id="material-count" style="font-weight:bold;color:#42a5f5;">0</span>
+            <span>🧱 Matériaux:</span> <span id="material-count" style="font-weight:bold;color:#42a5f5;">0</span>
         </div>
 
         <!-- Cooked Items -->

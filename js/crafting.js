@@ -30,7 +30,7 @@ Game.crafting.craftFurniture = function(recipeId) {
         Game.ui.update();
         Game.ui.notify(recipe.emoji + " fabriqué ! Clique dessus pour l'utiliser, fais-le glisser pour le déplacer ✨");
     } else {
-        Game.ui.notify("Pas assez de bois 🪵 ou de pierre ! Il faut " + recipe.wood + " bois et " + recipe.stone + " pierre");
+        Game.ui.notify("Pas assez de bois 🪵 ou de pierre ! Il faut " + recipe.wood + " 🪵 et " + recipe.stone + " 🪨");
         Game.audio.play('error');
     }
 };

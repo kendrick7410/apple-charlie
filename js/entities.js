@@ -140,11 +140,11 @@ Game.entities.checkCollect = function() {
         if (Math.hypot(cx - parseInt(st.style.left), cy - parseInt(st.style.top)) < stoneRadius) {
             s.inventory.stone++;
             Game.xp.add(3);
-            Game.particles.spawnWorld('🧱', parseInt(st.style.left), parseInt(st.style.top));
+            Game.particles.spawnWorld('🪨', parseInt(st.style.left), parseInt(st.style.top));
             Game.audio.playChime();
             st.remove();
             Game.ui.update();
-            Game.ui.notify("+1 Pierre 🧱");
+            Game.ui.notify("+1 Pierre 🪨");
             setTimeout(Game.entities.spawnStone, Game.CONFIG.STONE_RESPAWN);
         }
     }
