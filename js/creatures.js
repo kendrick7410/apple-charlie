@@ -77,14 +77,11 @@ Game.creatures.update = function(dt) {
                 // Assign butterfly species
                 if (newType === '🦋') {
                     c.speciesId = pickSpecies(Game.BUTTERFLY_SPECIES, season, isNight);
-                    var sp = c.speciesId ? Game.BUTTERFLY_SPECIES[c.speciesId] : null;
-                    if (sp && sp.color) {
-                        c.el.style.filter = 'drop-shadow(0 0 4px ' + sp.color + ')';
-                    } else {
-                        c.el.style.filter = '';
-                    }
+                    // Tous les papillons se ressemblent (même taille, même lueur dorée) ;
+                    // on découvre l'espèce seulement en l'attrapant
+                    c.el.style.filter = 'drop-shadow(0 0 5px rgba(255, 213, 79, 0.95))';
                     // Bigger + STATIONARY butterflies = very easy to tap and catch
-                    c.el.style.fontSize = '2rem';
+                    c.el.style.fontSize = '2.4rem';
                     c.speedMul = 0;   // les papillons restent fixes (ne s'envolent plus)
                     c.el.style.pointerEvents = 'auto';
                     c.el.style.cursor = 'pointer';
@@ -105,6 +102,13 @@ Game.creatures.update = function(dt) {
         }
 
         if (!c.type) return;
+
+        // Papillon : il suffit de marcher dessus (avec le filet) pour l'attraper
+        if (c.type === '🦋' && s.tools.net && s.currentView === 'world' &&
+            Math.hypot(s.charlie.x - c.x, s.charlie.y - c.y) < 70) {
+            Game.creatures.tryCapture(c);
+            if (!c.type) return;
+        }
 
         // Move
         c.timer += dt;
@@ -144,28 +148,17 @@ Game.creatures.update = function(dt) {
 Game.creatures.tryCapture = function(creature) {
     var s = Game.state;
     if (!s.tools.net) {
-        Game.ui.notify("Il te faut un filet ! 🥅");
+        Game.ui.notify("Il te faut un filet 🥅 pour attraper les papillons (au Magasin 🏪, 45💰) !");
         return;
     }
-    // Generous capture radius so you rarely get "trop loin"
-    if (Math.hypot(s.charlie.x - creature.x, s.charlie.y - creature.y) > 400) {
+    // Tout papillon visible à l'écran peut être attrapé d'un clic
+    if (Math.hypot(s.charlie.x - creature.x, s.charlie.y - creature.y) > 900) {
         Game.ui.notify("Trop loin ! Rapproche-toi 🦋");
         return;
     }
     if (!creature.speciesId) return;
 
     var sp = Game.BUTTERFLY_SPECIES[creature.speciesId];
-    // High capture chances so it's easy, even for the rare ones
-    var chance = { common: 1.0, uncommon: 1.0, rare: 0.9, legendary: 0.8 };
-    if (Math.random() > (chance[sp.rarity] || 0.6)) {
-        Game.ui.notify("Raté ! Le papillon s'enfuit ! 🦋");
-        Game.audio.play('error');
-        // Make it flee (gentler than before so you can chase it down)
-        creature.vx = (Math.random() - 0.5) * 3;
-        creature.vy = (Math.random() - 0.5) * 3;
-        return;
-    }
-
     // Caught!
     s.inventory.butterflies++;
     s.specimens.butterflies[creature.speciesId] = (s.specimens.butterflies[creature.speciesId] || 0) + 1;
