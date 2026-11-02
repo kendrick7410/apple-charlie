@@ -8,8 +8,8 @@ cd "$SRC"
 git pull --quiet origin main || true
 mkdir -p "$DEST"
 # On ne publie que les fichiers du site (jamais .git, README ou test.txt)
-rm -rf "$DEST"/index.html "$DEST"/robots.txt "$DEST"/style.css "$DEST"/js "$DEST"/lib
-cp -a "$SRC"/index.html "$SRC"/robots.txt "$SRC"/style.css "$SRC"/js "$SRC"/lib "$DEST"/
+rm -rf "$DEST"/index.html "$DEST"/favicon.svg "$DEST"/favicon-32.png "$DEST"/apple-touch-icon.png "$DEST"/robots.txt "$DEST"/style.css "$DEST"/js "$DEST"/lib
+cp -a "$SRC"/index.html "$SRC"/favicon.svg "$SRC"/favicon-32.png "$SRC"/apple-touch-icon.png "$SRC"/robots.txt "$SRC"/style.css "$SRC"/js "$SRC"/lib "$DEST"/
 # Numéro de version sur les scripts et le CSS : le navigateur recharge forcément la nouvelle version
 VER=$(git rev-parse --short HEAD)
 sed -i -E "s#(src=\"js/[a-z0-9]+\.js)\"#\1?v=$VER\"#g; s#(href=\"style\.css)\"#\1?v=$VER\"#" "$DEST"/index.html

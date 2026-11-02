@@ -280,13 +280,110 @@ function cowboyHat(head, color, band) {
 }
 // Charlie, style « chibi » (même dessin que l'aperçu choisi), avec son chapeau de cowboy
 var charlie = null;
-function makeCharlie() {
-    var root = makeBody({ skin: '#f2c39a', shirt: '#ee7a2a', pants: '#4466b0', belt: true, scarf: '#d63a3a' });
-    var head = root.userData.head;
-    ball(head, 0.47, mat('#7a4a28'), 0, 0.16, -0.06, 1, 0.55, 1);
-    face(head, { nose: '#f2c39a' });
-    cowboyHat(head, '#b57a3e', '#5b3a1a');
+// Les looks (skins) de Charlie en 3D : même petit corps, costume différent
+var SKIN_LOOKS = {
+    aventurier: { skin: '#f2c39a', shirt: '#ee7a2a', pants: '#4466b0', belt: true, scarf: '#d63a3a', hair: '#7a4a28', hat: 'cowboy' },
+    ninja:      { skin: '#f2c39a', shirt: '#2b2b33', pants: '#2b2b33', boot: '#1d1d22', belt: true, hair: '#1d1d22', hat: 'ninja' },
+    astronaute: { skin: '#8fe07a', shirt: '#c9d2dc', pants: '#c9d2dc', boot: '#8a96a3', alien: true, hat: 'antennae' },
+    magicien:   { skin: '#f2c39a', shirt: '#5b3fa8', pants: '#5b3fa8', boot: '#3a2a6a', hair: '#e8e8e8', beard: '#f0f0f0', hat: 'wizard', robe: '#5b3fa8' },
+    pecheur:    { skin: '#f2c39a', shirt: '#f2c230', pants: '#3f6aa0', boot: '#2f4f7a', hair: '#7a4a28', hat: 'bucket', rod: true },
+    heros:      { skin: '#f2c39a', shirt: '#2e6fd8', pants: '#2e6fd8', boot: '#d63a3a', belt: true, hair: '#2a1d14', cape: '#d63a3a', mask: '#d63a3a', emblem: '#f2c94c' },
+    prince:     { skin: '#f2c39a', shirt: '#f4f1ea', pants: '#2f4f9a', boot: '#2a1d14', belt: true, hair: '#d9a54a', hat: 'crown', cape: '#b3243a' },
+    vampire:    { skin: '#e9e3ea', shirt: '#2b2b33', pants: '#2b2b33', boot: '#1d1d22', hair: '#1d1d22', cape: '#1d1d22', capeIn: '#b3243a', collar: true, fangs: true },
+    triton:     { skin: '#f2c39a', shirt: '#2fa79a', pants: '#2fa79a', hair: '#e8742e', tail: '#2fa79a', hat: 'crown', trident: true, noShirt: true },
+    genie:      { skin: '#6fb6f2', shirt: '#7b3fa8', pants: '#e8c04a', boot: '#7b3fa8', hat: 'turban', bracelets: true },
+    dragon:     { skin: '#5fae47', shirt: '#4a9a3a', pants: '#4a9a3a', boot: '#3a7a2a', dragon: true }
+};
+function makeCharlie(skinId) {
+    var id = skinId || (Game.state && Game.state.skin) || 'aventurier';
+    var o = SKIN_LOOKS[id] || SKIN_LOOKS.aventurier;
+    var root = makeBody({ skin: o.skin, shirt: o.shirt, pants: o.pants, boot: o.boot, belt: o.belt, scarf: o.scarf });
+    var ud = root.userData, head = ud.head, body = ud.body;
+    if (o.hair) {
+        // Calotte de cheveux sur le dessus et l'arrière (le visage reste dégagé) + petite mèche
+        var cap = put(head, new T.Mesh(geo('haircap', function() { return new T.SphereGeometry(0.49, 32, 16, 0, Math.PI * 2, 0, 1.2); }), mat(o.hair)), 0, 0.02, -0.02);
+        cap.rotation.x = -0.45;
+        if (!o.hat) { var lock = ball(head, 0.12, o.hair, 0.12, 0.4, 0.3, 1.4, 0.6, 0.8); lock.rotation.z = -0.4; }
+    }
+    if (o.alien) {
+        // Grands yeux noirs en amande
+        [-0.17, 0.17].forEach(function(x) { var e = ball(head, 0.13, mat('#111111', { roughness: 0.2 }), x, 0.03, 0.36, 0.8, 1.2, 0.5); e.rotation.z = x > 0 ? -0.5 : 0.5; });
+        var sm = new T.Mesh(geo('smile', function() { return new T.TorusGeometry(0.075, 0.016, 8, 16, Math.PI); }), mat('#2f6b2a')); sm.rotation.z = Math.PI; put(head, sm, 0, -0.2, 0.41);
+    } else face(head, { nose: o.skin });
+    if (o.beard) ball(head, 0.28, o.beard, 0, -0.32, 0.22, 1, 1.2, 0.7);
+    if (o.fangs) [-0.04, 0.04].forEach(function(x) { put(head, new T.Mesh(geo('fang', function() { return new T.ConeGeometry(0.018, 0.06, 6); }), mat('#ffffff')), x, -0.2, 0.43).rotation.x = Math.PI; });
+    if (o.mask) { var m = put(head, new T.Mesh(new T.TorusGeometry(0.4, 0.06, 8, 32, Math.PI), mat(o.mask)), 0, 0.04, 0.05); m.rotation.y = 0; m.scale.set(1.12, 0.6, 1.1); }
+    switch (o.hat) {
+        case 'cowboy': cowboyHat(head, '#b57a3e', '#5b3a1a'); break;
+        case 'ninja':
+            put(head, new T.Mesh(new T.TorusGeometry(0.46, 0.05, 8, 32), mat('#d63a3a')), 0, 0.15, 0).rotation.x = Math.PI / 2;
+            [0.15, -0.15].forEach(function(z, i) { var t = rbox(head, 0.06, 0.32, 0.05, 0.02, '#d63a3a', 0.1 * (i ? -1 : 1), 0.05, -0.5); t.rotation.z = i ? 0.4 : -0.4; });
+            ball(head, 0.43, mat('#2b2b33'), 0, -0.14, 0.06, 1.04, 0.5, 1.02);   // masque du bas du visage
+            break;
+        case 'antennae':
+            [-0.18, 0.18].forEach(function(x) { var a = put(head, new T.Mesh(capsuleGeo(0.02, 0.35), mat('#8fe07a')), x, 0.55, -0.05); a.rotation.z = -x * 2; ball(head, 0.07, mat('#c6ff8a', { emissive: '#7aff5a', emissiveIntensity: 0.6 }), x * 1.8, 0.74, -0.05); });
+            break;
+        case 'wizard': {
+            put(head, new T.Mesh(geo('wizbrim', function() { return new T.CylinderGeometry(0.62, 0.62, 0.05, 32); }), mat('#4a2f8f')), 0, 0.28, 0);
+            var cone = put(head, new T.Mesh(geo('wizhat', function() { return new T.ConeGeometry(0.4, 1.0, 24); }), mat('#4a2f8f')), 0, 0.78, -0.06); cone.rotation.x = -0.15;
+            [[0.15, 0.6, 0.3], [-0.12, 0.9, 0.2], [0.05, 0.45, 0.4]].forEach(function(p) { ball(head, 0.05, mat('#f2c94c', { emissive: '#f2c94c', emissiveIntensity: 0.5 }), p[0], p[1], p[2]); });
+            break;
+        }
+        case 'bucket':
+            put(head, new T.Mesh(geo('bucketbrim', function() { return new T.CylinderGeometry(0.62, 0.66, 0.08, 32); }), mat('#f2c230')), 0, 0.26, 0);
+            put(head, new T.Mesh(geo('buckettop', function() { return new T.CylinderGeometry(0.38, 0.44, 0.32, 28); }), mat('#f2c230')), 0, 0.44, 0);
+            break;
+        case 'crown':
+            put(head, new T.Mesh(geo('crown', function() { return new T.CylinderGeometry(0.34, 0.34, 0.2, 24, 1, true); }), mat('#f2c94c', { metalness: 0.7, roughness: 0.3, side: T.DoubleSide })), 0, 0.46, -0.02);
+            for (var k = 0; k < 6; k++) { var a = k / 6 * Math.PI * 2; put(head, new T.Mesh(geo('crownpt', function() { return new T.ConeGeometry(0.07, 0.15, 8); }), mat('#f2c94c', { metalness: 0.7, roughness: 0.3 })), Math.cos(a) * 0.32, 0.62, Math.sin(a) * 0.32 - 0.02); }
+            ball(head, 0.06, mat('#d63a3a', { roughness: 0.2 }), 0, 0.48, 0.33);
+            break;
+        case 'turban':
+            ball(head, 0.48, mat('#f4f1ea'), 0, 0.28, -0.03, 1, 0.6, 1);
+            ball(head, 0.08, mat('#d63a3a', { roughness: 0.2 }), 0, 0.33, 0.45);
+            put(head, new T.Mesh(capsuleGeo(0.04, 0.2), mat('#e8c04a')), 0, 0.55, 0.38);
+            break;
+    }
+    // Cape (super-héros, prince, vampire) : un grand pan arrondi dans le dos
+    if (o.cape) {
+        var cape = rbox(body, 0.7, 1.0, 0.05, 0.06, o.cape, 0, 0.82, -0.36); cape.rotation.x = 0.18;
+        if (o.capeIn) rbox(body, 0.66, 0.95, 0.02, 0.05, o.capeIn, 0, 0.82, -0.33).rotation.x = 0.18;
+        if (o.collar) [-1, 1].forEach(function(sx) { var c = rbox(body, 0.3, 0.38, 0.04, 0.05, o.capeIn || o.cape, sx * 0.28, 1.45, -0.12); c.rotation.y = sx * 0.6; c.rotation.z = -sx * 0.25; });
+    }
+    if (o.emblem) put(body, new T.Mesh(geo('emblem', function() { return new T.CircleGeometry(0.12, 5); }), mat(o.emblem)), 0, 1.0, 0.315);
+    if (o.robe) put(body, new T.Mesh(geo('robe', function() { return new T.ConeGeometry(0.45, 0.7, 24, 1, true); }), mat(o.robe, { side: T.DoubleSide })), 0, 0.55, 0);
+    if (o.bracelets) [ud.armL, ud.armR].forEach(function(a) { put(a, new T.Mesh(geo('bracelet', function() { return new T.TorusGeometry(0.1, 0.03, 8, 16); }), mat('#f2c94c', { metalness: 0.7, roughness: 0.3 })), 0, -0.38, 0).rotation.x = Math.PI / 2; });
+    if (o.rod) {
+        var rod = put(ud.armR, new T.Mesh(geo('rod', function() { return new T.CylinderGeometry(0.02, 0.03, 1.6, 8); }), mat('#8a5a3c')), 0, -0.2, 0.5); rod.rotation.x = 1.0;
+    }
+    if (o.trident) {
+        var tg = new T.Group(); tg.position.set(0, -0.5, 0.05); ud.armR.add(tg);
+        put(tg, new T.Mesh(geo('tripole', function() { return new T.CylinderGeometry(0.025, 0.025, 1.6, 8); }), mat('#f2c94c', { metalness: 0.7, roughness: 0.3 })), 0, 0.5, 0);
+        [-0.12, 0, 0.12].forEach(function(x) { put(tg, new T.Mesh(geo('tripoint', function() { return new T.ConeGeometry(0.04, 0.25, 8); }), mat('#f2c94c', { metalness: 0.7, roughness: 0.3 })), x, 1.4, 0); });
+    }
+    if (o.tail) {
+        // Queue de sirène à la place des jambes
+        ud.legL.visible = ud.legR.visible = false;
+        var tail = new T.Group(); tail.position.set(0, 0.6, 0); body.add(tail);
+        put(tail, new T.Mesh(capsuleGeo(0.24, 0.35), mat(o.tail)), 0, -0.25, 0);
+        var fin = ball(tail, 0.25, '#45c4b4', 0, -0.68, 0.1, 1.4, 0.2, 0.8); fin.rotation.x = -0.6;
+        ud.legL = tail; ud.legR = new T.Group();
+    }
+    if (o.dragon) {
+        // Museau, cornes, crête, ailes et queue
+        ball(head, 0.22, '#7cc45e', 0, -0.1, 0.35, 1.1, 0.75, 1);
+        [-0.08, 0.08].forEach(function(x) { ball(head, 0.03, '#1a1410', x, -0.04, 0.55); });
+        [-1, 1].forEach(function(sx) { var h = put(head, new T.Mesh(geo('dhorn', function() { return new T.ConeGeometry(0.07, 0.35, 10); }), mat('#f2e3b8')), sx * 0.22, 0.42, -0.1); h.rotation.z = -sx * 0.4; h.rotation.x = -0.4; });
+        for (var j = 0; j < 4; j++) put(body, new T.Mesh(geo('dspike', function() { return new T.ConeGeometry(0.07, 0.18, 8); }), mat('#f2a33a')), 0, 1.25 - j * 0.2, -0.3 - j * 0.02).rotation.x = -0.6;
+        [-1, 1].forEach(function(sx) {
+            var w = new T.Group(); w.position.set(sx * 0.2, 1.2, -0.3); w.rotation.y = sx * 0.5; body.add(w);
+            var wing = new T.Mesh(geo('dwing', function() { var sh = new T.Shape(); sh.moveTo(0, 0); sh.lineTo(0.8, 0.5); sh.lineTo(0.7, -0.1); sh.lineTo(0.45, 0.05); sh.lineTo(0.3, -0.25); sh.lineTo(0, 0); return new T.ShapeGeometry(sh); }), mat('#f2a33a', { side: T.DoubleSide }));
+            wing.scale.x = sx; w.add(wing); wing.castShadow = true;
+        });
+        var dt = put(body, new T.Mesh(capsuleGeo(0.12, 0.6), mat('#5fae47')), 0, 0.55, -0.55); dt.rotation.x = 1.1;
+    }
     root.scale.setScalar(0.85);
+    root.userData.skin = id;
     return root;
 }
 // Silhouette de Charlie visible à travers les murs : chaque morceau est doublé avec une matière
@@ -1986,6 +2083,19 @@ function init() {
     applyPhase();
 
     Game.player.handleClick = handleClick3d;
+    // Changement de look : on remplace le modèle de Charlie (même place, même direction)
+    var origApply = Game.player.applySkin;
+    Game.player.applySkin = function() {
+        if (origApply) origApply.apply(this, arguments);
+        if (charlie && charlie.userData.skin !== Game.state.skin) {
+            var nc = makeCharlie(); nc.position.copy(charlie.position); nc.rotation.copy(charlie.rotation); nc.userData.facing = charlie.userData.facing;
+            scene.remove(charlie); charlie = nc; scene.add(charlie); addGhost(charlie);
+        }
+        if (room3d && room3d.charlie.userData.skin !== Game.state.skin) {
+            var rc = makeCharlie(); rc.position.copy(room3d.charlie.position); rc.scale.setScalar(1.05);
+            room3d.scene.remove(room3d.charlie); room3d.charlie = rc; room3d.scene.add(rc);
+        }
+    };
     Game.player.afterMove = function() { if (!_cutscene) collide(); };
     wrapBuildings();
     // Petit état lisible pour les tests automatiques (animation de porte en cours, ouverture de la porte)
@@ -1993,6 +2103,8 @@ function init() {
         var rec = _lastBuildingId ? doorRecFor(_lastBuildingId) : null, d = rec && rec.obj.userData.door;
         return { cutscene: _cutscene, door: d ? d.rotation.y : null, room: !!room3d, iris: (document.getElementById('r3d-iris') || {}).style ? document.getElementById('r3d-iris').style.width : '' };
     };
+    // Gros plan sur Charlie (tests automatiques)
+    Game.r3d.closeUp = function(z) { _camFocus = z ? { x: charlie.position.x, z: charlie.position.z + 0.2, zoom: z, snap: true } : null; };
     // Position à l'écran d'un meuble de la pièce 3D (tests automatiques)
     Game.r3d.furnitureScreen = function(f) {
         if (!room3d) return null;
