@@ -1172,7 +1172,8 @@ function groundPoint(el, kind) {
     return { x: x + w / 2, y: y + h * 0.9 };
 }
 var _ray, _down, _from;
-var heightGrid = null;
+var heightGrid = null, _rawHeight = false;
+function rawHeightAt(px, py) { _rawHeight = true; var h = heightAt(px, py); _rawHeight = false; return h; }
 // Hauteur du sol en un point de la carte (interpolée dans la carte des hauteurs)
 function heightAt(px, py) {
     if (!heightGrid) return 0;
@@ -1180,7 +1181,7 @@ function heightAt(px, py) {
     var ix = Math.floor(gx), iy = Math.floor(gy), fx = gx - ix, fy = gy - iy, H = heightGrid.h;
     var h00 = H[iy * n + ix], h10 = H[iy * n + ix + 1], h01 = H[(iy + 1) * n + ix], h11 = H[(iy + 1) * n + ix + 1];
     var h = (h00 * (1 - fx) + h10 * fx) * (1 - fy) + (h01 * (1 - fx) + h11 * fx) * fy;
-    return Math.max(h, -0.3);   // dans l'eau peu profonde, Charlie a les pieds mouillés
+    return _rawHeight ? h : Math.max(h, -0.3);   // dans l'eau peu profonde, Charlie a les pieds mouillés
 }
 
 function syncElement(el) {
@@ -1363,6 +1364,52 @@ function placeBubble(rec) {
     rec.bubbleEl.style.top = ((1 - _bv.y) / 2 * window.innerHeight) + 'px';
 }
 
+// ── Nage : dans l'eau profonde (rivière, lacs), Charlie nage le crawl ou fait du sur-place ──
+var SWIM_DEPTH = -0.34, WATER_Y = -0.16, _swimK = 0, _ripples = [], _rippleT = 0;
+function swim(inWater, moving, dt, time) {
+    var ud = charlie.userData;
+    _swimK += ((inWater ? 1 : 0) - _swimK) * Math.min(1, dt * 6);   // passage en douceur
+    var k = _swimK;
+    if (k < 0.01) { ud.body.rotation.x = 0; ud.armL.rotation.z = -0.12; ud.armR.rotation.z = 0.12; return; }
+    var lie = moving ? 1 : 0;
+    ud.swimLie = (ud.swimLie || 0) + (lie - (ud.swimLie || 0)) * Math.min(1, dt * 5);
+    var L = ud.swimLie;
+    // Corps : allongé quand il avance, debout (tête hors de l'eau) quand il fait du sur-place
+    ud.body.rotation.x = 1.25 * L * k;
+    ud.body.position.y = 0;
+    charlie.position.y = WATER_Y + (-1.05 * (1 - L) - 0.35 * L) * k + Math.sin(time * 3) * 0.04 * k;
+    if (L > 0.5) {
+        // Crawl : un bras après l'autre fait le tour, les jambes battent vite
+        var a = time * 7;
+        ud.armL.rotation.x = -a % (Math.PI * 2); ud.armR.rotation.x = -(a + Math.PI) % (Math.PI * 2);
+        var kick = Math.sin(time * 16) * 0.45;
+        ud.legL.rotation.x = kick; ud.legR.rotation.x = -kick;
+    } else {
+        // Sur-place : bras qui remuent sur les côtés, petites jambes
+        ud.armL.rotation.x = Math.sin(time * 4) * 0.5; ud.armR.rotation.x = -Math.sin(time * 4) * 0.5;
+        ud.armL.rotation.z = -0.9; ud.armR.rotation.z = 0.9;
+        ud.legL.rotation.x = Math.sin(time * 5) * 0.3; ud.legR.rotation.x = -Math.sin(time * 5) * 0.3;
+    }
+    if (L > 0.5) { ud.armL.rotation.z = -0.12; ud.armR.rotation.z = 0.12; }
+    // Ronds dans l'eau
+    _rippleT += dt;
+    if (inWater && _rippleT > (moving ? 0.25 : 0.7)) {
+        _rippleT = 0;
+        var r = _ripples.find(function(x) { return !x.visible; });
+        if (!r && _ripples.length < 10) {
+            r = new T.Mesh(geo('ripple', function() { return new T.RingGeometry(0.35, 0.45, 32); }), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, depthWrite: false }));
+            r.rotation.x = -Math.PI / 2; scene.add(r); _ripples.push(r);
+        }
+        if (r) { r.visible = true; r.userData.t = 0; r.position.set(charlie.position.x, WATER_Y + 0.02, charlie.position.z); }
+    }
+    _ripples.forEach(function(r) {
+        if (!r.visible) return;
+        r.userData.t += dt;
+        var t = r.userData.t / 1.2;
+        if (t >= 1) { r.visible = false; return; }
+        r.scale.setScalar(1 + t * 2.5); r.material.opacity = 0.7 * (1 - t);
+    });
+}
 // Animation de marche commune (Charlie, villageois, fermier)
 function animateWalker(obj, dx, dy, dt, time) {
     var ud = obj.userData, moving = Math.hypot(dx, dy) > 0.3;
@@ -2039,8 +2086,9 @@ function loop(now) {
     var cx = s.charlie.visualX, cy = s.charlie.visualY;
     var gy = heightAt(cx, cy);
     if (!_exitHold) {   // pendant l'animation de porte, c'est elle qui place Charlie
-        animateWalker(charlie, _prev ? cx - _prev.x : 0, _prev ? cy - _prev.y : 0, dt, time);
+        var moved = animateWalker(charlie, _prev ? cx - _prev.x : 0, _prev ? cy - _prev.y : 0, dt, time);
         charlie.position.set(cx * U, gy, cy * U);
+        swim(rawHeightAt(cx, cy) < SWIM_DEPTH, moved, dt, time);
     }
     _prev = { x: cx, y: cy };
 
