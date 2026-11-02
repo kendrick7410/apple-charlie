@@ -131,7 +131,8 @@ Game.saveGame = function() {
         totalTimePlayed: s.totalTimePlayed
     };
     try {
-        localStorage.setItem('charlie_village_save', JSON.stringify(data));
+        localStorage.setItem(Game.saveKey(), JSON.stringify(data));
+        Game.worlds.touch(Game.worldId, s.level);
     } catch(e) {
         console.warn('Save failed:', e);
     }
@@ -139,7 +140,7 @@ Game.saveGame = function() {
 
 Game.loadGame = function() {
     try {
-        var raw = localStorage.getItem('charlie_village_save');
+        var raw = localStorage.getItem(Game.saveKey());
         if (!raw) return false;
         var data = JSON.parse(raw);
         Game.newGame(); // reset first
@@ -197,11 +198,11 @@ Game.loadGame = function() {
 };
 
 Game.hasSave = function() {
-    return !!localStorage.getItem('charlie_village_save');
+    return !!localStorage.getItem(Game.saveKey());
 };
 
 Game.deleteSave = function() {
-    localStorage.removeItem('charlie_village_save');
+    localStorage.removeItem(Game.saveKey());
 };
 
 // Auto-save timer
@@ -216,5 +217,62 @@ Game.startAutoSave = function() {
 window.addEventListener('beforeunload', function() {
     if (Game.state.currentView !== 'title') Game.saveGame();
 });
+
+// ── Mondes : jusqu'à 10 parties séparées, chacune avec son nom (20 caractères max) ──
+// Liste des mondes dans localStorage « village_worlds » ; la partie d'un monde dans « charlie_village_save_<id> ».
+Game.MAX_WORLDS = 10;
+Game.WORLD_NAME_MAX = 20;
+Game.worldId = null;
+Game.saveKey = function() { return 'charlie_village_save' + (Game.worldId ? '_' + Game.worldId : ''); };
+function readWorlds() {
+    try { var w = JSON.parse(localStorage.getItem('village_worlds') || '[]'); return Array.isArray(w) ? w : []; } catch (e) { return []; }
+}
+function writeWorlds(w) { try { localStorage.setItem('village_worlds', JSON.stringify(w)); } catch (e) {} }
+Game.worlds = {
+    list: function() {
+        var w = readWorlds();
+        // Ancienne partie (avant les mondes) : elle devient le premier monde
+        if (!w.length) {
+            try {
+                var old = localStorage.getItem('charlie_village_save');
+                if (old) {
+                    var lvl = 1; try { lvl = JSON.parse(old).level || 1; } catch (e) {}
+                    w = [{ id: 'w' + Date.now().toString(36), name: 'Mon monde', created: Date.now(), updated: Date.now(), level: lvl }];
+                    localStorage.setItem('charlie_village_save_' + w[0].id, old);
+                    localStorage.removeItem('charlie_village_save');
+                    writeWorlds(w);
+                }
+            } catch (e) {}
+        }
+        return w.sort(function(a, b) { return (b.updated || 0) - (a.updated || 0); });
+    },
+    cleanName: function(name) {
+        name = String(name || '').replace(/\s+/g, ' ').trim().slice(0, Game.WORLD_NAME_MAX);
+        return name || 'Mon monde';
+    },
+    create: function(name) {
+        var w = Game.worlds.list();
+        if (w.length >= Game.MAX_WORLDS) return null;
+        var world = { id: 'w' + Date.now().toString(36) + Math.floor(Math.random() * 1000), name: Game.worlds.cleanName(name), created: Date.now(), updated: Date.now(), level: 1 };
+        w.push(world); writeWorlds(w);
+        return world;
+    },
+    rename: function(id, name) {
+        var w = readWorlds();
+        w.forEach(function(x) { if (x.id === id) x.name = Game.worlds.cleanName(name); });
+        writeWorlds(w);
+    },
+    remove: function(id) {
+        writeWorlds(readWorlds().filter(function(x) { return x.id !== id; }));
+        try { localStorage.removeItem('charlie_village_save_' + id); } catch (e) {}
+    },
+    touch: function(id, level) {
+        if (!id) return;
+        var w = readWorlds();
+        w.forEach(function(x) { if (x.id === id) { x.updated = Date.now(); x.level = level || x.level; } });
+        writeWorlds(w);
+    },
+    get: function(id) { return readWorlds().find(function(x) { return x.id === id; }); }
+};
 
 })();

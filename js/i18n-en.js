@@ -834,5 +834,20 @@ Game.I18N_EN = {
 "Continuer": "Continue",
 "Continuer ▶️": "Continue ▶️",
 "Nv.": "Lvl",
-"Nv": "Lvl"
+"Nv": "Lvl",
+"Jouer ▶️": "Play ▶️",
+"🌍 Mes mondes": "🌍 My worlds",
+"Tu n'as pas encore de monde. Crée ton premier monde ci-dessous !": "You don't have a world yet. Create your first world below!",
+"Nom du nouveau monde": "New world name",
+"➕ Créer": "➕ Create",
+"20 caractères maximum": "20 characters max",
+"Tu as déjà 10 mondes (le maximum). Supprime-en un pour en créer un nouveau.": "You already have 10 worlds (the maximum). Delete one to create a new one.",
+"Renommer": "Rename",
+"Supprimer": "Delete",
+"Valider": "Confirm",
+"Ce monde sera perdu pour toujours.": "This world will be lost forever.",
+"Oui": "Yes",
+"Non": "No",
+"Jouer": "Play",
+"Mon monde": "My world"
 };
