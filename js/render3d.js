@@ -206,6 +206,23 @@ function labelSprite(text, h) {
     s.renderOrder = 10;
     return s;
 }
+// Lueur chaude en dégradé (dessinée une fois), ajoutée par-dessus la scène : jolie et légère
+var _glowTex = null;
+function glowMaterial(base, flat) {
+    if (!_glowTex) {
+        var c = document.createElement('canvas'); c.width = c.height = 128;
+        var g = c.getContext('2d'), grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+        grd.addColorStop(0, 'rgba(255,200,120,1)'); grd.addColorStop(0.35, 'rgba(255,165,80,0.5)'); grd.addColorStop(1, 'rgba(255,140,60,0)');
+        g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+        _glowTex = new T.CanvasTexture(c); _glowTex.encoding = T.sRGBEncoding;
+    }
+    // Halos des fenêtres : lumière ajoutée ; flaque au sol : voile orangé (sinon l'herbe verte la rend jaune-vert)
+    var o = { map: _glowTex, transparent: true, depthWrite: false, blending: flat ? T.NormalBlending : T.AdditiveBlending, opacity: _glow * base, fog: false };
+    var m = flat ? new T.MeshBasicMaterial(o) : new T.SpriteMaterial(o);
+    m.userData.base = base;
+    glowMats.push(m);
+    return m;
+}
 function rand(seed) { return function() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
 
 // ═══════════════════════ Modèles ronds ═══════════════════════
@@ -763,10 +780,16 @@ function buildFor(el, kind, e, label) {
     }
     // La nuit, les maisons et boutiques construites éclairent autour d'elles par leurs fenêtres
     if (kind === 'house' || kind === 'shop') {
-        var glow = new T.PointLight(lin('#ffb85c'), _windowLight, 11, 1.7);
-        glow.position.set(0, 1.8, 3.2);
+        var glow = new T.PointLight(lin('#ffc27a'), _windowLight, 9, 2);
+        glow.position.set(0, 1.5, 2.8);
         obj.add(glow);
         houseLights.push(glow);
+        // Halo doré autour des fenêtres + flaque de lumière douce sur le sol devant la maison
+        [-1.3, 1.3].forEach(function(x) {
+            var halo = new T.Sprite(glowMaterial(0.85)); halo.position.set(x, 1.75, 1.85); halo.scale.set(1.9, 1.9, 1); obj.add(halo);
+        });
+        var pool = new T.Mesh(geo('pool', function() { return new T.PlaneGeometry(5.2, 3.0); }), glowMaterial(0.4, true));
+        pool.rotation.x = -Math.PI / 2; pool.position.set(0, 0.06, 3.0); obj.add(pool);
     }
     if (label && kind !== 'flower') {
         var top = { house: 4.6 * HOUSE_S / 0.8, shop: 5.6 * SHOP_S / 0.95, construction: 3 * SITE_S / 0.8, plot: 2.2, fountain: 2.6, garden: 1.2, villager: 2.3, farmer: 2.3, barn: 4.8, mountain: Math.max(8, size * 2.6) + 0.6 }[kind] || (kind === 'sprite' ? size * 1.3 : 3.5);
@@ -992,22 +1015,42 @@ function skyTexture(top, bottom) {
     var t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; return t;
 }
 var SKIES, _phase = null;
-var houseLights = [], _windowLight = 0, _spriteLight = 1;   // lumières des fenêtres (intensité selon l'heure)
+// Ciel de nuit : dégradé bleu nuit, étoiles et lune
+function nightSky() {
+    var c = document.createElement('canvas'); c.width = 512; c.height = 256;
+    var g = c.getContext('2d'), grd = g.createLinearGradient(0, 0, 0, 256);
+    grd.addColorStop(0, '#0c1540'); grd.addColorStop(1, '#3a4a8c');
+    g.fillStyle = grd; g.fillRect(0, 0, 512, 256);
+    var R = rand(42);
+    for (var i = 0; i < 160; i++) { g.fillStyle = 'rgba(255,255,255,' + (0.4 + R() * 0.6) + ')'; g.fillRect(R() * 512, R() * 200, R() > 0.85 ? 2 : 1, R() > 0.85 ? 2 : 1); }
+    var mg = g.createRadialGradient(420, 50, 0, 420, 50, 40); mg.addColorStop(0, 'rgba(255,250,220,0.5)'); mg.addColorStop(1, 'rgba(255,250,220,0)');
+    g.fillStyle = mg; g.fillRect(370, 0, 100, 100);
+    g.fillStyle = '#fff8dc'; g.beginPath(); g.arc(420, 50, 14, 0, 7); g.fill();
+    var t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; return t;
+}
+var houseLights = [], _windowLight = 0, _spriteLight = 1;
+var glowMats = [], _glow = 0;   // halos des fenêtres et flaques de lumière (visibles le soir et la nuit)   // lumières des fenêtres (intensité selon l'heure)
 function applyPhase() {
     var ph = Game.time.getPhase();
     if (ph === _phase) return;
     _phase = ph;
     var P = {
         day:   { sky: SKIES.day,   fog: '#bfe2f6', hemi: 0.7,  sun: 1.3,  sunC: '#fff0d0', win: 0,   lamp: 0,   spr: 1 },
-        dawn:  { sky: SKIES.dawn,  fog: '#f6d2b8', hemi: 0.5,  sun: 0.9,  sunC: '#ffc89a', win: 0.4, lamp: 0.6, spr: 0.8 },
-        dusk:  { sky: SKIES.dusk,  fog: '#e7a98f', hemi: 0.4,  sun: 0.7,  sunC: '#ff9f6a', win: 0.9, lamp: 1.2, spr: 0.65 },
+        dawn:  { sky: SKIES.dawn,  fog: '#f6d2b8', hemi: 0.5,  sun: 0.9,  sunC: '#ffc89a', win: 0.4, lamp: 0.3, spr: 0.8, glow: 0.35 },
+        dusk:  { sky: SKIES.dusk,  fog: '#e7a98f', hemi: 0.4,  sun: 0.7,  sunC: '#ff9f6a', win: 0.9, lamp: 0.6, spr: 0.65, glow: 0.6 },
         // Nuit noire : seules les fenêtres des maisons éclairent (Charlie ne porte plus de lumière)
-        night: { sky: SKIES.night, fog: '#05070f', hemi: 0.025, sun: 0.02, sunC: '#8fa6ff', win: 1.6, lamp: 2.6, spr: 0.12 }
+        // Nuit douce : clair de lune bleuté (on voit tout), fenêtres dorées qui brillent
+        night: { sky: SKIES.night, fog: '#141c40', hemi: 0.2, sun: 0.3, sunC: '#9db2ff', win: 1.8, lamp: 0.9, spr: 0.42, glow: 1, exp: 0.82 }
     }[ph];
     scene.background = P.sky;
     scene.fog.color.copy(lin(P.fog));
     hemi.intensity = P.hemi;
+    hemi.color.copy(lin(ph === 'night' ? '#9fb2ff' : '#cfe9ff'));
+    hemi.groundColor.copy(lin(ph === 'night' ? '#1e2a4a' : '#4d6b2f'));
     sun.intensity = P.sun; sun.color.copy(lin(P.sunC));
+    renderer.toneMappingExposure = P.exp || 1;
+    _glow = P.glow || 0;
+    glowMats.forEach(function(m) { m.opacity = _glow * m.userData.base; });
     windowGlass.forEach(function(g) { g.emissiveIntensity = P.win; });
     _windowLight = P.lamp;
     houseLights = houseLights.filter(function(l) { return l.parent && l.parent.parent; });   // maisons encore là
@@ -1503,7 +1546,7 @@ function init() {
     scene = new T.Scene();
     SKIES = {
         day: skyTexture('#5fb3ee', '#d3eefc'), dawn: skyTexture('#8fb4e8', '#ffd9bf'),
-        dusk: skyTexture('#5a64b0', '#ffae86'), night: skyTexture('#070c26', '#25305e')
+        dusk: skyTexture('#5a64b0', '#ffae86'), night: nightSky()
     };
     scene.fog = new T.Fog(lin('#bfe2f6'), 48, 105);
     camera = new T.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 200);
