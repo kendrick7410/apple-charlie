@@ -46,7 +46,7 @@ Game.CONFIG = {
 
     // XP
     XP_PER_LEVEL: 100,
-    MAX_LEVEL: 15,
+    MAX_LEVEL: 30,
 
     // Faim
     HUNGER_MAX: 100,
@@ -195,23 +195,24 @@ Game.HOUSES = [
 // npc     : shopkeeper emoji standing behind the counter
 // purpose : short text explaining what you do in this shop
 // nightOnly: if true, only enterable at night (the museum)
+// level/cost: bâtiment à construire (niveau requis + matériaux 🧱) ; resident : villageois qui y vit
 Game.SHOPS = [
-    { id: 'bakery', name: 'Boulangerie', sign: '🍞', loc: 'bakery', panel: 'action-bakery', theme: 'bakery',
+    { id: 'bakery', name: 'Boulangerie', sign: '🍞', loc: 'bakery', panel: 'action-bakery', theme: 'bakery', level: 15, cost: 15,
       npc: '👩‍🍳', purpose: "Ici tu cuis du pain 🍞 et tu cuisines des plats (tartes, sushis...) à revendre.",
       decor: [['🥖',70,140],['🥐',150,130],['🧁',460,150],['🍰',250,110],['🔥',110,430],['🪵',440,440],['🌾',60,310],['🛒',460,310]] },
     { id: 'shop', name: 'Magasin', sign: '🏪', loc: 'shop', panel: 'action-shop', theme: 'shop',
       npc: '🧓', purpose: "Achète des outils 🪓, des graines 🌱 et des matériaux 🧱 avec tes clochettes.",
       decor: [['📦',70,140],['🧺',460,140],['🪜',250,110],['🏷️',60,310],['🛒',460,310],['💰',110,440],['🧱',440,440],['🪴',250,440]] },
-    { id: 'fishShop', name: 'Poissonnerie', sign: '🐟', loc: 'fishShop', panel: 'action-fishShop', theme: 'fishShop',
+    { id: 'fishShop', name: 'Poissonnerie', sign: '🐟', loc: 'fishShop', panel: 'action-fishShop', theme: 'fishShop', level: 20, cost: 20,
       npc: '🧑‍🍳', purpose: "Dépose tes poissons 🐟 : ils se vendent tout seuls, reviens collecter tes clochettes 💰.",
       decor: [['🐠',70,140],['🦀',460,150],['🐙',250,110],['🦐',150,130],['🧊',110,440],['⚖️',440,440],['🐟',60,310],['🪣',460,310]] },
-    { id: 'museum', name: 'Musée', sign: '🏛️', loc: 'museum', panel: 'action-museum', theme: 'museum', nightOnly: true,
+    { id: 'museum', name: 'Musée', sign: '🏛️', loc: 'museum', panel: 'action-museum', theme: 'museum', nightOnly: true, level: 30, cost: 30, resident: 'Pedro 🦉',
       npc: '🦉', purpose: "Le hibou t'achète tes ressources 🍎🪵🧱🌻 contre des clochettes. Donne aussi tes spécimens !",
       decor: [['🖼️',70,140],['🗿',460,140],['🏺',250,110],['🦴',60,310],['💎',460,310],['🕯️',110,440],['📜',440,440],['🔭',250,440]] },
     { id: 'souvenir', name: 'Boutique Souvenir', sign: '🎁', loc: 'souvenirShop', panel: 'action-souvenir', theme: 'souvenir',
       npc: '🧑‍💼', purpose: "Achète des boules à neige à collectionner. Elles décorent ta maison ! ❄️",
       decor: [['🎁',70,140],['🧸',460,140],['🪅',250,110],['📮',60,310],['🛍️',460,310],['🏖️',110,440],['🐚',440,440],['🌴',250,440]] },
-    { id: 'pizzeria', name: 'Pizzeria David', sign: '🍕', loc: 'pizzeria', panel: 'action-pizzeria', theme: 'pizzeria',
+    { id: 'pizzeria', name: 'Pizzeria David', sign: '🍕', loc: 'pizzeria', panel: 'action-pizzeria', theme: 'pizzeria', level: 25, cost: 25,
       npc: '🦏', npcLine: "David : Bienvenue dans ma pizzeria ! 🍕🦏", purpose: "David le rhinocéros te prépare de bonnes pizzas. Achète-les et goûte-les toutes !",
       decor: [['🍕',70,140],['🧀',460,140],['🍅',250,110],['🔥',110,440],['🪵',440,440],['🌿',60,300],['🍷',460,300],['🪑',250,440]] }
 ];

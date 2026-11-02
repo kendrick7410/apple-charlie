@@ -49,6 +49,9 @@ Game.world.init = function() {
     // Pizzeria David (le rhinocéros)
     Game.world.createBuilding(Game.CONFIG.LOCATIONS.pizzeria.x, Game.CONFIG.LOCATIONS.pizzeria.y, "🍕", "Pizzeria David", "pizzeria-anchor");
 
+    // Boulangerie, poissonnerie, musée, pizzeria : chantiers tant qu'ils ne sont pas construits
+    Game.SHOPS.forEach(function(sh) { if (sh.level) Game.world.renderShopSite(sh); });
+
     // Mini-forest
     Game.world.createForest();
 
@@ -635,6 +638,20 @@ Game.world.renderVillagerHouse = function(h) {
     } else {
         div.className = 'entity house-exterior house-plot';
         div.innerHTML = '<div>' + (h.plotEmoji || '🪧') + '</div><div class="building-label">' + (h.plotLabel || 'Terrain à bâtir') + ' · niv. ' + h.level + ' · ' + h.cost + ' 🧱</div>';
+    }
+};
+
+// Bâtiment à construire : chantier 🏗️ tant qu'il n'est pas construit
+Game.world.renderShopSite = function(shop) {
+    var el = document.getElementById(shop.loc + '-anchor');
+    if (!el) return;
+    if (el.dataset.html === undefined) el.dataset.html = el.innerHTML;   // apparence du bâtiment fini
+    if (Game.buildings.isShopBuilt(shop.id)) {
+        el.innerHTML = el.dataset.html;
+        el.classList.remove('house-plot');
+    } else {
+        el.innerHTML = '<div>🏗️</div><div class="building-label">Chantier : ' + shop.name + ' · niv. ' + shop.level + ' · ' + shop.cost + ' 🧱</div>';
+        el.classList.add('house-plot');
     }
 };
 

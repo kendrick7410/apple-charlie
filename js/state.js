@@ -45,6 +45,7 @@ Game.state = {
     placedPaths: [],     // [{x,y}]
     houseFurniture: {},  // per-house id
     builtHouses: [],     // maisons de villageois construites [id, ...] (voir Game.HOUSES)
+    builtShops: [],      // bâtiments construits [id, ...] (voir Game.SHOPS, champ level)
     totalTimePlayed: 0,
     keysDown: {},
     paused: false,
@@ -79,6 +80,8 @@ Game.newGame = function() {
     });
     // Nouvelle partie : une seule maison (et un seul villageois) au départ
     Game.state.builtHouses = Game.HOUSES.filter(function(h){ return h.start; }).map(function(h){ return h.id; });
+    // Les bâtiments avec un niveau requis (boulangerie, poissonnerie, pizzeria, musée) sont à construire
+    Game.state.builtShops = Game.SHOPS.filter(function(sh){ return !sh.level; }).map(function(sh){ return sh.id; });
 };
 
 Game.saveGame = function() {
@@ -117,6 +120,7 @@ Game.saveGame = function() {
         placedPaths: s.placedPaths.slice(),
         houseFurniture: JSON.parse(JSON.stringify(s.houseFurniture)),
         builtHouses: s.builtHouses.slice(),
+        builtShops: s.builtShops.slice(),
         totalTimePlayed: s.totalTimePlayed
     };
     try {
@@ -167,6 +171,7 @@ Game.loadGame = function() {
         if (data.houseFurniture) s.houseFurniture = data.houseFurniture;
         // Ancienne sauvegarde (avant les terrains à bâtir) : on garde tout le village déjà là
         s.builtHouses = data.builtHouses || Game.HOUSES.map(function(h){ return h.id; });
+        s.builtShops = data.builtShops || Game.SHOPS.map(function(sh){ return sh.id; });
         Game.HOUSES.forEach(function(h) {
             if (!s.houseFurniture[h.id]) s.houseFurniture[h.id] = h.furniture.map(function(f){ return f.slice(); });
         });

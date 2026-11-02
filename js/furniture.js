@@ -9,6 +9,7 @@ Game.furniture = {};
 var USE_RADIUS = 110;          // distance pour pouvoir utiliser un meuble
 var DAY_MS = 12 * 60 * 1000;   // 1 jour de jeu = 12 minutes réelles (2h de jeu par minute)
 var DRAG_THRESHOLD = 6;        // en dessous, c'est un clic ; au-dessus, on déplace
+var BREAD_APPLES = 2;          // un pain cuit à la cuisinière coûte 2 pommes
 
 var BOOK_FACTS = [
     "Les loutres se tiennent la main en dormant pour ne pas dériver. 🦦",
@@ -48,7 +49,7 @@ var HELP = {
     bed:       "La nuit, dors jusqu'au matin ☀️.",
     lamp:      "La nuit, la maison est sombre sans lampe allumée.",
     mirror:    "Essaie tes skins 🎭.",
-    stove:     "Cuisine des plats sans aller à la boulangerie."
+    stove:     "Cuis du pain 🍞 et des plats sans aller à la boulangerie."
 };
 
 function room() { return document.getElementById('current-room'); }
@@ -366,7 +367,8 @@ var USES = {
     // Cuisinière : cuisiner à la maison
     stove: function(f, el) {
         var icons = { apples: '🍎', fish: '🐟', flowers: '🌻', bread: '🍞' };
-        var html = '';
+        // Le pain se cuit aussi à la maison (indispensable avant la boulangerie, niveau 15)
+        var html = '<button class="btn-animal fm-bread">🍞 Pain (🍎' + BREAD_APPLES + ')</button>';
         for (var id in Game.COOKING_RECIPES) {
             var r = Game.COOKING_RECIPES[id];
             var need = '';
@@ -380,6 +382,20 @@ var USES = {
         for (var i = 0; i < btns.length; i++) {
             btns[i].onclick = function() { Game.crafting.cook(this.dataset.recipe); };
         }
+        document.querySelector('#furniture-menu .fm-bread').onclick = function() {
+            var s = Game.state;
+            if (s.inventory.apples < BREAD_APPLES) {
+                Game.ui.notify("Il te faut " + BREAD_APPLES + " pommes 🍎 pour faire un pain");
+                Game.audio.play('error');
+                return;
+            }
+            s.inventory.apples -= BREAD_APPLES;
+            s.inventory.bread++;
+            Game.xp.add(5);
+            Game.audio.play('craft');
+            Game.ui.update();
+            Game.ui.notify("Pain frais ! 🍞");
+        };
     }
 };
 

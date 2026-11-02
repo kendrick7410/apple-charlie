@@ -40,7 +40,19 @@ Game.buildings.checkProximity = function() {
     var enterPanel = document.getElementById('action-enter');
     var enterBtn = document.getElementById('enter-shop-btn');
     if (enterPanel && enterBtn) {
-        if (nearShop && s.currentView === 'world') {
+        if (nearShop && s.currentView === 'world' && !Game.buildings.isShopBuilt(nearShop.id)) {
+            // Chantier : niveau requis puis matériaux
+            enterPanel.style.display = 'flex';
+            if (s.level < nearShop.level) {
+                enterBtn.textContent = '🔒 Chantier ' + nearShop.name + ' — niveau ' + nearShop.level + ' requis';
+                enterBtn.onclick = (function(sh){ return function() {
+                    Game.ui.notify("Atteins le niveau " + sh.level + " pour construire : " + sh.name + " " + sh.sign);
+                }; })(nearShop);
+            } else {
+                enterBtn.textContent = '🔨 Construire : ' + nearShop.name + ' (' + s.inventory.materials + '/' + nearShop.cost + ' 🧱)';
+                enterBtn.onclick = (function(sh){ return function() { Game.buildings.buildShop(sh); }; })(nearShop);
+            }
+        } else if (nearShop && s.currentView === 'world') {
             enterPanel.style.display = 'flex';
             if (nearShop.nightOnly && !Game.time.isNight()) {
                 enterBtn.textContent = '🌙 ' + nearShop.sign + ' ' + nearShop.name + ' — ouvre la nuit';
@@ -387,7 +399,41 @@ Game.buildings.houseOf = function(villagerName) {
 // Un villageois habite au village si sa maison est construite (ou s'il n'a pas de maison)
 Game.buildings.isVillagerHere = function(villagerName) {
     var h = Game.buildings.houseOf(villagerName);
-    return !h || Game.buildings.isHouseBuilt(h.id);
+    if (h) return Game.buildings.isHouseBuilt(h.id);
+    // Habitant d'un bâtiment (Pedro au musée) : là seulement si le bâtiment est construit
+    var shop = Game.SHOPS.find(function(sh){ return sh.resident === villagerName; });
+    return !shop || Game.buildings.isShopBuilt(shop.id);
+};
+
+Game.buildings.isShopBuilt = function(id) {
+    return Game.state.builtShops.indexOf(id) !== -1;
+};
+
+Game.buildings.buildShop = function(shop) {
+    var s = Game.state;
+    if (Game.buildings.isShopBuilt(shop.id)) return;
+    if (s.level < shop.level) {
+        Game.ui.notify("Atteins le niveau " + shop.level + " pour construire : " + shop.name + " ⭐");
+        return;
+    }
+    if (s.inventory.materials < shop.cost) {
+        Game.ui.notify("Il te faut " + shop.cost + " matériaux 🧱 (tu en as " + s.inventory.materials + "). Achète-en au Magasin 🏪 !");
+        Game.audio.play('error');
+        return;
+    }
+    s.inventory.materials -= shop.cost;
+    s.builtShops.push(shop.id);
+    Game.world.renderShopSite(shop);
+    var l = Game.CONFIG.LOCATIONS[shop.loc];
+    Game.xp.add(60);
+    Game.audio.play('craft');
+    Game.particles.spawnWorld('🔨', l.x, l.y, { count: 6, spread: 50 });
+    Game.particles.confetti();
+    Game.ui.notify("🎉 " + shop.sign + " " + shop.name + " : construction terminée ! Tu peux y entrer.", 'levelup');
+    Game.ui.update();
+    Game.quests.updateQuestTracker();
+    Game.saveGame();
+    Game.buildings.checkProximity();
 };
 
 Game.buildings.buildVillagerHouse = function(house) {
@@ -423,6 +469,11 @@ Game.buildings.announceNewPlots = function(newLevel) {
     Game.HOUSES.forEach(function(h) {
         if (h.level === newLevel && !Game.buildings.isHouseBuilt(h.id)) {
             Game.ui.notify("🪧 Nouveau terrain ! Tu peux construire la maison de " + h.name + " (" + h.cost + " 🧱)", 'info');
+        }
+    });
+    Game.SHOPS.forEach(function(sh) {
+        if (sh.level === newLevel && !Game.buildings.isShopBuilt(sh.id)) {
+            Game.ui.notify("🏗️ Nouveau chantier ! Tu peux construire : " + sh.name + " " + sh.sign + " (" + sh.cost + " 🧱)", 'info');
         }
     });
 };
