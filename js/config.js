@@ -55,11 +55,11 @@ Game.CONFIG = {
     // Locations
     LOCATIONS: {
         fountain:     { x: 1000, y: 1000 },
-        bakery:       { x: 800,  y: 800  },
+        bakery:       { x: 870,  y: 800  },   // décalée : ne touche plus la rivière
         shop:         { x: 1200, y: 800  },
         charlieHouse: { x: 1400, y: 1200 },
         garden:       { x: 1550, y: 1350 },
-        fishShop:     { x: 650,  y: 1100 },
+        fishShop:     { x: 760,  y: 1110 },   // décalée : ne touche plus la rivière
         museum:       { x: 1300, y: 1500 },
         pizzeria:     { x: 1900, y: 1150 },
         forest:       { x: 1900, y: 450  },
@@ -180,7 +180,7 @@ Game.HOUSES = [
     { id: 'lya',  name: 'Eloise 🐰',  x: 850,  y: 1200, emoji: '🏡', start: true, furniture: [['🛏️',50,50],['🎨',450,100],['🧶',250,250]] },
     { id: 'melo', name: 'Lea 🐱', x: 1100, y: 1400, emoji: '🏠', level: 2, cost: 3, furniture: [['🛋️',400,50],['📺',450,50],['🍜',100,300]] },
     { id: 'jo',   name: 'Tom 🐶',   x: 1500, y: 900,  emoji: '🏠', level: 3, cost: 5, furniture: [['🎸',50,400],['🍕',300,300],['🏆',50,50]] },
-    { id: 'celestine', name: 'Lucie 🦊', x: 700, y: 1500, emoji: '🏡', level: 5, cost: 8, furniture: [['🔮',50,50],['📖',400,100],['🕯️',250,300]] },
+    { id: 'celestine', name: 'Lucie 🦊', x: 860, y: 1520, emoji: '🏡', level: 5, cost: 8, furniture: [['🔮',50,50],['📖',400,100],['🕯️',250,300]] },
     { id: 'ordra', name: 'Ordralfabétix 🐡', x: 1700, y: 1000, emoji: '🛖', level: 7, cost: 10, furniture: [['🐟',50,50],['🪣',400,100],['🎣',250,300]] },
     // Max garde le refuge du Cervin : sa "maison", c'est le refuge en ruine à réparer
     { id: 'max',  name: 'Max 🐕', x: 3300, y: 950, emoji: '🛖', label: '🔥 Refuge de Max', plotEmoji: '🏚️', plotLabel: 'Refuge en ruine', level: 9, cost: 12, furniture: [['🧗',50,50],['🎒',400,100],['🗺️',250,300]] },

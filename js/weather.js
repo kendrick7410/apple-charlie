@@ -27,7 +27,7 @@ Game.weather.init = function() {
 
     // Init drops
     for (var i = 0; i < 200; i++) {
-        drops.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, speed: 4 + Math.random() * 6, len: 10 + Math.random() * 15 });
+        drops.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, speed: 16 + Math.random() * 10, len: 18 + Math.random() * 16 });   // vraie pluie : chute rapide
     }
     for (var j = 0; j < 100; j++) {
         flakes.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, speed: 1 + Math.random() * 2, size: 2 + Math.random() * 4, drift: (Math.random() - 0.5) * 1 });
@@ -60,7 +60,7 @@ function drawRain(dt) {
     for (var i = 0; i < drops.length; i++) {
         var d = drops[i];
         d.y += d.speed;
-        d.x -= 1;
+        d.x -= 2;
         if (d.y > canvas.height) { d.y = -d.len; d.x = Math.random() * canvas.width; }
         if (d.x < 0) d.x = canvas.width;
         ctxW.moveTo(d.x, d.y);

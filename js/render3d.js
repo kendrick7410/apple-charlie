@@ -614,6 +614,28 @@ function makeGarden(el) {
 }
 
 // ═══════════════════════ Décor fixe (sol, mer, rivière, chemins) ═══════════════════════
+// Texture d'eau : bleu, reflets ondulés et petites taches d'écume (répétée, on la fait défiler)
+var riverTex = null, seaTex = null;
+function waterTexture(base) {
+    var c = document.createElement('canvas'); c.width = c.height = 256;
+    var g = c.getContext('2d');
+    g.fillStyle = base; g.fillRect(0, 0, 256, 256);
+    var R = rand(9);
+    g.lineCap = 'round';
+    for (var i = 0; i < 26; i++) {
+        var y = R() * 256, x = R() * 256, len = 30 + R() * 60;
+        g.strokeStyle = 'rgba(255,255,255,' + (0.12 + R() * 0.2) + ')'; g.lineWidth = 2 + R() * 3;
+        g.beginPath(); g.moveTo(x, y);
+        g.bezierCurveTo(x + len * 0.3, y - 6, x + len * 0.6, y + 6, x + len, y);
+        g.stroke();
+        // recopie de l'autre côté pour que la texture se répète sans couture
+        g.beginPath(); g.moveTo(x - 256, y); g.bezierCurveTo(x - 256 + len * 0.3, y - 6, x - 256 + len * 0.6, y + 6, x - 256 + len, y); g.stroke();
+    }
+    for (i = 0; i < 40; i++) { g.fillStyle = 'rgba(255,255,255,' + (0.2 + R() * 0.3) + ')'; g.beginPath(); g.arc(R() * 256, R() * 256, 1 + R() * 2, 0, 7); g.fill(); }
+    var t = new T.CanvasTexture(c);
+    t.encoding = T.sRGBEncoding; t.wrapS = t.wrapT = T.RepeatWrapping;
+    return t;
+}
 function shorelineY(x) { return Game.world.shorelineY ? Game.world.shorelineY(x) : Game.CONFIG.SEA_TOP; }
 function rectOf(el) { return { x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0, w: el.offsetWidth, h: el.offsetHeight }; }
 function inEllipse(px, py, r) { var dx = (px - (r.x + r.w / 2)) / (r.w / 2), dy = (py - (r.y + r.h / 2)) / (r.h / 2); return dx * dx + dy * dy; }
@@ -625,7 +647,11 @@ function buildTerrain() {
     var hills = Array.prototype.map.call(world.querySelectorAll('.hill'), rectOf);
     var pens = Array.prototype.map.call(world.querySelectorAll('.farm-pen'), rectOf);
     var MZ = { x: 2650, y: 300, w: 1750, h: 1450 };   // zone des montagnes (comme entities.js)
-    var seg = 160;
+    // Rivière et lacs : on creuse leur lit dans le sol (berges en pente)
+    var waters = Game.buildRiverSegments().map(function(sg) { return { x: sg.x, y: sg.y, w: sg.w, h: sg.h }; })
+        .concat(Array.prototype.map.call(world.querySelectorAll('.lake-water'), rectOf));
+    var BANK = lin('#a88d5c'), BED = lin('#6b7a52');
+    var seg = 300;
     var g = new T.PlaneGeometry(W * U, H * U, seg, seg);
     g.rotateX(-Math.PI / 2); g.translate(W * U / 2, 0, H * U / 2);
     var pos = g.attributes.position, cols = [], c = new T.Color(), R = rand(3);
@@ -648,33 +674,51 @@ function buildTerrain() {
         if (py > C.BEACH_TOP - 60) c.lerp(SAND, Math.min(1, (py - (C.BEACH_TOP - 60)) / 120));
         if (py > shore - 120) { var d = (py - (shore - 120)) / 120; h -= Math.min(1, d) * 0.15; c.lerp(WET, Math.min(1, d) * 0.6); }
         if (py > shore) { h -= Math.min(1.2, (py - shore) / 300); c.copy(SEABED); }
+        // Distance à l'eau la plus proche (ellipses de la rivière et des lacs)
+        var ew = 9;
+        for (var wi = 0; wi < waters.length; wi++) {
+            var wr = waters[wi];
+            if (py < wr.y - 200 || py > wr.y + wr.h + 200) continue;
+            var ev = inEllipse(px, py, wr); if (ev < ew) ew = ev;
+        }
+        if (ew < 1) { var dep = Math.min(1, (1 - ew) / 0.45); h -= 0.6 * dep * dep * (3 - 2 * dep); c.lerp(BED, dep); }
+        if (ew < 1.35) c.lerp(BANK, Math.max(0, 1 - Math.abs(ew - 1) / 0.35) * 0.7);
         pos.setY(i, h);
         cols.push(c.r, c.g, c.b);
     }
     g.setAttribute('color', new T.Float32BufferAttribute(cols, 3));
     g.computeVertexNormals();
+    // Carte des hauteurs (pour poser les objets et Charlie sur le sol sans tester tous les triangles)
+    heightGrid = { n: seg + 1, cell: W / seg, h: new Float32Array(pos.count) };
+    for (i = 0; i < pos.count; i++) heightGrid.h[i] = pos.getY(i);
     groundMesh = new T.Mesh(g, new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
     groundMesh.receiveShadow = true;
     scene.add(groundMesh);
 
-    // Mer
-    var sea = new T.Mesh(new T.PlaneGeometry(W * U, (H - C.SEA_TOP + 400) * U), new T.MeshStandardMaterial({ color: lin('#3fa6dc'), roughness: 0.08, metalness: 0.1, transparent: true, opacity: 0.85 }));
+    // Mer (vagues qui bougent doucement)
+    seaTex = waterTexture('#2f97d1');
+    seaTex.repeat.set(W * U / 6, (H - C.SEA_TOP + 400) * U / 6);
+    var sea = new T.Mesh(new T.PlaneGeometry(W * U, (H - C.SEA_TOP + 400) * U), new T.MeshStandardMaterial({ map: seaTex, roughness: 0.12, metalness: 0.1, transparent: true, opacity: 0.88 }));
     sea.rotation.x = -Math.PI / 2; sea.position.set(W * U / 2, -0.12, (C.SEA_TOP - 400 + (H - C.SEA_TOP + 400) / 2) * U);
     scene.add(sea);
 
-    // Rivière, lacs : formes d'eau plates (ellipses fusionnées en un seul objet)
-    var WATER = new T.MeshStandardMaterial({ color: lin('#4fb3e4'), roughness: 0.1, metalness: 0.1 });
-    var verts = [];
+    // Rivière, lacs : surface d'eau au fond du lit creusé, avec une texture qui coule vers la mer
+    riverTex = waterTexture('#3aa6dc');
+    var WATER = new T.MeshStandardMaterial({ map: riverTex, roughness: 0.1, metalness: 0.1 });
+    var verts = [], uvs = [];
     function ellipse(r, y) {
-        var cx = (r.x + r.w / 2) * U, cz = (r.y + r.h / 2) * U, rx = r.w / 2 * U, rz = r.h / 2 * U, n = 20;
+        var cx = (r.x + r.w / 2) * U, cz = (r.y + r.h / 2) * U, rx = r.w / 2 * U * 1.04, rz = r.h / 2 * U * 1.04, n = 20;
+        function v(x, z) { verts.push(x, y, z); uvs.push(x / 4, z / 4); }
         for (var k = 0; k < n; k++) {
             var a1 = k / n * Math.PI * 2, a2 = (k + 1) / n * Math.PI * 2;
-            verts.push(cx, y, cz, cx + Math.cos(a2) * rx, y, cz + Math.sin(a2) * rz, cx + Math.cos(a1) * rx, y, cz + Math.sin(a1) * rz);
+            v(cx, cz); v(cx + Math.cos(a2) * rx, cz + Math.sin(a2) * rz); v(cx + Math.cos(a1) * rx, cz + Math.sin(a1) * rz);
         }
     }
-    Game.buildRiverSegments().forEach(function(s) { ellipse({ x: s.x, y: s.y, w: s.w, h: s.h }, 0.04); });
-    Array.prototype.forEach.call(world.querySelectorAll('.lake-water'), function(el) { ellipse(rectOf(el), 0.05); });
-    var wg = new T.BufferGeometry(); wg.setAttribute('position', new T.Float32BufferAttribute(verts, 3)); wg.computeVertexNormals();
+    waters.forEach(function(r) { ellipse(r, -0.16); });
+    var wg = new T.BufferGeometry();
+    wg.setAttribute('position', new T.Float32BufferAttribute(verts, 3));
+    wg.setAttribute('uv', new T.Float32BufferAttribute(uvs, 2));
+    wg.computeVertexNormals();
     var waterMesh = new T.Mesh(wg, WATER); waterMesh.receiveShadow = true; scene.add(waterMesh);
 
     // Chemins de sable (rectangles aux coins arrondis)
@@ -815,12 +859,15 @@ function groundPoint(el, kind) {
     return { x: x + w / 2, y: y + h * 0.9 };
 }
 var _ray, _down, _from;
+var heightGrid = null;
+// Hauteur du sol en un point de la carte (interpolée dans la carte des hauteurs)
 function heightAt(px, py) {
-    if (!groundMesh) return 0;
-    _from.set(px * U, 50, py * U);
-    _ray.set(_from, _down);
-    var hit = _ray.intersectObject(groundMesh, false)[0];
-    return hit ? Math.max(hit.point.y, -0.1) : 0;
+    if (!heightGrid) return 0;
+    var n = heightGrid.n, gx = Math.max(0, Math.min(n - 1.001, px / heightGrid.cell)), gy = Math.max(0, Math.min(n - 1.001, py / heightGrid.cell));
+    var ix = Math.floor(gx), iy = Math.floor(gy), fx = gx - ix, fy = gy - iy, H = heightGrid.h;
+    var h00 = H[iy * n + ix], h10 = H[iy * n + ix + 1], h01 = H[(iy + 1) * n + ix], h11 = H[(iy + 1) * n + ix + 1];
+    var h = (h00 * (1 - fx) + h10 * fx) * (1 - fy) + (h01 * (1 - fx) + h11 * fx) * fy;
+    return Math.max(h, -0.3);   // dans l'eau peu profonde, Charlie a les pieds mouillés
 }
 
 function syncElement(el) {
@@ -1655,6 +1702,9 @@ function loop(now) {
 
     _dtFrame = dt;
     if (!_cutscene) { walkToTarget(dt); collide(); }
+    // La rivière coule vers la mer (vers le bas de la carte), la mer ondule
+    if (riverTex) { riverTex.offset.y -= dt * 0.35; riverTex.offset.x = Math.sin(time * 0.6) * 0.04; }
+    if (seaTex) { seaTex.offset.x += dt * 0.03; seaTex.offset.y = Math.sin(time * 0.5) * 0.08; }
     _scanT += dt;
     if (_scanT > 0.4) { _scanT = 0; scan(); applyPhase(); }
     syncMoving(time);
