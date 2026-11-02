@@ -160,6 +160,7 @@ window.addEventListener('resize', function() { _fitKey = ''; Game.furniture.fitR
 document.addEventListener('pointerdown', function(e) {
     var r = room();
     if (!r || Game.state.currentView !== 'interior' || busy) return;
+    if (e.pointerType === 'touch' && e.clientX < window.innerWidth * 0.45) return;   // pouce gauche = joystick
     if (e.target !== r && e.target.id !== 'room-light' && !e.target.classList.contains('exit-mat')) return;
     var rect = r.getBoundingClientRect(), k = scale();
     Game.state.interiorTarget = {

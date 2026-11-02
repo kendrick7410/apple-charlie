@@ -58,6 +58,8 @@ Game.player.update = function(dt, now) {
         dx *= 0.7071;
         dy *= 0.7071;
     }
+    // Joystick tactile (pouce gauche) : direction et vitesse selon jusqu'où on pousse
+    if (s.joy && (s.joy.x || s.joy.y)) { dx = s.joy.x; dy = s.joy.y; }
 
     if (dx !== 0 || dy !== 0) {
         s.charlie.x += dx * speed;
@@ -187,6 +189,7 @@ Game.player.updateInterior = function(dt) {
     }
 
     if (dx !== 0 && dy !== 0 && !s.interiorTarget) { dx *= 0.7071; dy *= 0.7071; }
+    if (s.joy && (s.joy.x || s.joy.y)) { dx = s.joy.x; dy = s.joy.y; s.interiorTarget = null; }
 
     s.interiorCharlie.x += dx * speed;
     s.interiorCharlie.y += dy * speed;

@@ -1504,6 +1504,7 @@ function walkToTarget(dt) {
     var s = Game.state, k = s.keysDown;
     if (!_walkTarget) return;
     for (var key in k) { if (k[key]) { _walkTarget = null; return; } }   // le clavier reprend la main
+    if (s.joy && (s.joy.x || s.joy.y)) { _walkTarget = null; return; }
     var c = s.charlie, dx = _walkTarget.x - c.x, dy = _walkTarget.y - c.y, d = Math.hypot(dx, dy);
     var step = Game.CONFIG.PLAYER_SPEED * Game.player.skinBonus().speed * dt * 60;
     if (d <= step) { c.x = _walkTarget.x; c.y = _walkTarget.y; _walkTarget = null; return; }
@@ -1687,6 +1688,7 @@ function updateSwing(dt, time) {
     _swingBtn.textContent = _swinging ? '✋ Descendre' : '🎠 Se balancer';
     if (_swinging) {
         for (var k in s.keysDown) if (s.keysDown[k]) { stopSwing(); return; }
+        if (s.joy && (s.joy.x || s.joy.y)) { stopSwing(); return; }
         // Charlie assis sur le siège, les mains aux cordes, avec un grand sourire
         var ud = charlie.userData, seat = new T.Vector3(0, -2.3, 0);
         swingPivot.localToWorld(seat);
@@ -1718,6 +1720,11 @@ function stopSwing() {
     s.charlie.x = s.swing.x; s.charlie.y = s.swing.y + 70;
 }
 Game.r3d.isSwinging = function() { return _swinging; };
+Game.r3d.furnitureAt = function(e) {
+    if (!room3d) return false;
+    var hits = roomPoint(e).intersectObjects(room3d.items.children, true);
+    return hits.some(function(h) { return h.object.userData.f; });
+};
 Game.r3d.debugMovers = function() {
     var out = [];
     tracked.forEach(function(rec) { if (rec.moving && rec.obj.visible) { var u = rec.obj.userData, leg = u.legs ? u.legs[0].rotation.x : (u.legL ? u.legL.rotation.x : 0); out.push({ id: rec.obj.id, rot: rec.obj.rotation.y, leg: leg }); } });
@@ -2158,6 +2165,7 @@ function floorToRoom(rc) {
 }
 function onRoomDown(e) {
     var s = Game.state;
+    if (e.pointerType === 'touch' && e.clientX < window.innerWidth * 0.45 && !Game.r3d.furnitureAt(e)) return;   // pouce gauche = joystick
     if (s.currentView !== 'interior' || !room3d || _cutscene) return;
     var rc = roomPoint(e);
     var hits = rc.intersectObjects(room3d.items.children, true);

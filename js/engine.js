@@ -41,6 +41,7 @@ Game.engine.init = function() {
 
     viewport.addEventListener('mousedown', handleMoveInput);
     viewport.addEventListener('touchstart', function(e) {
+        if (e.touches[0] && e.touches[0].clientX < window.innerWidth * 0.45) return;   // moitié gauche = joystick
         if (e.touches.length === 1) {
             // Simulate mouse event for touch
             // (on garde la cible du toucher pour ignorer les boutons, comme à la souris)
@@ -53,11 +54,64 @@ Game.engine.init = function() {
     Game.engine.initJoystick();
 };
 
+// Joystick « comme Minecraft sur téléphone » : on pose le pouce gauche n'importe où dans la moitié
+// gauche de l'écran, le joystick apparaît sous le pouce et on le pousse dans la direction voulue.
+Game.engine.initThumbstick = function() {
+    if (document.getElementById('thumbstick')) return;
+    var base = document.createElement('div'); base.id = 'thumbstick';
+    var knob = document.createElement('div'); knob.id = 'thumbstick-knob';
+    base.appendChild(knob); document.body.appendChild(base);
+    var RADIUS = 55, touchId = null, ox = 0, oy = 0, s = Game.state;
+    function home() {
+        // Position de repos : en bas à gauche
+        base.classList.remove('active');
+        base.style.left = '90px'; base.style.top = (window.innerHeight - 100) + 'px';
+        knob.style.transform = 'translate(-50%, -50%)';
+    }
+    home();
+    window.addEventListener('resize', home);
+    function isUi(t) { return t.closest && t.closest('button, a, input, .ui-card, [id^="action-"], #furniture-menu, .furniture-panel, #panel-skins, #panel-teleport, #panel-collections, #panel-eat, #controls-panel, #title-screen'); }
+    document.addEventListener('touchstart', function(e) {
+        if (touchId !== null || Game.state.currentView === 'title') return;
+        for (var i = 0; i < e.changedTouches.length; i++) {
+            var t = e.changedTouches[i];
+            if (t.clientX > window.innerWidth * 0.45 || isUi(t.target)) continue;
+            touchId = t.identifier; ox = t.clientX; oy = t.clientY;
+            base.style.left = ox + 'px'; base.style.top = oy + 'px';
+            base.classList.add('active');
+            s.joy = { x: 0, y: 0 };
+            e.preventDefault();
+            return;
+        }
+    }, { passive: false });
+    document.addEventListener('touchmove', function(e) {
+        if (touchId === null) return;
+        for (var i = 0; i < e.changedTouches.length; i++) {
+            var t = e.changedTouches[i];
+            if (t.identifier !== touchId) continue;
+            var dx = t.clientX - ox, dy = t.clientY - oy, d = Math.hypot(dx, dy);
+            if (d > RADIUS) { dx = dx / d * RADIUS; dy = dy / d * RADIUS; }
+            knob.style.transform = 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px))';
+            var k = Math.min(1, d / RADIUS);
+            s.joy = d < 8 ? { x: 0, y: 0 } : { x: dx / RADIUS * (k < 0.35 ? 0.6 : 1), y: dy / RADIUS * (k < 0.35 ? 0.6 : 1) };
+            e.preventDefault();
+        }
+    }, { passive: false });
+    function end(e) {
+        for (var i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === touchId) { touchId = null; s.joy = { x: 0, y: 0 }; home(); }
+        }
+    }
+    document.addEventListener('touchend', end);
+    document.addEventListener('touchcancel', end);
+};
+
 Game.engine.initJoystick = function() {
     // Pas d'écran tactile (ordinateur) : on cache les flèches ; elles reviennent au premier toucher
     var hasTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
     document.body.classList.toggle('no-touch', !hasTouch);
     window.addEventListener('touchstart', function() { document.body.classList.remove('no-touch'); }, { once: true });
+    Game.engine.initThumbstick();
 
     var btns = document.querySelectorAll('#joystick button');
     var dirs = [

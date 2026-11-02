@@ -75,7 +75,7 @@ Game.titlescreen.show = function() {
     gear.className = 'settings-gear';
     gear.title = 'Paramètres et commandes';
     gear.setAttribute('aria-label', 'Paramètres et commandes');
-    gear.textContent = '⚙️';
+    gear.innerHTML = '<span class="gear-icon">⚙️</span><span class="gear-label">Paramètres</span>';
     gear.onclick = function(e) { e.stopPropagation(); Game.titlescreen.showControls(); };
     screen.appendChild(gear);
 

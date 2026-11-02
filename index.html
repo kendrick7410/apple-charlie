@@ -340,6 +340,7 @@
 
 <!-- ═══════════ Joystick (center-bottom on mobile) ═══════════ -->
 
+<div id="rotate-hint"><div class="phone">📱</div><div>Tourne ton téléphone à l'horizontale pour jouer !<br><small>Pouce gauche : se déplacer · Pouce droit : boutons</small></div></div>
 <div id="joystick">
     <div></div>
     <button class="btn-animal btn-joystick">↑</button>
@@ -400,7 +401,8 @@ function toggleMobileUI() {
 // Detect mobile and show toggle button
 function detectMobile() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-                     || window.innerWidth <= 768;
+                     || window.innerWidth <= 768
+                     || (window.innerHeight <= 500 && navigator.maxTouchPoints > 0);   // téléphone à l'horizontale
 
     if (isMobile) {
         const toggleBtn = document.getElementById('mobile-toggle');
@@ -408,8 +410,9 @@ function detectMobile() {
             toggleBtn.style.display = 'block';
         }
 
-        // Start with UI hidden on very small screens
-        if (window.innerWidth <= 480) {
+        // Petit écran ou téléphone à l'horizontale : écran dégagé (le panneau s'ouvre avec le bouton 👁️)
+        if ((window.innerWidth <= 480 || window.innerHeight <= 500) && !detectMobile.done) {
+            detectMobile.done = true;
             const panel = document.getElementById('status-panel');
             if (panel) {
                 panel.style.display = 'none';
