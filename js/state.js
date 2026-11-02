@@ -290,6 +290,8 @@ Game.worlds = {
         fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(function(r) { return r.ok ? r.text() : ''; }).then(function(v) {
             v = (v || '').trim();
             if (!v || v === current) return;
+            // Sécurité : on ne recharge qu'une fois pour une même version (jamais en boucle)
+            try { if (sessionStorage.getItem('village_reloaded_for') === v) return; sessionStorage.setItem('village_reloaded_for', v); } catch (e) {}
             var s = Game.state;
             if (!s || s.currentView === 'title' || !Game.worldId) { reloadInto(null); return; }
             if (Game.ui && Game.ui.notify) Game.ui.notify('✨ Nouvelle mise à jour ! Le jeu se met à jour dans 5 secondes…', 'levelup');
