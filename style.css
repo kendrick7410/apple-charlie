@@ -18,7 +18,7 @@ body {
     margin: 0;
     overflow: hidden;
     background-color: var(--grass);
-    font-family: 'Varela Round', sans-serif;
+    font-family: 'Varela Round', 'Noto Color Emoji', sans-serif;
     touch-action: none;
     user-select: none;
     transition: background-color 2s;
@@ -603,7 +603,7 @@ html, body {
     font-weight: bold;
     box-shadow: 0 4px 0 #d97d3e;
     cursor: pointer;
-    font-family: 'Varela Round', sans-serif;
+    font-family: 'Varela Round', 'Noto Color Emoji', sans-serif;
     font-size: 0.85rem;
     transition: transform 0.1s;
 }
@@ -717,7 +717,7 @@ html, body {
     padding: 6px 10px;
     margin: 3px 0;
     cursor: pointer;
-    font-family: 'Varela Round', sans-serif;
+    font-family: 'Varela Round', 'Noto Color Emoji', sans-serif;
     font-size: 0.7rem;
     text-align: left;
     transition: background 0.2s;
@@ -759,7 +759,7 @@ html, body {
     border-radius: 10px;
     padding: 6px 14px;
     cursor: pointer;
-    font-family: 'Varela Round', sans-serif;
+    font-family: 'Varela Round', 'Noto Color Emoji', sans-serif;
     font-size: 0.8rem;
     transition: background 0.2s;
 }
@@ -777,7 +777,7 @@ html, body {
     padding: 5px 10px;
     margin: 2px 0;
     cursor: pointer;
-    font-family: 'Varela Round', sans-serif;
+    font-family: 'Varela Round', 'Noto Color Emoji', sans-serif;
     font-size: 0.7rem;
     text-align: left;
     transition: background 0.2s;
@@ -835,8 +835,8 @@ html, body {
         font-size: 4.5rem !important;
     }
 
-    .entity.stone {
-        font-size: 2.5rem !important;
+    .entity.stone .rock {
+        transform: scale(1.4);
     }
 
     .entity.flower {
@@ -1019,7 +1019,7 @@ html, body {
     padding: 2px 8px;
     cursor: pointer;
     font-size: 0.65rem;
-    font-family: 'Varela Round', sans-serif;
+    font-family: 'Varela Round', 'Noto Color Emoji', sans-serif;
     transition: background 0.2s;
 }
 
@@ -1096,7 +1096,7 @@ html, body {
     padding: 2px 8px;
     cursor: pointer;
     font-size: 0.65rem;
-    font-family: 'Varela Round', sans-serif;
+    font-family: 'Varela Round', 'Noto Color Emoji', sans-serif;
     transition: background 0.2s;
     color: #5d4037;
 }
@@ -1419,4 +1419,31 @@ body.no-touch #joystick {
         padding: 6px 10px;
         font-size: 0.75rem;
     }
+}
+
+/* Emojis : police d'emojis chargée par le jeu, pour que les emojis récents (🪨 🪵 🪴 🪧 🛖...)
+   s'affichent aussi sur les ordinateurs qui ne les connaissent pas (sinon : rectangle noir) */
+button, input, select, textarea {
+    font-family: inherit;
+}
+
+/* Caillou de la carte, dessiné en CSS */
+.entity.stone .rock {
+    display: block;
+    width: 30px;
+    height: 22px;
+    border-radius: 48% 52% 40% 45% / 60% 58% 42% 40%;
+    background: radial-gradient(circle at 35% 30%, #c9ccd1 0%, #9ea3aa 35%, #6f757d 75%, #5a5f66 100%);
+    box-shadow: inset -3px -3px 0 rgba(0,0,0,0.18), 0 3px 2px rgba(0,0,0,0.25);
+    position: relative;
+}
+.entity.stone .rock::after {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 5px;
+    width: 8px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.55);
 }

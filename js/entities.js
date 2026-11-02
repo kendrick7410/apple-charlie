@@ -100,8 +100,8 @@ Game.entities.spawnStone = function() {
     stone.className = 'entity stone';
     stone.style.left = x + 'px';
     stone.style.top = y + 'px';
-    stone.style.fontSize = '1.5rem';
-    stone.innerHTML = '🪨';
+    // Caillou dessiné en CSS (l'emoji 🪨 s'affiche en rectangle noir sur certains ordinateurs)
+    stone.innerHTML = '<span class="rock"></span>';
     document.getElementById('game-world').appendChild(stone);
 };
 
