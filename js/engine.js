@@ -95,6 +95,7 @@ Game.engine.initJoystick = function() {
                 step *= Game.player.skinBonus().speed;     // même vitesse partout (bonus du skin seulement)
                 Game.state.charlie.x += dir.dx * step;
                 Game.state.charlie.y += dir.dy * step;
+                if (Game.player.afterMove) Game.player.afterMove();
 
                 // IMPORTANT: Check for collectibles and building proximity after moving
                 Game.buildings.checkProximity();

@@ -168,7 +168,9 @@ Game.entities.checkCollect = function() {
     var trees = document.querySelectorAll('.tree');
     for (var k = 0; k < trees.length; k++) {
         var tr = trees[k];
-        if (tr.dataset.hasApple === 'true' && Math.hypot(cx - parseInt(tr.style.left), cy - parseInt(tr.style.top)) < treeRadius) {
+        // Distance mesurée depuis le centre de l'arbre (on peut cueillir de tous les côtés, même en 3D où l'arbre bloque)
+        var tcx = parseInt(tr.style.left) + tr.offsetWidth / 2, tcy = parseInt(tr.style.top) + tr.offsetHeight / 2;
+        if (tr.dataset.hasApple === 'true' && Math.hypot(cx - tcx, cy - tcy) < treeRadius + 25) {
             Game.entities.harvest(tr);
         }
     }

@@ -76,6 +76,8 @@ Game.player.update = function(dt, now) {
         var shore = Game.world.shorelineY(s.charlie.x) - 14;
         if (s.charlie.y > shore) s.charlie.y = shore;
     }
+    // Vue 3D : on bute contre les maisons, arbres... AVANT de dessiner (sinon Charlie y entre un instant)
+    if (Game.player.afterMove) Game.player.afterMove();
 
     // Smooth interpolation (lerp)
     var lerp = Game.CONFIG.LERP_SPEED;

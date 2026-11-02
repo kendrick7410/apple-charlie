@@ -807,18 +807,19 @@ var _scanT = 0, _dtFrame = 0.016;
 // ═══════════════════════ Collisions ═══════════════════════
 // Ce qui bloque Charlie : bâtiments (rectangles), arbres, montagnes, villageois... (cercles).
 // Cailloux et fleurs ne bloquent pas (on les ramasse en marchant dessus), ni l'eau (on pêche au bord).
-var CHARLIE_R = 16;
+var CHARLIE_R = 20;
 function colliderFor(el, kind, obj) {
     var sc = obj.scale.x;
     switch (kind) {
-        case 'house':        return { hw: 4.1 * 0.8 / 2 / U, hd: 3.3 * 0.8 / 2 / U };
-        case 'shop':         return { hw: 4.1 * 0.95 / 2 / U, hd: 3.3 * 0.95 / 2 / U };
+        // Bâtiments : la taille de ce qu'on voit (toit qui dépasse, socle), pas seulement les murs
+        case 'house':        return { hw: 2.9 * 0.8 * 0.9 / U, hd: 3.8 * 0.8 / 2 / U };
+        case 'shop':         return { hw: 2.9 * 0.95 * 0.9 / U, hd: 3.8 * 0.95 / 2 / U };
         case 'construction': return { hw: 4 * 0.8 / 2 / U, hd: 3.4 * 0.8 / 2 / U };
         case 'barn':         return { hw: 2.5 / U, hd: 1.9 / U };
         case 'field':        return { hw: el.offsetWidth / 2, hd: el.offsetHeight / 2 };
-        case 'fountain':     return { r: 2.3 / U };
+        case 'fountain':     return { r: 2.45 / U };
         case 'plot':         return { r: 8 };
-        case 'tree': case 'autumn': case 'pine': case 'snowpine': return { r: 0.45 * sc / U };
+        case 'tree': case 'autumn': case 'pine': case 'snowpine': return { r: 0.9 * sc / U };   // le feuillage, pas seulement le tronc
         case 'palm':         return { r: 0.3 * sc / U };
         case 'mountain':     return { r: obj.userData.baseR ? obj.userData.baseR / U * 0.8 : 60 };
         case 'hay':          return { r: 0.55 * sc / U };
@@ -1468,6 +1469,7 @@ function init() {
     applyPhase();
 
     Game.player.handleClick = handleClick3d;
+    Game.player.afterMove = function() { if (!_cutscene) collide(); };
     wrapBuildings();
     // Petit état lisible pour les tests automatiques (animation de porte en cours, ouverture de la porte)
     Game.r3d.debug = function() {
