@@ -1,4 +1,4 @@
-// ── render3d.js ── Vue 3D « diorama doux » (Three.js) — activée seulement avec ?3d dans l'adresse ──
+// ── render3d.js ── Vue 3D « diorama doux » (Three.js) — le jeu par défaut ; ?2d dans l'adresse = ancienne vue ──
 // Le jeu continue de tourner sur la carte 2D (#game-world), qui devient invisible :
 // toute la logique (ramasser, quêtes, chantiers, sauvegardes) reste identique.
 // Cette vue relit la carte 2D et la redessine en 3D :
@@ -8,7 +8,12 @@
 (function(){
 "use strict";
 
-var ACTIVE = /[?&]3d\b/.test(location.search);
+function hasWebGL() {
+    try { var c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl'))); }
+    catch (e) { return false; }
+}
+var ACTIVE = !/[?&]2d\b/.test(location.search) && hasWebGL();
+var SHOW_FPS = /[?&]fps\b/.test(location.search);
 Game.r3d = { active: ACTIVE };
 if (!ACTIVE) return;
 document.documentElement.classList.add('mode-3d');
@@ -139,48 +144,123 @@ function labelSprite(text, h) {
 function rand(seed) { return function() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
 
 // ═══════════════════════ Modèles ronds ═══════════════════════
-// Charlie, style « chibi » (même dessin que l'aperçu choisi)
-var charlie = null;
-function makeCharlie() {
+// Corps « chibi » commun à Charlie, au fermier et aux villageois (bras et jambes qui balancent)
+function makeBody(o) {
     var root = new T.Group(), body = new T.Group(); root.add(body);
-    var SKIN = mat('#f2c39a', { roughness: 0.6 }), SHIRT = mat('#ee7a2a'), JEANS = mat('#4466b0'), BOOT = mat('#6b4224', { roughness: 0.5 });
-    var HAT = mat('#b57a3e', { roughness: 0.7, side: T.DoubleSide }), BAND = mat('#5b3a1a');
+    var SKIN = mat(o.skin, { roughness: 0.6 }), SHIRT = mat(o.shirt), PANTS = mat(o.pants), BOOT = mat(o.boot || '#6b4224', { roughness: 0.5 });
     function limb(r, len, m, x, y) {
         var piv = new T.Group(); piv.position.set(x, y, 0); body.add(piv);
         put(piv, new T.Mesh(capsuleGeo(r, len), m), 0, -len / 2 - r * 0.4, 0);
         return piv;
     }
-    var legL = limb(0.12, 0.3, JEANS, -0.15, 0.62), legR = limb(0.12, 0.3, JEANS, 0.15, 0.62);
+    var legL = limb(0.12, 0.3, PANTS, -0.15, 0.62), legR = limb(0.12, 0.3, PANTS, 0.15, 0.62);
     ball(legL, 0.15, BOOT, 0, -0.52, 0.06, 1, 0.75, 1.35);
     ball(legR, 0.15, BOOT, 0, -0.52, 0.06, 1, 0.75, 1.35);
     put(body, new T.Mesh(capsuleGeo(0.31, 0.22), SHIRT), 0, 0.95, 0);
-    put(body, new T.Mesh(new T.TorusGeometry(0.3, 0.05, 10, 28), mat('#5b3a1a')), 0, 0.78, 0).rotation.x = Math.PI / 2;
-    ball(body, 0.06, mat('#f2c94c', { metalness: 0.7, roughness: 0.3 }), 0, 0.78, 0.33);
-    put(body, new T.Mesh(new T.ConeGeometry(0.2, 0.26, 20), mat('#d63a3a')), 0, 1.2, 0.2).rotation.x = Math.PI + 0.35;
+    if (o.belt) {
+        put(body, new T.Mesh(geo('belt', function() { return new T.TorusGeometry(0.3, 0.05, 10, 28); }), mat('#5b3a1a')), 0, 0.78, 0).rotation.x = Math.PI / 2;
+        ball(body, 0.06, mat('#f2c94c', { metalness: 0.7, roughness: 0.3 }), 0, 0.78, 0.33);
+    }
+    if (o.scarf) put(body, new T.Mesh(geo('scarf', function() { return new T.ConeGeometry(0.2, 0.26, 20); }), mat(o.scarf)), 0, 1.2, 0.2).rotation.x = Math.PI + 0.35;
     var armL = limb(0.09, 0.3, SHIRT, -0.4, 1.18), armR = limb(0.09, 0.3, SHIRT, 0.4, 1.18);
     armL.rotation.z = 0.25; armR.rotation.z = -0.25;
     ball(armL, 0.1, SKIN, 0, -0.48, 0); ball(armR, 0.1, SKIN, 0, -0.48, 0);
     var head = new T.Group(); head.position.set(0, 1.68, 0); body.add(head);
     ball(head, 0.46, SKIN, 0, 0, 0);
-    ball(head, 0.47, mat('#7a4a28'), 0, 0.16, -0.06, 1, 0.55, 1);
+    root.userData = { body: body, head: head, legL: legL, legR: legR, armL: armL, armR: armR, step: 0, facing: 0 };
+    return root;
+}
+function face(head, o) {
     [-0.16, 0.16].forEach(function(x) {
         ball(head, 0.07, mat('#2a1d14', { roughness: 0.3 }), x, 0.02, 0.41, 0.85, 1.25, 0.6);
         ball(head, 0.024, mat('#ffffff', { emissive: '#ffffff', emissiveIntensity: 0.4 }), x + 0.025, 0.07, 0.455);
         ball(head, 0.07, mat('#ff9aa2', { roughness: 0.9, transparent: true, opacity: 0.75 }), x * 1.55, -0.12, 0.37, 1, 0.6, 0.3);
     });
-    ball(head, 0.05, SKIN, 0, -0.06, 0.46);
-    var smile = new T.Mesh(new T.TorusGeometry(0.075, 0.016, 8, 16, Math.PI), mat('#8a3b2e')); smile.rotation.z = Math.PI;
+    if (o.nose) ball(head, o.noseSize || 0.05, o.nose, 0, -0.06, 0.46);
+    var smile = new T.Mesh(geo('smile', function() { return new T.TorusGeometry(0.075, 0.016, 8, 16, Math.PI); }), mat('#8a3b2e')); smile.rotation.z = Math.PI;
     put(head, smile, 0, -0.17, 0.425);
-    // Chapeau de cowboy posé sur la tête, penché vers l'arrière (version validée)
+}
+function cowboyHat(head, color, band) {
+    var HAT = mat(color, { roughness: 0.7, side: T.DoubleSide });
     var hat = new T.Group(); hat.position.set(0, 0.22, -0.02); hat.rotation.x = -0.2; head.add(hat);
-    var brimPts = [];
-    for (var i = 0; i <= 14; i++) { var u = i / 14; brimPts.push(new T.Vector2(0.4 + u * 0.36, Math.pow(u, 2.6) * 0.15)); }
-    put(hat, new T.Mesh(new T.LatheGeometry(brimPts, 40), HAT), 0, 0, 0).scale.set(1, 1, 0.9);
-    var crownPts = [new T.Vector2(0.001, 0.4), new T.Vector2(0.2, 0.39), new T.Vector2(0.33, 0.33), new T.Vector2(0.4, 0.17), new T.Vector2(0.42, 0.02), new T.Vector2(0.41, -0.02)];
-    put(hat, new T.Mesh(new T.LatheGeometry(crownPts, 32), HAT), 0, 0, 0).scale.set(1, 1, 0.9);
-    put(hat, new T.Mesh(new T.CylinderGeometry(0.425, 0.43, 0.08, 32), BAND), 0, 0.07, 0).scale.set(1, 1, 0.9);
+    var brim = geo('brim', function() {
+        var pts = [];
+        for (var i = 0; i <= 14; i++) { var u = i / 14; pts.push(new T.Vector2(0.4 + u * 0.36, Math.pow(u, 2.6) * 0.15)); }
+        return new T.LatheGeometry(pts, 40);
+    });
+    var crown = geo('crown', function() {
+        return new T.LatheGeometry([new T.Vector2(0.001, 0.4), new T.Vector2(0.2, 0.39), new T.Vector2(0.33, 0.33), new T.Vector2(0.4, 0.17), new T.Vector2(0.42, 0.02), new T.Vector2(0.41, -0.02)], 32);
+    });
+    put(hat, new T.Mesh(brim, HAT), 0, 0, 0).scale.set(1, 1, 0.9);
+    put(hat, new T.Mesh(crown, HAT), 0, 0, 0).scale.set(1, 1, 0.9);
+    put(hat, new T.Mesh(geo('hatband', function() { return new T.CylinderGeometry(0.425, 0.43, 0.08, 32); }), mat(band)), 0, 0.07, 0).scale.set(1, 1, 0.9);
+}
+// Charlie, style « chibi » (même dessin que l'aperçu choisi), avec son chapeau de cowboy
+var charlie = null;
+function makeCharlie() {
+    var root = makeBody({ skin: '#f2c39a', shirt: '#ee7a2a', pants: '#4466b0', belt: true, scarf: '#d63a3a' });
+    var head = root.userData.head;
+    ball(head, 0.47, mat('#7a4a28'), 0, 0.16, -0.06, 1, 0.55, 1);
+    face(head, { nose: '#f2c39a' });
+    cowboyHat(head, '#b57a3e', '#5b3a1a');
     root.scale.setScalar(0.85);
-    root.userData = { body: body, head: head, legL: legL, legR: legR, armL: armL, armR: armR, step: 0, facing: 0 };
+    return root;
+}
+// Le fermier : même corps, chapeau de paille et salopette
+function makeFarmer() {
+    var root = makeBody({ skin: '#e8b48c', shirt: '#6aa84f', pants: '#3f6aa0', boot: '#4a3a2a' });
+    var head = root.userData.head;
+    ball(head, 0.47, mat('#c9a27a'), 0, 0.16, -0.06, 1, 0.55, 1);
+    face(head, { nose: '#e8b48c' });
+    cowboyHat(head, '#e8cf7a', '#c0392b');
+    root.scale.setScalar(0.85);
+    return root;
+}
+// Villageois animaux : corps chibi + tête d'animal (oreilles, museau, couleurs)
+var CRITTERS = {
+    '🐰': { fur: '#ece6ef', shirt: '#ff8fb1', pants: '#8d6fd1', ears: 'long', inner: '#ffb3c8', nose: '#ff8fa8' },
+    '🐱': { fur: '#f2b65a', shirt: '#7fb7e8', pants: '#5a6c8a', ears: 'cat', inner: '#ffc9a8', nose: '#ff8fa8', whiskers: true },
+    '🐶': { fur: '#d9b38c', shirt: '#5fae47', pants: '#7a5a3c', ears: 'floppy', earColor: '#a87b52', nose: '#3a2a20', muzzle: '#f1dcc2' },
+    '🦊': { fur: '#e8792e', shirt: '#9b7be0', pants: '#4a3a6a', ears: 'fox', inner: '#3a2a20', nose: '#2a1d14', muzzle: '#fff3e6' },
+    '🐡': { fur: '#f6d044', shirt: '#2fa79a', pants: '#1f6f66', ears: 'fins', spikes: true, nose: '#e8a020' },
+    '🐕': { fur: '#a8743f', shirt: '#c0392b', pants: '#5b4636', ears: 'floppy', earColor: '#6e4a28', nose: '#2a1d14', muzzle: '#e8cfa8' },
+    '🦉': { fur: '#9a7552', shirt: '#6d5a8a', pants: '#4a3a5a', ears: 'owl', nose: '#f2b84b', muzzle: '#e9d8c0' }
+};
+function makeCritter(e) {
+    var c = CRITTERS[e] || { fur: '#c9a27a', shirt: '#7fb7e8', pants: '#5a6c8a', ears: 'round', nose: '#3a2a20' };
+    var root = makeBody({ skin: c.fur, shirt: c.shirt, pants: c.pants, boot: c.fur });
+    var head = root.userData.head, FUR = mat(c.fur);
+    if (c.muzzle) ball(head, 0.2, c.muzzle, 0, -0.12, 0.33, 1.2, 0.8, 0.8);
+    face(head, { nose: c.nose, noseSize: c.muzzle ? 0.07 : 0.05 });
+    var ear;
+    switch (c.ears) {
+        case 'long':
+            [-0.17, 0.17].forEach(function(x) {
+                ear = put(head, new T.Mesh(capsuleGeo(0.09, 0.42), FUR), x, 0.62, -0.05); ear.rotation.z = x > 0 ? -0.15 : 0.15;
+                ball(ear, 0.05, c.inner, 0, 0.02, 0.06, 1, 4.5, 0.4);
+            });
+            break;
+        case 'cat': case 'fox':
+            [-0.25, 0.25].forEach(function(x) {
+                ear = put(head, new T.Mesh(geo('earcone', function() { return new T.ConeGeometry(0.16, 0.3, 16); }), FUR), x, 0.42, -0.02); ear.rotation.z = x > 0 ? -0.35 : 0.35;
+                if (c.inner) { var tip = put(ear, new T.Mesh(geo('eartip', function() { return new T.ConeGeometry(0.08, 0.14, 12); }), mat(c.inner)), 0, 0.09, 0.03); }
+            });
+            break;
+        case 'floppy':
+            [-0.42, 0.42].forEach(function(x) { ear = ball(head, 0.17, c.earColor || c.fur, x, 0.02, -0.02, 0.6, 1.5, 0.9); ear.rotation.z = x > 0 ? 0.3 : -0.3; });
+            break;
+        case 'fins':
+            [-0.46, 0.46].forEach(function(x) { ear = ball(head, 0.16, '#f0a030', x, 0, 0, 0.35, 1, 0.9); ear.rotation.z = x > 0 ? -0.5 : 0.5; });
+            break;
+        case 'owl':
+            [-0.25, 0.25].forEach(function(x) { ear = put(head, new T.Mesh(geo('earcone', function() { return new T.ConeGeometry(0.16, 0.3, 16); }), FUR), x, 0.42, -0.02); ear.rotation.z = x > 0 ? -0.5 : 0.5; });
+            break;
+        default:
+            [-0.32, 0.32].forEach(function(x) { ball(head, 0.13, c.fur, x, 0.36, -0.04); });
+    }
+    if (c.whiskers) [-1, 1].forEach(function(sx) { for (var k = 0; k < 2; k++) { var w = put(head, new T.Mesh(geo('whisk', function() { return new T.CylinderGeometry(0.008, 0.008, 0.28, 4); }), mat('#5a4636')), sx * 0.3, -0.1 - k * 0.05, 0.36); w.rotation.z = Math.PI / 2 + sx * (k ? -0.15 : 0.1); } });
+    if (c.spikes) for (var k = 0; k < 10; k++) { var a = k / 10 * Math.PI * 2, sp = put(head, new T.Mesh(geo('spike', function() { return new T.ConeGeometry(0.05, 0.16, 8); }), mat('#e8a020')), Math.cos(a) * 0.45, Math.sin(a) * 0.45 + 0.05, -0.05); sp.rotation.z = a - Math.PI / 2; }
+    root.scale.setScalar(0.8);
     return root;
 }
 
@@ -330,6 +410,46 @@ function makePalm(s) {
     g.scale.setScalar(s);
     return g;
 }
+// Ferme : grange rouge, bottes de foin, champs cultivés
+function makeBarn() {
+    var g = new T.Group();
+    rbox(g, 5, 3, 3.8, 0.3, '#c0392b', 0, 1.5, 0);
+    var roofGeo = geo('barnroof', function() {
+        var s = new T.Shape();
+        s.moveTo(-3, 0); s.lineTo(-1.6, 1.3); s.quadraticCurveTo(0, 2.1, 1.6, 1.3); s.lineTo(3, 0); s.quadraticCurveTo(0, -0.1, -3, 0);
+        var r = new T.ExtrudeGeometry(s, { depth: 4.1, bevelEnabled: true, bevelThickness: 0.14, bevelSize: 0.12, bevelSegments: 4, curveSegments: 10 });
+        r.translate(0, 0, -2.05); return r;
+    });
+    put(g, new T.Mesh(roofGeo, mat('#7b2d2d', { roughness: 0.6 })), 0, 3.0, 0);
+    rbox(g, 1.8, 2.2, 0.12, 0.08, '#8a4b2a', 0, 1.1, 1.92);
+    [0.78, -0.78].forEach(function(r) { rbox(g, 2.6, 0.14, 0.08, 0.04, '#f5f0e6', 0, 1.1, 2.0).rotation.z = r; });
+    rbox(g, 1.9, 0.14, 0.1, 0.04, '#f5f0e6', 0, 2.25, 2.0);
+    return g;
+}
+function makeHay(w) {
+    var g = new T.Group();
+    var bale = put(g, new T.Mesh(geo('hay', function() { return new T.CylinderGeometry(0.5, 0.5, 1, 24); }), mat('#e2b84e', { roughness: 0.95 })), 0, 0.5, 0);
+    bale.rotation.z = Math.PI / 2;
+    var s = Math.max(0.8, w * 0.75);
+    g.scale.set(s, s * 0.85, s * 0.85);
+    return g;
+}
+function makeField(el) {
+    var g = new T.Group(), w = el.offsetWidth * U, d = el.offsetHeight * U;
+    rbox(g, w, 0.18, d, 0.12, '#7a5a37', 0, 0.09, 0);
+    var crop = /🌽/.test(el.textContent) ? 'corn' : 'wheat';
+    var rows = Math.max(2, Math.round(d / 0.9)), cols = Math.max(3, Math.round(w / 0.7));
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+        var x = -w / 2 + 0.45 + c * (w - 0.9) / (cols - 1), z = -d / 2 + 0.45 + r * (d - 0.9) / Math.max(1, rows - 1);
+        if (crop === 'corn') {
+            put(g, new T.Mesh(capsuleGeo(0.08, 0.7), mat('#5c9a35')), x, 0.6, z);
+            ball(g, 0.1, '#f2c94c', x + 0.08, 0.75, z, 0.8, 1.6, 0.8);
+        } else {
+            put(g, new T.Mesh(capsuleGeo(0.09, 0.35), mat('#d9b44a')), x, 0.42, z);
+        }
+    }
+    return g;
+}
 // Jardin : 25 parcelles (cliquables comme dans le jeu 2D) ; les cultures s'affichent par-dessus
 function makeGarden(el) {
     var g = new T.Group();
@@ -433,7 +553,7 @@ function buildTerrain() {
 // ═══════════════════════ Pont carte 2D → 3D ═══════════════════════
 var tracked = new Map();      // élément 2D → objet 3D
 var gameWorld = null;
-var MOVING = /villager-sprite|creature|sea-creature|mtn-animal|farmer-sprite|wasp/;
+var MOVING = /villager-sprite|creature|sea-creature|mtn-animal|farmer-sprite|farm-escaped|farm-animal|wasp/;
 
 function emojiOf(el) {
     for (var i = 0; i < el.childNodes.length; i++) {
@@ -456,6 +576,16 @@ function kindOf(el, e) {
         if (e === '🏗️' || e === '🧱') return 'construction';
         if (e === '🪧' || e === '🏚️') return 'plot';
         return 'house';
+    }
+    if (cl.contains('villager-sprite')) return 'villager';
+    if (cl.contains('farmer-sprite')) return 'farmer';
+    if (!el.className) {
+        // Décor de la ferme (éléments sans classe) : grange, champs, bottes de foin ; le reste est ignoré
+        if (labelOf(el).indexOf('La Ferme') > -1) return 'barn';
+        if (el.querySelector(':scope > div') && /🌽|🌾/.test(el.textContent) && el.offsetWidth > 120) return 'field';
+        if (!el.textContent.trim() && /repeating-linear-gradient/.test(el.style.background) && el.offsetWidth < 90) return 'hay';
+        if (e === '🚜') return 'sprite';
+        return 'skip';
     }
     if (cl.contains('snowy-pine')) return 'snowpine';
     if (cl.contains('tree')) return e === '🌲' ? 'pine' : (e === '🍂' ? 'autumn' : 'tree');
@@ -485,6 +615,14 @@ function buildFor(el, kind, e, label) {
         case 'flower': obj = makeFlower(e); break;
         case 'mountain': obj = makeMountain(Math.max(4, size * 1.4)); break;
         case 'palm': obj = makePalm(Math.max(0.8, size / 1.2)); break;
+        case 'villager': {
+            var em = el.querySelector('.villager-emoji');
+            obj = makeCritter(em ? em.textContent.trim() : e); break;
+        }
+        case 'farmer': obj = makeFarmer(); break;
+        case 'barn': obj = makeBarn(); break;
+        case 'hay': obj = makeHay(el.offsetWidth * U); break;
+        case 'field': obj = makeField(el); break;
         default: {
             obj = new T.Group();
             var sp = emojiSprite(e || '❔', Math.max(0.8, size * 1.25)); obj.add(sp);
@@ -492,7 +630,7 @@ function buildFor(el, kind, e, label) {
         }
     }
     if (label && kind !== 'flower') {
-        var top = { house: 4.6, shop: 5.6, construction: 3, plot: 2.2, fountain: 2.6, garden: 1.2, mountain: Math.max(4, size * 1.4) + 0.5 }[kind] || (kind === 'sprite' ? size * 1.3 : 3.5);
+        var top = { house: 4.6, shop: 5.6, construction: 3, plot: 2.2, fountain: 2.6, garden: 1.2, villager: 2.3, farmer: 2.3, barn: 4.8, mountain: Math.max(4, size * 1.4) + 0.5 }[kind] || (kind === 'sprite' ? size * 1.3 : 3.5);
         var lab = labelSprite(label, 0.55); lab.position.y = top; obj.add(lab);
     }
     obj.traverse(function(o) { o.userData.el = o.userData.el || el; });
@@ -500,11 +638,17 @@ function buildFor(el, kind, e, label) {
 }
 
 // Point au sol d'un élément 2D : bas-centre de son dessin (hors étiquette)
+function worldXY(el) {
+    var x = 0, y = 0, n = el;
+    while (n && n !== gameWorld) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+    return { x: x, y: y };
+}
 function groundPoint(el, kind) {
-    var x = parseFloat(el.style.left) || 0, y = parseFloat(el.style.top) || 0;
+    var wxy = worldXY(el), x = wxy.x, y = wxy.y;
     var first = el.firstElementChild && !el.firstElementChild.classList.contains('building-label') ? el.firstElementChild : null;
     var w = el.offsetWidth, h = first ? first.offsetHeight : el.offsetHeight;
-    if (kind === 'garden' || kind === 'fountain') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
+    if (kind === 'garden' || kind === 'fountain' || kind === 'field') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
+    if (kind === 'barn') return { x: x + w / 2, y: y + 140 };
     if (el.classList.contains('house-exterior') || /-anchor$/.test(el.id)) return { x: x + w / 2, y: y + h * 0.75 };
     return { x: x + w / 2, y: y + h * 0.9 };
 }
@@ -554,11 +698,14 @@ function syncGarden(el, g) {
         }
     }
 }
-var _scanT = 0;
+var _scanT = 0, _dtFrame = 0.016;
 function scan() {
     tracked.forEach(function(rec) { rec.seen = false; });
-    var els = gameWorld.querySelectorAll(':scope > .entity');
-    for (var i = 0; i < els.length; i++) syncElement(els[i]);
+    var els = gameWorld.querySelectorAll(':scope > .entity, :scope > div:not([class]), .farm-pen > div:not(.building-label)');
+    for (var i = 0; i < els.length; i++) {
+        if (els[i].parentElement.classList.contains('farm-pen')) els[i].classList.add('farm-animal');
+        syncElement(els[i]);
+    }
     tracked.forEach(function(rec, el) { if (!rec.seen) { scene.remove(rec.obj); tracked.delete(el); } });
 }
 function syncMoving(time) {
@@ -566,8 +713,10 @@ function syncMoving(time) {
         if (!rec.moving) return;
         rec.obj.visible = el.style.display !== 'none';
         if (!rec.obj.visible) return;
+        var ox = rec.px, oy = rec.py;
         placeRec(el, rec);
         if (rec.obj.userData.sprite) rec.obj.userData.sprite.position.y = Math.abs(Math.sin(time * 6 + rec.px * 0.01)) * 0.12;
+        if (rec.obj.userData.legL) animateWalker(rec.obj, ox === undefined ? 0 : rec.px - ox, oy === undefined ? 0 : rec.py - oy, _dtFrame, time);
         // Bulle de dialogue des villageois
         var b = bubbleOf(el);
         if (b !== rec.bubble) {
@@ -576,6 +725,21 @@ function syncMoving(time) {
             if (b) { rec.bubbleSprite = labelSprite('💬 ' + b, 0.5); rec.bubbleSprite.position.y = 2.2; rec.obj.add(rec.bubbleSprite); }
         }
     });
+}
+
+// Animation de marche commune (Charlie, villageois, fermier)
+function animateWalker(obj, dx, dy, dt, time) {
+    var ud = obj.userData, moving = Math.hypot(dx, dy) > 0.3;
+    if (moving) ud.facing = Math.atan2(dx, dy);
+    var turn = ud.facing - obj.rotation.y;
+    turn = Math.atan2(Math.sin(turn), Math.cos(turn));
+    obj.rotation.y += turn * Math.min(1, dt * 10);
+    if (moving) ud.step += dt * 10;
+    var sw = moving ? Math.sin(ud.step) * 0.65 : ud.legL.rotation.x * 0.85;
+    ud.legL.rotation.x = sw; ud.legR.rotation.x = -sw; ud.armL.rotation.x = -sw * 0.8; ud.armR.rotation.x = sw * 0.8;
+    ud.body.position.y = moving ? Math.abs(Math.sin(ud.step)) * 0.07 : 0;
+    ud.head.rotation.y = Math.sin(time * 1.1 + obj.id) * 0.15;
+    return moving;
 }
 
 // ═══════════════════════ Lumière du jour et de la nuit ═══════════════════════
@@ -684,7 +848,13 @@ function init() {
     camera.position.set(Game.state.charlie.visualX * U, CAM_H, Game.state.charlie.visualY * U + CAM_D);
     _fpsEl = document.createElement('div');
     _fpsEl.id = 'r3d-fps';
+    if (!SHOW_FPS) _fpsEl.style.display = 'none';
     document.body.appendChild(_fpsEl);
+    // Les petites images qui sautent (🍎 +1...) : placées depuis la caméra 3D
+    Game.particles.spawnWorld = function(emoji, worldX, worldY, opts) {
+        var v = new T.Vector3(worldX * U, heightAt(worldX, worldY) + 1.2, worldY * U).project(camera);
+        Game.particles.spawn(emoji, (v.x + 1) / 2 * window.innerWidth, (1 - v.y) / 2 * window.innerHeight, opts);
+    };
     Game.r3d.renderer = renderer;
     requestAnimationFrame(loop);
 }
@@ -694,6 +864,21 @@ function resize() {
     camera.updateProjectionMatrix();
 }
 
+// Si l'ordinateur rame (moins de 20 images/s pendant 10 s), on propose la vue 2D
+var _slowSamples = [], _slowShown = false;
+function watchSlow(fps) {
+    if (_slowShown) return;
+    _slowSamples.push(fps);
+    if (_slowSamples.length < 20) return;
+    var avg = _slowSamples.slice(-20).reduce(function(a, b) { return a + b; }, 0) / 20;
+    if (avg >= 20) { _slowSamples = _slowSamples.slice(-20); return; }
+    _slowShown = true;
+    var box = document.createElement('div');
+    box.id = 'r3d-slow';
+    box.innerHTML = '🐢 Le jeu rame un peu sur cet ordinateur. <a href="?2d">Passer en 2D</a> <button type="button" aria-label="Fermer">✕</button>';
+    box.querySelector('button').onclick = function() { box.remove(); };
+    document.body.appendChild(box);
+}
 var CAM_H = 11, CAM_D = 15.5;   // caméra : hauteur et recul derrière Charlie
 var _last = 0, _prev = null, _camTarget = null, _look = null;
 var _fpsEl = null, _frames = 0, _fpsT = 0;
@@ -705,29 +890,17 @@ function loop(now) {
     if (s.currentView !== 'world') return;   // maisons / boutiques : l'intérieur est en 2D par-dessus
     var time = now / 1000;
 
+    _dtFrame = dt;
     _scanT += dt;
     if (_scanT > 0.4) { _scanT = 0; scan(); applyPhase(); }
     syncMoving(time);
 
     // Charlie suit sa position (lissée) du jeu 2D
     var cx = s.charlie.visualX, cy = s.charlie.visualY;
-    var ud = charlie.userData;
-    var moving = false;
-    if (_prev) {
-        var dx = cx - _prev.x, dy = cy - _prev.y;
-        if (Math.hypot(dx, dy) > 0.6) { moving = true; ud.facing = Math.atan2(dx, dy); }
-    }
+    animateWalker(charlie, _prev ? cx - _prev.x : 0, _prev ? cy - _prev.y : 0, dt, time);
     _prev = { x: cx, y: cy };
-    var turn = ud.facing - charlie.rotation.y;
-    turn = Math.atan2(Math.sin(turn), Math.cos(turn));
-    charlie.rotation.y += turn * Math.min(1, dt * 12);
     var gy = heightAt(cx, cy);
     charlie.position.set(cx * U, gy, cy * U);
-    if (moving) ud.step += dt * 10;
-    var sw = moving ? Math.sin(ud.step) * 0.65 : ud.legL.rotation.x * 0.8;
-    ud.legL.rotation.x = sw; ud.legR.rotation.x = -sw; ud.armL.rotation.x = -sw * 0.8; ud.armR.rotation.x = sw * 0.8;
-    ud.body.position.y = moving ? Math.abs(Math.sin(ud.step)) * 0.07 : 0;
-    ud.head.rotation.y = Math.sin(time * 1.1) * 0.15;
     charlieLight.position.set(cx * U, gy + 2.2, cy * U + 0.5);
 
     // Caméra de biais qui suit Charlie ; le soleil (et ses ombres) suit aussi
@@ -743,7 +916,12 @@ function loop(now) {
 
     // Compteur d'images par seconde (pour vérifier que l'ordinateur suit)
     _frames++; _fpsT += dt;
-    if (_fpsT >= 0.5) { _fpsEl.textContent = Math.round(_frames / _fpsT) + ' img/s'; _frames = 0; _fpsT = 0; }
+    if (_fpsT >= 0.5) {
+        var fps = Math.round(_frames / _fpsT);
+        _fpsEl.textContent = fps + ' img/s';
+        _frames = 0; _fpsT = 0;
+        watchSlow(fps);
+    }
 }
 
 })();

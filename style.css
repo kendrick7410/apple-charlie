@@ -1602,3 +1602,22 @@ html.mode-3d #time-overlay {
     border-radius: 6px;
     pointer-events: none;
 }
+#r3d-slow {
+    position: fixed;
+    left: 50%;
+    top: 12px;
+    transform: translateX(-50%);
+    z-index: 1300;
+    background: #fffef5;
+    border: 3px solid #e8e2c8;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#r3d-slow a { color: #e65100; }
+#r3d-slow button { border: none; background: #ef9a9a; color: #fff; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
