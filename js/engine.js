@@ -54,6 +54,11 @@ Game.engine.init = function() {
 };
 
 Game.engine.initJoystick = function() {
+    // Pas d'écran tactile (ordinateur) : on cache les flèches ; elles reviennent au premier toucher
+    var hasTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+    document.body.classList.toggle('no-touch', !hasTouch);
+    window.addEventListener('touchstart', function() { document.body.classList.remove('no-touch'); }, { once: true });
+
     var btns = document.querySelectorAll('#joystick button');
     var dirs = [
         { dx: 0, dy: -1 }, // up

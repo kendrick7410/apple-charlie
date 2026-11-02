@@ -1396,3 +1396,9 @@ button {
     transform: translateY(-12px);
 }
 #notify-stack .notification { border-radius: 20px; }
+
+/* Sur ordinateur (pas d'écran tactile) : pas de flèches à l'écran, on joue avec ZQSD / flèches du clavier.
+   Elles restent sur téléphone et tablette. Classe posée par Game.engine.initJoystick. */
+body.no-touch #joystick {
+    display: none !important;
+}
