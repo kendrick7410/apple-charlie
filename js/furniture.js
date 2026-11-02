@@ -256,6 +256,7 @@ Game.furniture.interact = function(f, el) {
     if (busy) return;
     var type = Game.furniture.typeOf(f[0]);
     if (storeMode && isMine()) { Game.furniture.store(f); return; }
+    if (rotateMode && isMine()) { Game.furniture.rotate(f); return; }
     if (!type) {
         Game.ui.notify(f[0] + " C'est une décoration : fais-la glisser pour la déplacer !");
         return;
@@ -281,10 +282,27 @@ Game.furniture.use = function(f, el) {
 // Mode rangement (bouton 📦 de la barre) : cliquer un meuble le range et rend ses matériaux
 Game.furniture.toggleStoreMode = function(force) {
     storeMode = force === undefined ? !storeMode : !!force;
+    if (storeMode && rotateMode) Game.furniture.toggleRotateMode(false);
     document.body.classList.toggle('store-mode', storeMode);
     var btn = document.getElementById('store-mode-btn');
     if (btn) btn.textContent = storeMode ? '✅ Fini de ranger' : '📦 Ranger un meuble';
     if (storeMode) Game.ui.notify("📦 Clique sur un meuble pour le ranger (tu récupères le bois et la pierre)");
+};
+
+// Tourner un meuble d'un quart de tour (f[5] = nombre de quarts de tour, sauvegardé avec la maison)
+var rotateMode = false;
+Game.furniture.rotate = function(f) {
+    if (!isMine()) { Game.ui.notify("Ce n'est pas ta maison : tu ne peux pas tourner ses meubles"); return; }
+    f[5] = ((f[5] || 0) + 1) % 4;
+    Game.audio.play('craft');
+};
+Game.furniture.toggleRotateMode = function(force) {
+    rotateMode = force === undefined ? !rotateMode : !!force;
+    if (rotateMode && storeMode) Game.furniture.toggleStoreMode(false);
+    document.body.classList.toggle('rotate-mode', rotateMode);
+    var btn = document.getElementById('rotate-mode-btn');
+    if (btn) btn.textContent = rotateMode ? '✅ Fini de tourner' : '🔄 Tourner un meuble';
+    if (rotateMode) Game.ui.notify("🔄 Clique sur un meuble pour le faire tourner (astuce : clic droit marche aussi)");
 };
 
 // Ranger un meuble : on récupère tout le bois et la pierre
@@ -315,6 +333,7 @@ Game.furniture.reset = function() {
     setPose(null);
     setFx('');
     Game.furniture.toggleStoreMode(false);
+    Game.furniture.toggleRotateMode(false);
     var light = document.getElementById('room-light');
     if (light) light.style.display = 'none';
 };

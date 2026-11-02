@@ -1750,7 +1750,7 @@ function resizeRoom() {
 // Ce qui doit être dessiné dans la pièce : meubles, décor de boutique, commerçant, lit du villageois, boules à neige
 function roomKey() {
     var s = Game.state, parts = [s.activeHouse ? s.activeHouse.id : (s.activeShop ? s.activeShop.id : ''), Game.time.isNight() ? 'n' : 'd'];
-    if (s.activeHouse) (s.houseFurniture[s.activeHouse.id] || []).forEach(function(f) { parts.push(f[0] + f[1] + ',' + f[2] + (f[4] ? '*' : '') + ((!f[3] || s.totalTimePlayed - f[3] >= 720000) ? 'r' : '')); });
+    if (s.activeHouse) (s.houseFurniture[s.activeHouse.id] || []).forEach(function(f) { parts.push(f[0] + f[1] + ',' + f[2] + '@' + (f[5] || 0) + (f[4] ? '*' : '') + ((!f[3] || s.totalTimePlayed - f[3] >= 720000) ? 'r' : '')); });
     var npc = document.getElementById('shop-npc');
     if (npc && npc.style.display !== 'none') parts.push('npc' + npc.textContent);
     parts.push(document.querySelectorAll('#current-room .house-sleeper').length, document.querySelectorAll('#current-room .snow-globe-display').length, document.querySelectorAll('#current-room .shop-decor').length);
@@ -1768,6 +1768,7 @@ function syncRoom() {
         (s.houseFurniture[s.activeHouse.id] || []).forEach(function(f) {
             var o = makeFurniture(Game.furniture.typeOf(f[0]), f), p = roomPos(f[1], f[2]);
             o.position.set(p.x, 0.06, p.z);
+            o.rotation.y = (f[5] || 0) * Math.PI / 2;   // sens choisi par Charlie
             o.traverse(function(m) { m.userData.f = f; });
             items.add(o);
         });
@@ -1852,6 +1853,11 @@ function onRoomDown(e) {
     if (s.currentView !== 'interior' || !room3d || _cutscene) return;
     var rc = roomPoint(e);
     var hits = rc.intersectObjects(room3d.items.children, true);
+    // Clic droit sur un meuble : il tourne d'un quart de tour
+    if (e.button === 2) {
+        for (var j = 0; j < hits.length; j++) if (hits[j].object.userData.f) { Game.furniture.rotate(hits[j].object.userData.f); break; }
+        return;
+    }
     for (var i = 0; i < hits.length; i++) {
         var o = hits[i].object;
         if (o.userData.f) { _drag = { f: o.userData.f, x: e.clientX, y: e.clientY, moved: false }; e.preventDefault(); return; }
@@ -2112,6 +2118,7 @@ function init() {
         return { x: (v.x + 1) / 2 * window.innerWidth, y: (1 - v.y) / 2 * window.innerHeight };
     };
     canvas.addEventListener('pointerdown', onRoomDown);
+    canvas.addEventListener('contextmenu', function(e) { if (Game.state.currentView === 'interior') e.preventDefault(); });
     window.addEventListener('pointermove', onRoomMove);
     window.addEventListener('pointerup', onRoomUp);
     window.addEventListener('resize', resize); resize();
