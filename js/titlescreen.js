@@ -30,7 +30,7 @@ Game.titlescreen.show = function() {
 
     screen.innerHTML = bg +
         '<div style="text-align:center;z-index:2;animation:title-entrance 1s ease-out;">' +
-            '<div style="font-size:5rem;margin-bottom:10px;text-shadow:0 4px 8px rgba(0,0,0,0.1);">🤠</div>' +
+            '<div id="title-hero" style="font-size:5rem;margin-bottom:10px;text-shadow:0 4px 8px rgba(0,0,0,0.1);">🤠</div>' +
             '<h1 style="font-size:2.5rem;color:#5d4037;text-shadow:2px 2px 0 rgba(255,255,255,0.5);margin:0;font-family:Varela Round,sans-serif;">Le Village de Charlie</h1>' +
             '<p style="color:#8b6914;font-size:1rem;margin:10px 0 30px;font-family:Varela Round,sans-serif;">Une aventure tranquille</p>' +
             '<div style="display:flex;flex-direction:column;gap:12px;align-items:center;">' +

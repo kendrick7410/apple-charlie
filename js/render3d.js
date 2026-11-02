@@ -12,7 +12,14 @@ function hasWebGL() {
     try { var c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl'))); }
     catch (e) { return false; }
 }
-var ACTIVE = !/[?&]2d\b/.test(location.search) && hasWebGL();
+// Toujours en 3D quand l'appareil sait faire de la 3D (l'ancienne vue 2D ne sert plus que si WebGL manque ;
+// ?dev2d la force pour les tests). Un vieux lien « ?2d » est nettoyé de l'adresse.
+if (/[?&]2d\b/.test(location.search) && window.history && history.replaceState) {
+    history.replaceState(null, '', location.pathname + location.search.replace(/[?&]2d\b/, '').replace(/^&/, '?') + location.hash);
+}
+var ACTIVE = !/[?&]dev2d\b/.test(location.search) && hasWebGL();
+var LOW = false;
+try { LOW = localStorage.getItem('village3d_low') === '1'; } catch (e) {}
 var SHOW_FPS = /[?&]fps\b/.test(location.search);
 Game.r3d = { active: ACTIVE };
 if (!ACTIVE) return;
@@ -39,6 +46,11 @@ function loadThree() {
 
 // On s'accroche au lancement de la partie (Game.startGame est défini dans index.html)
 window.addEventListener('DOMContentLoaded', function() {
+    // Écran d'accueil : Charlie en 3D à la place de l'emoji
+    if (!Game.titlescreen) return;
+    var origShow = Game.titlescreen.show;
+    Game.titlescreen.show = function() { origShow.apply(this, arguments); titleHero(); };
+    if (document.getElementById('title-hero')) titleHero();
     var orig = Game.startGame;
     Game.startGame = function() {
         orig.apply(this, arguments);
@@ -51,6 +63,44 @@ window.addEventListener('DOMContentLoaded', function() {
         });
     };
 });
+
+// Charlie en 3D sur l'écran d'accueil : il tourne doucement sur lui-même et fait coucou
+function titleHero() {
+    loadThree().then(function() {
+        var slot = document.getElementById('title-hero');
+        if (!slot || slot.dataset.r3d) return;
+        slot.dataset.r3d = '1';
+        T = window.THREE;
+        var size = Math.min(240, Math.round(window.innerHeight * 0.3));
+        var cv = document.createElement('canvas');
+        cv.style.cssText = 'width:' + size + 'px;height:' + size + 'px;display:block;margin:0 auto;';
+        slot.textContent = '';
+        slot.appendChild(cv);
+        var r = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+        r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        r.setSize(size, size, false);
+        r.outputEncoding = T.sRGBEncoding;
+        r.toneMapping = T.ACESFilmicToneMapping;
+        var sc = new T.Scene();
+        sc.add(new T.HemisphereLight(lin('#ffffff'), lin('#8a7a5a'), 0.9));
+        var key = new T.DirectionalLight(lin('#fff3dc'), 1.1); key.position.set(2, 4, 5); sc.add(key);
+        var hero = makeCharlie(); hero.scale.setScalar(1); sc.add(hero);
+        var cam = new T.PerspectiveCamera(30, 1, 0.1, 50);
+        cam.position.set(0, 1.5, 6.2); cam.lookAt(0, 1.05, 0);
+        var ud = hero.userData;
+        (function spin(now) {
+            if (!cv.isConnected) { r.dispose(); if (r.forceContextLoss) r.forceContextLoss(); return; }
+            var t = now / 1000;
+            hero.rotation.y = Math.sin(t * 0.6) * 0.6;
+            ud.armR.rotation.x = -2.6 + Math.sin(t * 7) * 0.35;   // coucou !
+            ud.armR.rotation.z = -0.35;
+            ud.body.position.y = Math.abs(Math.sin(t * 2.2)) * 0.06;
+            ud.head.rotation.z = Math.sin(t * 1.4) * 0.08;
+            r.render(sc, cam);
+            requestAnimationFrame(spin);
+        })(performance.now());
+    }).catch(function() {});
+}
 
 // ═══════════════════════ Outils ═══════════════════════
 function lin(c) { return new T.Color(c).convertSRGBToLinear(); }
@@ -1355,11 +1405,11 @@ function init() {
     viewport.insertBefore(canvas, viewport.firstChild);
 
     renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setPixelRatio(LOW ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.outputEncoding = T.sRGBEncoding;
     renderer.toneMapping = T.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
-    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled = !LOW;
     renderer.shadowMap.type = T.PCFSoftShadowMap;
 
     scene = new T.Scene();
@@ -1433,9 +1483,23 @@ function watchSlow(fps) {
     _slowShown = true;
     var box = document.createElement('div');
     box.id = 'r3d-slow';
-    box.innerHTML = '🐢 Le jeu rame un peu sur cet ordinateur. <a href="?2d">Passer en 2D</a> <button type="button" aria-label="Fermer">✕</button>';
+    box.innerHTML = '🐢 Le jeu rame un peu sur cet ordinateur. <a href="#" id="r3d-low">Qualité réduite (plus fluide)</a> <button type="button" aria-label="Fermer">✕</button>';
     box.querySelector('button').onclick = function() { box.remove(); };
+    box.querySelector('#r3d-low').onclick = function(e) {
+        e.preventDefault();
+        try { localStorage.setItem('village3d_low', '1'); } catch (err) {}
+        setLowQuality();
+        box.remove();
+    };
     document.body.appendChild(box);
+}
+// Qualité réduite : pas d'ombres, moins de pixels (gardé pour les prochaines parties)
+function setLowQuality() {
+    LOW = true;
+    renderer.setPixelRatio(1);
+    renderer.shadowMap.enabled = false;
+    scene.traverse(function(o) { if (o.material) o.material.needsUpdate = true; });
+    resize();
 }
 var CAM_H = 16, CAM_D = 18;   // vue plus haute et plus éloignée : Charlie reste visible derrière les maisons   // caméra : hauteur et recul derrière Charlie
 var _last = 0, _prev = null, _camTarget = null, _look = null;
