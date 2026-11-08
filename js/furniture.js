@@ -69,7 +69,8 @@ var HELP = {
     armchair:  "Installe-toi dans le fauteuil 🛋️ : avec la télé allumée, c'est encore mieux !",
     fridge:    "Prends un goûter dans le frigo 🧊 (+30 de faim).",
     counter:   "L'évier du coin cuisine : fais la vaisselle 🧽 (+5 XP par jour).",
-    portrait:  "Le portrait d'un ami, offert à 5 cœurs 💝"
+    portrait:  "Le portrait d'un ami, offert à 5 cœurs 💝",
+    petbed:    "Le panier de ton compagnon 🐾"
 };
 
 Game.furniture.help = function(type) { return HELP[type]; };
@@ -101,7 +102,7 @@ function elOf(f) {
 var FOOT = {
     bed: [43, 63], table: [43, 43], chair: [17, 17], bookshelf: [40, 14], lamp: [14, 14], plant: [17, 17],
     mirror: [26, 8], stove: [31, 22], tv: [37, 14], piano: [49, 20], bath: [54, 30],
-    armchair: [36, 30], fridge: [27, 24], counter: [48, 22], portrait: [26, 18]
+    armchair: [36, 30], fridge: [27, 24], counter: [48, 22], portrait: [26, 18], petbed: [30, 26]
 };
 function roomSize() { var r = room(); return { w: (r && r.clientWidth) || 570, h: (r && r.clientHeight) || 570 }; }
 Game.furniture.footprint = function(f) {
@@ -799,6 +800,13 @@ var USES = {
         sparkle(f, snack, 3);
         Game.audio.playChime();
         Game.ui.notify(snack + " Miam, un goûter du frigo ! (+30 de faim)");
+    },
+
+    // Panier du compagnon : un câlin
+    petbed: function(f) {
+        var p = Game.state.pet;
+        sparkle(f, '💛', 3);
+        Game.ui.notify(p ? (f[6] || '🐾') + ' ' + p.name + ' se blottit dans son panier. Il est content d\'être à la maison 💛' : '🧺 Un panier tout douillet');
     },
 
     // Portrait d'un ami : un joli souvenir

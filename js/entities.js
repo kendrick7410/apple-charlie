@@ -170,6 +170,18 @@ Game.entities.checkCollect = function() {
 
 Game.entities.harvest = function(tree) {
     var s = Game.state;
+    if (tree.dataset.fruit) {   // arbre fruitier de la prairie : des fruits (comptés comme des pommes) et de l'XP
+        tree.dataset.hasApple = 'false';
+        tree.innerHTML = Game.SEASON_HARVESTED_TREE[s.season];
+        s.inventory.apples += 3;
+        Game.xp.add(8);
+        Game.particles.spawnWorld(tree.dataset.fruit, parseInt(tree.style.left), parseInt(tree.style.top));
+        Game.audio.playChime();
+        Game.ui.update();
+        Game.ui.notify('+3 fruits ' + tree.dataset.fruit + ' (comptés comme des pommes 🍎) +8 XP');
+        setTimeout(function() { if (Game.state.season !== 'winter') { tree.dataset.hasApple = 'true'; tree.innerHTML = Game.SEASON_TREE[Game.state.season]; } }, Game.CONFIG.TREE_RESPAWN);
+        return;
+    }
     tree.dataset.hasApple = 'false';
     tree.innerHTML = Game.SEASON_HARVESTED_TREE[s.season];
 

@@ -598,7 +598,8 @@ Game.RECIPES = {
     armchair: { emoji: '🛋️', label: 'Fauteuil', wood: 4, stone: 0 },
     fridge:   { emoji: '🧊', label: 'Frigo',    wood: 1, stone: 5 },
     counter:  { emoji: '🚰', label: 'Évier',    wood: 4, stone: 2 },
-    portrait: { emoji: '🖼️', label: 'Portrait', wood: 0, stone: 0 }   // cadeau d'un ami à 5 cœurs (ne se fabrique pas)
+    portrait: { emoji: '🖼️', label: 'Portrait', wood: 0, stone: 0 },  // cadeau d'un ami à 5 cœurs (ne se fabrique pas)
+    petbed:   { emoji: '🧺', label: 'Panier',   wood: 0, stone: 0 }   // panier du compagnon (offert à l'adoption)
 };
 
 Game.COOKING_RECIPES = {

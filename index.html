@@ -379,6 +379,7 @@
 <script src="js/friends.js"></script>
 <script src="js/plaza.js"></script>
 <script src="js/bridge.js"></script>
+<script src="js/pets.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/farming.js"></script>
 <script src="js/minimap.js"></script>
@@ -465,7 +466,8 @@ Game.startGame = function() {
     Game.placement.settle();     // garde-fou : rien ne reste posé sur un autre objet, dans l'eau ou sur un chemin
     if (Game.decorLayout.apply()) Game.placement.settle();
     Game.plaza.init();           // grande place : bancs, lampadaires, mâts des guirlandes (là où il y a de la place)
-    Game.bridge.init();          // pont du torrent (Prairie aux Lucioles)   // décor placé à la main (page admin) ; les fleurs et cailloux au hasard se décalent s'ils tombent dessus
+    Game.bridge.init();          // pont du torrent (Prairie aux Lucioles)
+    Game.pets.init();            // prairie (fleurs rares, arbres fruitiers), refuge des animaux, compagnon   // décor placé à la main (page admin) ; les fleurs et cailloux au hasard se décalent s'ils tombent dessus
     Game.placement.devCheck();   // ?checkdecor : liste ce qui se chevauche encore
 
     // Init UI

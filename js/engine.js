@@ -218,6 +218,7 @@ Game.engine.loop = function(now) {
     Game.friends.update();
     Game.plaza.update();
     Game.bridge.update();
+    Game.pets.update(dt);
     Game.farming.update(dt);
     Game.creatures.update(dt);
     Game.mountain.update(dt, now);

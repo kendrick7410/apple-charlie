@@ -615,7 +615,8 @@ function makeTree(kind, apples, s) {
         [[0, 2.15, 0, 1.05], [0.75, 1.9, 0.25, 0.8], [-0.7, 1.95, 0.15, 0.82], [0.1, 2.75, -0.1, 0.78], [0.05, 1.85, 0.75, 0.72]].forEach(function(b, k) {
             ball(g, b[3], k % 2 ? B : A, b[0], b[1], b[2]);
         });
-        if (apples) [[0.55, 1.75, 0.85], [-0.6, 2.2, 0.75], [0.3, 2.6, 0.7]].forEach(function(a) { ball(g, 0.13, mat('#e8443c', { roughness: 0.4 }), a[0], a[1], a[2]); });
+        if (apples === true) [[0.55, 1.75, 0.85], [-0.6, 2.2, 0.75], [0.3, 2.6, 0.7]].forEach(function(a) { ball(g, 0.13, mat('#e8443c', { roughness: 0.4 }), a[0], a[1], a[2]); });
+        else if (apples) [[0.55, 1.75, 0.85], [-0.6, 2.2, 0.75], [0.3, 2.6, 0.7], [-0.2, 1.9, 0.95], [0.8, 2.3, 0.2], [-0.75, 1.7, -0.3]].forEach(function(a) { ball(g, 0.11, mat(apples, { roughness: 0.35 }), a[0], a[1], a[2]); });   // arbre fruitier (cerises, oranges, pêches)
     }
     g.scale.setScalar(s);
     return g;
@@ -1165,6 +1166,10 @@ var ANIMALS = {
     '🦇': function() { return bird({ color: '#3d3550', wing: '#2a2438', beak: '#3d3550', span: 1.8, size: 0.6, flies: true }); }
 };
 ANIMALS['🐮'] = ANIMALS['🐄']; ANIMALS['🐖'] = ANIMALS['🐷'];
+// Compagnons (refuge des animaux)
+ANIMALS['🐶'] = function() { return quad({ fur: '#c68642', belly: '#f3dcc0', snout: '#e8c49a', nose: '#1a1410', ears: 'floppy', earColor: '#8a5a2b', tail: 'thin', size: 0.72, long: 1.2, legLen: 0.2, legR: 0.08, neck: 0.2, headR: 0.32, hoof: '#8a5a2b' }); };
+ANIMALS['🐱'] = function() { return quad({ fur: '#f0a35a', belly: '#fff3e0', spots: [[-0.3, 0.12, 0.1], [0.32, 0.1, -0.2]], spotColor: '#c8762f', nose: '#ff9aa8', ears: 'point', inner: '#ffb6c1', tail: 'thin', size: 0.58, long: 1.25, legLen: 0.16, legR: 0.07, neck: 0.12, headR: 0.32 }); };
+ANIMALS['🐹'] = function() { return quad({ fur: '#e8b27a', belly: '#fff3e0', snout: '#fff3e0', nose: '#ff9aa8', ears: 'round', tail: 'none', size: 0.38, long: 0.95, legLen: 0.0, legR: 0.09, neck: 0.02, headR: 0.38 }); };
 ['🦀', '⭐', '🐚', '🐙', '🦑', '🪼', '🦐', '🦞', '🐠'].forEach(function(e) { ANIMALS[e] = function() { return seaThing(e); }; });
 // Papillon (tous pareils, doré) et luciole
 ANIMALS['🦋'] = function() {
@@ -1373,6 +1378,7 @@ function buildTerrain() {
     var forest = Array.prototype.map.call(world.querySelectorAll('.forest-ground'), rectOf);
     var hills = Array.prototype.map.call(world.querySelectorAll('.hill'), rectOf);
     var PATHS = Game.PATHS || [];
+    var PL = Game.CONFIG.LOCATIONS.prairie, PRAIRIE = { x: PL.x - 620, y: PL.y - 720, w: 1240, h: 1440 }, MEADOW = lin('#a9dc6b');
     var pens = Array.prototype.map.call(world.querySelectorAll('.farm-pen'), rectOf);
     var MZ = { x: 2650, y: 300, w: 1750, h: 1450 };   // zone des montagnes (comme entities.js)
     // Rivière et lacs : on creuse leur lit dans le sol (berges en pente)
@@ -1399,6 +1405,7 @@ function buildTerrain() {
         c.copy(GRASS).lerp(GRASS2, 0.5 + 0.5 * Math.sin(px * 0.004) * Math.cos(py * 0.005));
         c.offsetHSL(0, 0, (R() - 0.5) * 0.02);
         forest.forEach(function(r) { var e = inEllipse(px, py, r); if (e < 1) c.lerp(FOREST, Math.min(1, (1 - e) * 2)); });
+        var pe = inEllipse(px, py, PRAIRIE); if (pe < 1) c.lerp(MEADOW, Math.min(0.75, (1 - pe) * 1.5));   // Prairie aux Lucioles : herbe claire et fleurie
         hills.forEach(function(r) { var e = inEllipse(px, py, r); if (e < 1) h += Math.cos(Math.sqrt(e) * Math.PI / 2) * Math.min(r.w, r.h) * U * 0.25; });
         var me = inEllipse(px, py, MZ);
         if (me < 1) {
@@ -1514,7 +1521,7 @@ function buildTerrain() {
 // ═══════════════════════ Pont carte 2D → 3D ═══════════════════════
 var tracked = new Map();      // élément 2D → objet 3D
 var gameWorld = null;
-var MOVING = /villager-sprite|creature|sea-creature|mtn-animal|farmer-sprite|farm-escaped|farm-animal|wasp|cargo-boat/;
+var MOVING = /villager-sprite|creature|sea-creature|mtn-animal|farmer-sprite|farm-escaped|farm-animal|wasp|cargo-boat|pet-sprite/;
 
 function emojiOf(el) {
     for (var i = 0; i < el.childNodes.length; i++) {
@@ -1531,7 +1538,8 @@ function kindOf(el, e) {
     var cl = el.classList, id = el.id;
     if (cl.contains('farm-pen')) return 'pen';   // enclos : sol de terre + barrières, il suit sa position
     if (cl.contains('plaza-deco')) return 'plazadeco';
-    if (id === 'bridge') return 'bridge';   // pont du torrent (cassé ou réparé)   // place du village : banc, lampadaire, mât de guirlande, fête
+    if (id === 'bridge') return 'bridge';   // pont du torrent (cassé ou réparé)
+    if (id === 'pet-refuge') return 'refuge';   // refuge des animaux (Prairie aux Lucioles)   // place du village : banc, lampadaire, mât de guirlande, fête
     if (id === 'player' || cl.contains('mountain-snow') || e === '❄️') return 'skip';
     if (id === 'garden-area') return 'garden';
     if (id === 'fountain-anchor') return 'fountain';
@@ -1580,7 +1588,7 @@ function buildFor(el, kind, e, label) {
         case 'fountain': obj = makeFountain(); break;
         case 'garden': obj = makeGarden(el); break;
         case 'tree': case 'autumn': case 'pine': case 'snowpine':
-            obj = makeTree(kind === 'tree' ? 'green' : kind, kind === 'tree' && el.dataset.hasApple === 'true', Math.max(0.7, Math.min(1.3, size / 1.1))); break;
+            obj = makeTree(kind === 'tree' ? 'green' : kind, kind === 'tree' && el.dataset.hasApple === 'true' && (el.dataset.fruitColor || true), Math.max(0.7, Math.min(1.3, size / 1.1))); break;
         case 'rock': obj = makeRock(Math.max(0.6, Math.min(1.6, size / 0.8))); break;
         case 'flower': obj = makeFlower(e); break;
         case 'mountain': obj = makeMountain(Math.max(8, size * 2.6), Math.round((parseFloat(el.style.left) || 1) + (parseFloat(el.style.top) || 1)) % 99991 + 1); break;
@@ -1603,6 +1611,11 @@ function buildFor(el, kind, e, label) {
         case 'pen': obj = makePen(el); break;
         case 'plazadeco': obj = makePlazaDeco(el.dataset.kind); obj.rotation.y = +(el.dataset.rot || 0); break;
         case 'bridge': obj = makeBridge(el.classList.contains('fixed')); break;
+        case 'refuge': {   // maison vert sapin avec une grande patte sur la façade
+            obj = makeHouse({ wall: '#e8f3e4', roof: '#4c9a6a' }, HOUSE_S);
+            var paw = labelSprite('🐾', 0.9); paw.position.set(0, 3.0, 1.7); obj.add(paw);
+            obj.position.y = 0; break;
+        }
         default: {
             obj = new T.Group();
             if (e) { var sp = emojiSprite(e, Math.max(0.8, size * 1.25)); obj.add(sp); obj.userData.sprite = sp; }
@@ -1622,7 +1635,7 @@ function buildFor(el, kind, e, label) {
         pool.rotation.x = -Math.PI / 2; pool.position.set(0, 0.06, 3.0); obj.add(pool);
     }
     if (label && kind !== 'flower') {
-        var top = { house: 4.6 * HOUSE_S / 0.8, shop: 5.6 * SHOP_S / 0.95, construction: 3 * SITE_S / 0.8, plot: 2.2, fountain: 2.6, garden: 1.2, villager: 2.3, farmer: 2.3, barn: 4.8, mountain: Math.max(8, size * 2.6) + 0.6 }[kind] || (kind === 'sprite' ? size * 1.3 : 3.5);
+        var top = { refuge: 4.6 * HOUSE_S / 0.8, house: 4.6 * HOUSE_S / 0.8, shop: 5.6 * SHOP_S / 0.95, construction: 3 * SITE_S / 0.8, plot: 2.2, fountain: 2.6, garden: 1.2, villager: 2.3, farmer: 2.3, barn: 4.8, mountain: Math.max(8, size * 2.6) + 0.6 }[kind] || (kind === 'sprite' ? size * 1.3 : 3.5);
         var lab = labelSprite(label, 0.55); lab.position.y = top; obj.add(lab);
     }
     obj.traverse(function(o) { o.userData.el = o.userData.el || el; });
@@ -1641,6 +1654,7 @@ function groundPoint(el, kind) {
     var w = el.offsetWidth, h = first ? first.offsetHeight : el.offsetHeight;
     if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'pen' || kind === 'dock' || kind === 'path' || kind === 'plazadeco' || kind === 'bridge') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
     if (kind === 'barn') return { x: x + w / 2, y: y + 140 };
+    if (kind === 'refuge') { var RF = Game.CONFIG.LOCATIONS.petRefuge; return { x: RF.x, y: RF.y }; }
     if (el.classList.contains('house-exterior') || /-anchor$/.test(el.id)) return { x: x + w / 2, y: y + h * 0.75 };
     return { x: x + w / 2, y: y + h * 0.9 };
 }
@@ -1772,6 +1786,7 @@ function colliderFor(el, kind, obj) {
         case 'rock':         return el.classList.contains('stone') ? null : { r: 0.45 * sc / U };
         case 'decor':        return DECOR_COL[emojiOf(el)] ? { r: DECOR_COL[emojiOf(el)] / U } : null;   // parasol, château de sable, bûche...
         case 'pen':          return { hw: el.offsetWidth / 2, hd: el.offsetHeight / 2 };            // on ne passe pas à travers les barrières
+        case 'refuge':       return { hw: 2.9 * HOUSE_S * 0.9 / U, hd: 3.8 * HOUSE_S / 2 / U };
         case 'plazadeco':    return { r: (PLAZA_COL[el.dataset.kind] || 0.3) / U };
         default:             return null;
     }
@@ -2529,6 +2544,13 @@ function makeFurniture(type, f) {
             hd.parent.remove(hd); fr.add(hd); hd.position.set(0, 0.08, 0.1); hd.scale.setScalar(0.42); hd.rotation.set(0, 0, 0);
             var sc = (CRITTERS[f[6]] || {}).shirt || '#7fb7e8';
             ball(fr, 0.26, mat(sc), 0, -0.32, 0.06, 1.15, 0.55, 0.35);                   // épaules
+            break;
+        }
+        case 'petbed': {   // panier en osier, coussin, et le compagnon qui s'y repose
+            put(g, new T.Mesh(new T.CylinderGeometry(0.62, 0.52, 0.32, 24, 1, true), mat('#b5834a', { roughness: 0.9, side: T.DoubleSide })), 0, 0.16, 0);
+            put(g, new T.Mesh(new T.TorusGeometry(0.62, 0.06, 8, 28), mat('#9c6b38')), 0, 0.32, 0).rotation.x = Math.PI / 2;
+            put(g, new T.Mesh(new T.CylinderGeometry(0.5, 0.5, 0.12, 24), mat('#e57373', { roughness: 0.95 })), 0, 0.1, 0);
+            if (f[6] && ANIMALS[f[6]] && Game.state.pet) { var pa = ANIMALS[f[6]](); pa.position.set(0, 0.12, 0); pa.rotation.y = 0.6; pa.scale.multiplyScalar(0.85); g.add(pa); }
             break;
         }
         case 'armchair':   // fauteuil moelleux : dossier vers l'arrière (-z), on s'assoit face à +z

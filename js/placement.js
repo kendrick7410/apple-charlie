@@ -66,6 +66,7 @@ P.footprint = function(el) {
         var loc = sh && L[sh.loc] ? L[sh.loc] : { x: parseFloat(el.style.left) || 0, y: (parseFloat(el.style.top) || 0) + 56 };
         fp = boxAt(loc.x, loc.y - 56, 2.9 * SHOP_S * 0.9 * U, 3.8 * SHOP_S / 2 * U);
     } else if (id === 'garden-area') fp = rectOf(el, 10);
+    else if (id === 'pet-refuge') { var RR = Game.CONFIG.LOCATIONS.petRefuge; fp = boxAt(RR.x, RR.y, 2.9 * HOUSE_S * 0.9 * U, 3.8 * HOUSE_S / 2 * U); }
     if (fp) {
         // Parvis devant la porte (côté +y) : rien ne doit bloquer l'entrée d'une maison ou d'une boutique
         if (id !== 'fountain-anchor' && id !== 'garden-area') fp.y2 += 55;
