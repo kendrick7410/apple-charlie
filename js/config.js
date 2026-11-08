@@ -80,6 +80,9 @@ Game.CONFIG = {
         souvenirShop: { x: 1700, y: 5040 },
         port:         { x: 4100, y: 5070 },
         farm:         { x: 2500, y: 2600 },
+        bridge:       { x: 4700, y: 2530 },   // pont sur le torrent (centre), vers la Prairie aux Lucioles
+        petRefuge:    { x: 5250, y: 2420 },   // refuge des animaux, dans la prairie
+        prairie:      { x: 5300, y: 2700 },   // centre de la Prairie aux Lucioles
         // Chaque morceau de la ferme a sa propre place (déplaçable seul dans la page admin)
         farmBarn:        { x: 2500, y: 2260 },   // haut-milieu de la grange
         farmPenChickens: { x: 2200, y: 2660 },   // centre des enclos
@@ -118,7 +121,10 @@ Game.PATHS = [
     { x: 1400, y: 1260, w: 250,  h: 40  },   // vers le jardin
     { x: 1550, y: 1300, w: 40,   h: 100 },
     { x: 970,  y: 1560, w: 60,   h: 1000 },  // route vers le sud (jusqu'à la ferme)
-    { x: 970,  y: 2500, w: 1600, h: 60  }    // route vers l'est : passe entre la grange et les enclos
+    { x: 970,  y: 2500, w: 1600, h: 60  },   // route vers l'est : passe entre la grange et les enclos
+    { x: 2570, y: 2500, w: 1990, h: 60  },   // route de la ferme jusqu'au pont du torrent
+    { x: 4840, y: 2500, w: 410,  h: 60  },   // de l'autre côté du pont : chemin de la prairie
+    { x: 5220, y: 2480, w: 60,   h: 80  }    // jusqu'au refuge des animaux
 ];
 
 // ── Rivière : bras ouest qui se divise, part au milieu de la carte et rejoint la mer ──
@@ -150,7 +156,20 @@ Game.buildRiverSegments = function() {
         segs.push({ x: midX + Math.sin(y2 / 260) * 70, y: y2, w: 150, h: 100 });
     }
 
+    // Torrent des montagnes (tout à l'est) : il sépare la Prairie aux Lucioles du reste du village.
+    // Trop de courant pour nager : il faut réparer le pont (js/bridge.js).
+    for (var y3 = 0; y3 < seaY; y3 += 80) {
+        segs.push({ x: Game.torrentX(y3) - 75, y: y3, w: 150, h: 100, torrent: true });
+    }
+
     return segs;
+};
+
+// Milieu du torrent de l'est à la hauteur y (doux méandres, toujours droit au niveau du pont)
+Game.torrentX = function(y) {
+    var B = Game.CONFIG.LOCATIONS.bridge, d = Math.abs(y - B.y);
+    var bend = Math.sin(y / 280) * 55 * Math.min(1, Math.max(0, (d - 120) / 200));
+    return B.x + bend;
 };
 
 Game.FLOWER_TYPES = ["🌸", "🌻", "🌷", "🌹", "💐", "🪻"];

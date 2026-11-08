@@ -43,7 +43,7 @@ Game.player.update = function(dt, now) {
     // PLAYER_SPEED est en pixels par image à 60 images/s : on le cale sur le temps réel (dt),
     // sinon Charlie ralentit là où l'ordinateur affiche moins d'images (montagnes...).
     var speed = Game.CONFIG.PLAYER_SPEED * Game.player.skinBonus().speed * (dt || 16.67) / 16.67;
-    var moved = false;
+    var moved = false, prevX = s.charlie.x, prevY = s.charlie.y;
     var keys = s.keysDown;
 
     // Movement input
@@ -80,6 +80,8 @@ Game.player.update = function(dt, now) {
         var seaLimit = (Game.r3d && Game.r3d.renderer) ? shore + 450 : shore;
         if (s.charlie.y > seaLimit) s.charlie.y = seaLimit;
     }
+    // Le torrent : jamais à la nage, seulement par le pont réparé
+    if (Game.bridge) Game.bridge.guard(prevX, prevY);
     // Vue 3D : on bute contre les maisons, arbres... AVANT de dessiner (sinon Charlie y entre un instant)
     if (Game.player.afterMove) Game.player.afterMove();
 

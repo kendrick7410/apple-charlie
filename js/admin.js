@@ -67,7 +67,11 @@ Game.decorLayout = {
         layout = layout || Game.DECOR_LAYOUT;
         if (!layout || !layout.items || !layout.items.length) return false;
         Game.decorLayout.editable().forEach(function(el) { el.remove(); });
-        layout.items.forEach(function(it) { Game.decorLayout.create(it); });
+        layout.items.forEach(function(it) {
+            // Un objet qui tomberait dans le torrent (ajouté après la validation) n'est pas posé
+            if (Game.bridge && Game.bridge.inTorrent && (Game.bridge.inTorrent(+it.x + 20, +it.y + 30))) return;
+            Game.decorLayout.create(it);
+        });
         if (Game.placement.refreshObstacles) Game.placement.refreshObstacles();
         return true;
     },

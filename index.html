@@ -116,6 +116,7 @@
             <button id="crampons-toggle" onclick="Game.tools.toggleCrampons()" style="display:none" title="Crampons" aria-label="Crampons">🥾</button>
             <button id="swing-move" onclick="Game.tools.moveSwing()" style="display:none" title="Placer la balançoire" aria-label="Placer la balançoire">🎠</button>
             <button onclick="Game.ui.toggleCollections()" title="Collection" aria-label="Collection">📖</button>
+            <button onclick="Game.bridge.toggleCarnet()" title="Carnet du village" aria-label="Carnet du village">📒</button>
             <button onclick="Game.ui.toggleTeleport()" title="Voyage" aria-label="Voyage">🗺️</button>
             <button onclick="Game.ui.toggleSkins()" title="Skins" aria-label="Skins">🎭</button>
             <button onclick="Game.titlescreen.showControls()" title="Paramètres et commandes" aria-label="Paramètres et commandes">⚙️</button>
@@ -377,6 +378,7 @@
 <script src="js/quests.js"></script>
 <script src="js/friends.js"></script>
 <script src="js/plaza.js"></script>
+<script src="js/bridge.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/farming.js"></script>
 <script src="js/minimap.js"></script>
@@ -462,7 +464,8 @@ Game.startGame = function() {
     Game.minimap.init();
     Game.placement.settle();     // garde-fou : rien ne reste posé sur un autre objet, dans l'eau ou sur un chemin
     if (Game.decorLayout.apply()) Game.placement.settle();
-    Game.plaza.init();           // grande place : bancs, lampadaires, mâts des guirlandes (là où il y a de la place)   // décor placé à la main (page admin) ; les fleurs et cailloux au hasard se décalent s'ils tombent dessus
+    Game.plaza.init();           // grande place : bancs, lampadaires, mâts des guirlandes (là où il y a de la place)
+    Game.bridge.init();          // pont du torrent (Prairie aux Lucioles)   // décor placé à la main (page admin) ; les fleurs et cailloux au hasard se décalent s'ils tombent dessus
     Game.placement.devCheck();   // ?checkdecor : liste ce qui se chevauche encore
 
     // Init UI

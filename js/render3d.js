@@ -798,6 +798,49 @@ function makeHay(w) {
     g.scale.set(s, s * 0.85, s * 0.85);
     return g;
 }
+// ═══════════════════════ Pont du torrent ═══════════════════════
+// 7,5 unités de long (berge à berge), 2,3 de large ; planches, poutres, piliers dans l'eau, rambardes.
+// Cassé : il manque les planches du milieu, une rambarde pend dans l'eau, un panneau prévient.
+function makeBridge(fixed) {
+    var g = new T.Group(), W = 7.5, D = 2.3, n = 20, WOODC = '#a0703f', DARK = '#6e4b2a';
+    var gapFrom = 8, gapTo = 13;
+    for (var i = 0; i < n; i++) {
+        if (!fixed && i >= gapFrom && i <= gapTo) continue;
+        var x = -W / 2 + (i + 0.5) * W / n;
+        var pl = rbox(g, W / n - 0.03, 0.1, D, 0.02, i % 3 ? WOODC : '#b07d4f', x, 0.38, 0);
+        if (!fixed && (i === gapFrom - 1 || i === gapTo + 1)) pl.rotation.x = (i < gapFrom ? 0.12 : -0.1);   // planches abîmées au bord du trou
+    }
+    [-D / 2 + 0.08, D / 2 - 0.08].forEach(function(z) {   // poutres de chaque côté
+        if (fixed) rbox(g, W, 0.18, 0.14, 0.03, DARK, 0, 0.26, z);
+        else { rbox(g, W * 0.4, 0.18, 0.14, 0.03, DARK, -W * 0.3, 0.26, z); rbox(g, W * 0.4, 0.18, 0.14, 0.03, DARK, W * 0.3, 0.26, z); }
+    });
+    [-W / 2 + 0.2, -1.3, 1.3, W / 2 - 0.2].forEach(function(x) {   // piliers plantés dans le lit du torrent
+        [-D / 2 + 0.12, D / 2 - 0.12].forEach(function(z) { put(g, new T.Mesh(new T.CylinderGeometry(0.11, 0.13, 1.8, 10), mat(DARK)), x, -0.5, z); });
+    });
+    // Rambardes : poteaux + main courante
+    [-D / 2 + 0.06, D / 2 - 0.06].forEach(function(z, side) {
+        for (var k = 0; k <= 6; k++) {
+            var px = -W / 2 + 0.2 + k * (W - 0.4) / 6;
+            if (!fixed && k >= 3 && k <= 3) continue;
+            rbox(g, 0.1, 0.9, 0.1, 0.03, DARK, px, 0.85, z);
+        }
+        if (fixed) rbox(g, W - 0.3, 0.08, 0.1, 0.03, WOODC, 0, 1.28, z);
+        else {
+            rbox(g, W * 0.38, 0.08, 0.1, 0.03, WOODC, -W * 0.31, 1.28, z);
+            var hang = rbox(g, W * 0.38, 0.08, 0.1, 0.03, WOODC, W * 0.12, 0.7, z); hang.rotation.z = side ? -0.55 : -0.45;   // rambarde cassée qui pend
+        }
+    });
+    if (!fixed) {
+        // Panneau « Pont cassé » à l'entrée (côté village) et deux planches qui flottent
+        var sign = new T.Group(); sign.position.set(-W / 2 - 0.6, 0, -D / 2 - 0.2); g.add(sign);
+        put(sign, new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 1.3, 8), mat(DARK)), 0, 0.65, 0);
+        rbox(sign, 0.9, 0.5, 0.06, 0.04, '#f2c94c', 0, 1.25, 0.04);
+        var lab = labelSprite('⚠️ Pont cassé', 0.45); lab.position.set(0, 1.9, 0); sign.add(lab);
+        [[0.3, 0.6], [-0.5, -0.4]].forEach(function(f, i) { var fl = rbox(g, 0.36, 0.06, D * 0.8, 0.02, '#8d6040', f[0], -0.22, f[1]); fl.rotation.y = 0.6 + i; fl.castShadow = false; });
+    }
+    return g;
+}
+
 // ═══════════════════════ Place du village ═══════════════════════
 // Bancs, lampadaires, mâts des guirlandes, table de fête d'anniversaire
 function makePlazaDeco(kind) {
@@ -1329,6 +1372,7 @@ function buildTerrain() {
     var world = document.getElementById('game-world');
     var forest = Array.prototype.map.call(world.querySelectorAll('.forest-ground'), rectOf);
     var hills = Array.prototype.map.call(world.querySelectorAll('.hill'), rectOf);
+    var PATHS = Game.PATHS || [];
     var pens = Array.prototype.map.call(world.querySelectorAll('.farm-pen'), rectOf);
     var MZ = { x: 2650, y: 300, w: 1750, h: 1450 };   // zone des montagnes (comme entities.js)
     // Rivière et lacs : on creuse leur lit dans le sol (berges en pente)
@@ -1362,6 +1406,15 @@ function buildTerrain() {
             h += k * (0.6 + Math.sin(px * 0.01) * Math.cos(py * 0.012) * 0.5);
             c.lerp(ROCK, k * 0.55);
             if (k > 0.55) c.lerp(SNOW, (k - 0.55) * 1.6);
+        }
+        // Sous les routes, le sol est plat (sinon une colline recouvre la route) ; pente douce sur 50 px
+        if (h > 0) {
+            var pd = 1e9;
+            for (var q = 0; q < PATHS.length; q++) {
+                var P = PATHS[q], ddx = Math.max(P.x - px, 0, px - P.x - P.w), ddy = Math.max(P.y - py, 0, py - P.y - P.h);
+                pd = Math.min(pd, Math.hypot(ddx, ddy));
+            }
+            if (pd < 50) h *= pd / 50;
         }
         // Bord herbe / sable ondulé (pas une ligne droite), avec un passage doux
         var sandY = sandLine(px) + (R() - 0.5) * 30;
@@ -1434,8 +1487,9 @@ function buildTerrain() {
     waterMeshOf(lakes, new T.MeshStandardMaterial({ map: lakeTex, roughness: 0.1, metalness: 0.1 }));
 
     // Chemins de sable (rectangles aux coins arrondis)
-    var PATH = mat('#e3bd7c', { roughness: 1 });
-    (Game.PATHS || []).forEach(function(p) {
+    var PATH = mat('#e3bd7c', { roughness: 1, side: T.DoubleSide });   // (vues de dessus : sans DoubleSide les routes étaient invisibles)
+    (Game.PATHS || []).forEach(function(p, pi) {
+        if (pi === 0) return;   // l'ancienne place carrée : remplacée par la grande place ronde pavée
         var r = Math.min(30, p.w / 2, p.h / 2) * U, w = p.w * U, h = p.h * U;
         var s = new T.Shape();
         s.moveTo(r, 0); s.lineTo(w - r, 0); s.quadraticCurveTo(w, 0, w, r); s.lineTo(w, h - r); s.quadraticCurveTo(w, h, w - r, h);
@@ -1476,7 +1530,8 @@ function bubbleOf(el) { var b = el.querySelector('.speech-bubble'); return b && 
 function kindOf(el, e) {
     var cl = el.classList, id = el.id;
     if (cl.contains('farm-pen')) return 'pen';   // enclos : sol de terre + barrières, il suit sa position
-    if (cl.contains('plaza-deco')) return 'plazadeco';   // place du village : banc, lampadaire, mât de guirlande, fête
+    if (cl.contains('plaza-deco')) return 'plazadeco';
+    if (id === 'bridge') return 'bridge';   // pont du torrent (cassé ou réparé)   // place du village : banc, lampadaire, mât de guirlande, fête
     if (id === 'player' || cl.contains('mountain-snow') || e === '❄️') return 'skip';
     if (id === 'garden-area') return 'garden';
     if (id === 'fountain-anchor') return 'fountain';
@@ -1547,6 +1602,7 @@ function buildFor(el, kind, e, label) {
         case 'field': obj = makeField(el); break;
         case 'pen': obj = makePen(el); break;
         case 'plazadeco': obj = makePlazaDeco(el.dataset.kind); obj.rotation.y = +(el.dataset.rot || 0); break;
+        case 'bridge': obj = makeBridge(el.classList.contains('fixed')); break;
         default: {
             obj = new T.Group();
             if (e) { var sp = emojiSprite(e, Math.max(0.8, size * 1.25)); obj.add(sp); obj.userData.sprite = sp; }
@@ -1583,7 +1639,7 @@ function groundPoint(el, kind) {
     var wxy = worldXY(el), x = wxy.x, y = wxy.y;
     var first = el.firstElementChild && !el.firstElementChild.classList.contains('building-label') ? el.firstElementChild : null;
     var w = el.offsetWidth, h = first ? first.offsetHeight : el.offsetHeight;
-    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'pen' || kind === 'dock' || kind === 'path' || kind === 'plazadeco') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
+    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'pen' || kind === 'dock' || kind === 'path' || kind === 'plazadeco' || kind === 'bridge') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
     if (kind === 'barn') return { x: x + w / 2, y: y + 140 };
     if (el.classList.contains('house-exterior') || /-anchor$/.test(el.id)) return { x: x + w / 2, y: y + h * 0.75 };
     return { x: x + w / 2, y: y + h * 0.9 };
@@ -1600,6 +1656,7 @@ function applySeasonGround() {
 function rawHeightAt(px, py) { _rawHeight = true; var h = heightAt(px, py); _rawHeight = false; return h; }
 // Hauteur du sol en un point de la carte (interpolée dans la carte des hauteurs)
 function heightAt(px, py) {
+    if (Game.state && Game.state.bridgeFixed && Game.bridge && Game.bridge.onDeck(px, py)) return 0.43;   // sur le pont réparé : au-dessus de l'eau
     if (!heightGrid) return 0;
     var n = heightGrid.n, gx = Math.max(0, Math.min(n - 1.001, px / heightGrid.cell)), gy = Math.max(0, Math.min(n - 1.001, py / heightGrid.cell));
     var ix = Math.floor(gx), iy = Math.floor(gy), fx = gx - ix, fy = gy - iy, H = heightGrid.h;
@@ -1779,9 +1836,10 @@ function walkToTarget(dt) {
     if (s.joy && (s.joy.x || s.joy.y)) { _walkTarget = null; return; }
     var c = s.charlie, dx = _walkTarget.x - c.x, dy = _walkTarget.y - c.y, d = Math.hypot(dx, dy);
     var step = Game.CONFIG.PLAYER_SPEED * Game.player.skinBonus().speed * dt * 60;
-    if (d <= step) { c.x = _walkTarget.x; c.y = _walkTarget.y; _walkTarget = null; return; }
     var bx = c.x, by = c.y;
+    if (d <= step) { c.x = _walkTarget.x; c.y = _walkTarget.y; _walkTarget = null; if (Game.bridge) Game.bridge.guard(bx, by); return; }
     c.x += dx / d * step; c.y += dy / d * step;
+    if (Game.bridge) Game.bridge.guard(bx, by);
     collide();
     // Bloqué contre un obstacle (aucun progrès) : on s'arrête
     if (Math.hypot(c.x - bx, c.y - by) < step * 0.15) { if (++_stuck > 12) { _walkTarget = null; _stuck = 0; } }
