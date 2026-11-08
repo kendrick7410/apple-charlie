@@ -798,6 +798,106 @@ function makeHay(w) {
     g.scale.set(s, s * 0.85, s * 0.85);
     return g;
 }
+// ═══════════════════════ Place du village ═══════════════════════
+// Bancs, lampadaires, mâts des guirlandes, table de fête d'anniversaire
+function makePlazaDeco(kind) {
+    var g = new T.Group(), WOODC = mat('#9a6a42'), IRON = mat('#3b3f46', { metalness: 0.5, roughness: 0.45 });
+    if (kind === 'bench') {
+        for (var i = 0; i < 3; i++) rbox(g, 1.5, 0.07, 0.16, 0.03, WOODC, 0, 0.48, -0.2 + i * 0.19);          // assise en lattes
+        for (var j = 0; j < 2; j++) { var b = rbox(g, 1.5, 0.07, 0.14, 0.03, WOODC, 0, 0.72 + j * 0.2, -0.36); b.rotation.x = -0.18; }   // dossier
+        [-0.65, 0.65].forEach(function(x) { rbox(g, 0.08, 0.48, 0.5, 0.03, IRON, x, 0.24, -0.05); rbox(g, 0.08, 0.5, 0.08, 0.03, IRON, x, 0.72, -0.38); });
+    } else if (kind === 'lamp') {
+        put(g, new T.Mesh(new T.CylinderGeometry(0.06, 0.1, 2.6, 10), IRON), 0, 1.3, 0);
+        put(g, new T.Mesh(new T.CylinderGeometry(0.16, 0.16, 0.12, 10), IRON), 0, 0.06, 0);
+        var glass = new T.MeshStandardMaterial({ color: lin('#fff3c4'), emissive: lin('#ffcf6a'), emissiveIntensity: 0.2, roughness: 0.3 });
+        put(g, new T.Mesh(new T.CylinderGeometry(0.17, 0.12, 0.34, 6), glass), 0, 2.75, 0);
+        put(g, new T.Mesh(new T.ConeGeometry(0.24, 0.2, 6), IRON), 0, 3.02, 0);
+        var halo = new T.Sprite(glowMaterial(1)); halo.position.y = 2.75; halo.scale.set(2.2, 2.2, 1); halo.visible = false; g.add(halo);
+        lampGlasses.push(glass); lampHalos.push(halo);
+    } else if (kind === 'pole') {
+        put(g, new T.Mesh(new T.CylinderGeometry(0.06, 0.08, 3.4, 8), WOODC), 0, 1.7, 0);
+        ball(g, 0.1, mat('#f2c94c', { metalness: 0.5, roughness: 0.3 }), 0, 3.45, 0);
+    } else if (kind === 'party') {   // table de fête : nappe, gâteau aux bougies, cadeaux, ballons
+        rbox(g, 1.8, 0.08, 1.0, 0.04, '#ffffff', 0, 0.82, 0);
+        rbox(g, 1.86, 0.25, 1.06, 0.04, '#f48fb1', 0, 0.7, 0);
+        [[-0.8, -0.4], [0.8, -0.4], [-0.8, 0.4], [0.8, 0.4]].forEach(function(q) { rbox(g, 0.07, 0.8, 0.07, 0.02, WOODC, q[0], 0.4, q[1]); });
+        put(g, new T.Mesh(new T.CylinderGeometry(0.34, 0.34, 0.22, 24), mat('#fff3e0')), 0, 0.97, 0);
+        put(g, new T.Mesh(new T.CylinderGeometry(0.24, 0.24, 0.18, 24), mat('#f8bbd0')), 0, 1.17, 0);
+        for (var c = 0; c < 5; c++) {
+            var a = c / 5 * Math.PI * 2;
+            put(g, new T.Mesh(new T.CylinderGeometry(0.018, 0.018, 0.14, 6), mat(['#64b5f6', '#ffd54f', '#81c784', '#e57373', '#ba68c8'][c])), Math.cos(a) * 0.14, 1.33, Math.sin(a) * 0.14);
+            ball(g, 0.025, mat('#ffcc33', { emissive: '#ff9900', emissiveIntensity: 1.2 }), Math.cos(a) * 0.14, 1.42, Math.sin(a) * 0.14, 1, 1.6, 1);
+        }
+        [['#4fc3f7', -0.65, 0.2], ['#aed581', 0.6, 0.15]].forEach(function(gb) { rbox(g, 0.3, 0.24, 0.3, 0.03, gb[0], gb[1], 0.98, gb[2]); rbox(g, 0.32, 0.05, 0.06, 0.01, '#ffffff', gb[1], 1.1, gb[2]); });
+        var balloons = [];
+        [['#e53935', -0.95, -0.5], ['#fdd835', -0.75, -0.6], ['#1e88e5', -1.0, -0.3]].forEach(function(bl, i) {
+            var bg = new T.Group(); bg.position.set(bl[1], 0, bl[2]); g.add(bg);
+            put(bg, new T.Mesh(new T.CylinderGeometry(0.008, 0.008, 2.2, 4), mat('#eeeeee')), 0, 1.1 + i * 0.1, 0);
+            ball(bg, 0.26, mat(bl[0], { roughness: 0.25 }), 0, 2.35 + i * 0.2, 0, 1, 1.2, 1);
+            balloons.push(bg);
+        });
+        g.userData.balloons = balloons;
+    }
+    return g;
+}
+var lampGlasses = [], lampHalos = [], garlandBulbs = [], garlandGroup = null, _garlandKey = '';
+// Grande place ronde pavée autour de la fontaine
+function cobbleTexture() {
+    var c = document.createElement('canvas'); c.width = c.height = 256;
+    var g = c.getContext('2d'), R = rand(31);
+    g.fillStyle = '#b9ab95'; g.fillRect(0, 0, 256, 256);
+    for (var y = 0; y < 256; y += 21) for (var x = (y / 21) % 2 ? -12 : 0; x < 256; x += 25) {
+        var v = 200 + Math.floor(R() * 30);
+        g.fillStyle = 'rgb(' + v + ',' + (v - 10) + ',' + (v - 26) + ')';
+        g.beginPath(); g.ellipse(x + 12, y + 10, 11, 9, 0, 0, Math.PI * 2); g.fill();
+    }
+    var t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(5, 5);
+    return t;
+}
+function buildPlazaGround() {
+    var L = Game.CONFIG.LOCATIONS.fountain, R = (Game.CONFIG.PLAZA_R || 250) * U;
+    var disc = new T.Mesh(new T.CircleGeometry(R, 64), new T.MeshStandardMaterial({ map: cobbleTexture(), roughness: 0.95 }));
+    disc.rotation.x = -Math.PI / 2; disc.position.set(L.x * U, 0.045, L.y * U); disc.receiveShadow = true; scene.add(disc);
+    var rim = new T.Mesh(new T.RingGeometry(R, R + 0.35, 64), mat('#8d8070', { roughness: 1 }));
+    rim.rotation.x = -Math.PI / 2; rim.position.set(L.x * U, 0.05, L.y * U); rim.receiveShadow = true; scene.add(rim);
+}
+// Guirlandes de fanions multicolores entre les mâts, en cercle autour de la place (refaites si les mâts changent)
+var FLAG_COLS = ['#e53935', '#fb8c00', '#fdd835', '#43a047', '#1e88e5', '#8e24aa', '#ec407a'];
+function updateGarlands() {
+    var poles = Array.prototype.slice.call(gameWorld.querySelectorAll(':scope > .plaza-deco[data-kind="pole"]'));
+    var key = poles.map(function(p) { return p.style.left + p.style.top; }).join('|');
+    if (key === _garlandKey) return;
+    _garlandKey = key;
+    if (garlandGroup) scene.remove(garlandGroup);
+    garlandGroup = new T.Group(); scene.add(garlandGroup); garlandBulbs = [];
+    poles.sort(function(a, b) { return (+a.dataset.order) - (+b.dataset.order); });
+    var pts = poles.map(function(p) { var q = groundPoint(p, 'plazadeco'); return new T.Vector3(q.x * U, heightAt(q.x, q.y) + 3.35, q.y * U); });
+    var flagGeo = geo('flag', function() { var sh = new T.Shape(); sh.moveTo(-0.13, 0); sh.lineTo(0.13, 0); sh.lineTo(0, -0.3); sh.lineTo(-0.13, 0); return new T.ShapeGeometry(sh); });
+    var ROPE = mat('#f5f0e6');
+    for (var i = 0; i < pts.length && pts.length > 1; i++) {
+        var a = pts[i], b = pts[(i + 1) % pts.length];
+        if (pts.length === 2 && i === 1) break;
+        var len = a.distanceTo(b), sag = Math.min(1.1, len * 0.08), n = Math.max(6, Math.round(len / 0.45));
+        var curve = new T.QuadraticBezierCurve3(a, new T.Vector3((a.x + b.x) / 2, (a.y + b.y) / 2 - sag * 2, (a.z + b.z) / 2), b);
+        garlandGroup.add(new T.Mesh(new T.TubeGeometry(curve, n * 2, 0.02, 4, false), ROPE));
+        for (var k = 1; k < n; k++) {
+            var t = k / n, p = curve.getPoint(t), tan = curve.getTangent(t);
+            var flag = new T.Mesh(flagGeo, mat(FLAG_COLS[(i * 3 + k) % FLAG_COLS.length], { side: T.DoubleSide, roughness: 0.8 }));
+            flag.position.copy(p); flag.rotation.y = Math.atan2(-tan.z, tan.x); garlandGroup.add(flag);
+            if (k % 2) {   // petites ampoules qui s'allument la nuit
+                var bulb = new T.MeshStandardMaterial({ color: lin('#fff8e1'), emissive: lin(FLAG_COLS[k % FLAG_COLS.length]), emissiveIntensity: 0 });
+                var bm = new T.Mesh(sphereGeo(8), bulb); bm.scale.setScalar(0.085); bm.position.set(p.x, p.y - 0.03, p.z); bm.castShadow = false; garlandGroup.add(bm);
+                garlandBulbs.push(bulb);
+            }
+        }
+    }
+}
+function lightPlaza(night, time) {
+    lampGlasses.forEach(function(g) { g.emissiveIntensity = night ? 2.2 : 0.15; });
+    lampHalos.forEach(function(h) { h.visible = night; });
+    garlandBulbs.forEach(function(b, i) { b.emissiveIntensity = night ? 2.2 + Math.sin(time * 3 + i) * 0.6 : 0.05; });
+}
+
 // Enclos : sol de terre battue et barrières tout autour (un objet qui suit l'enclos quand on le déplace)
 function makePen(el) {
     var g = new T.Group(), w = el.offsetWidth * U, d = el.offsetHeight * U, FENCE = mat('#c99a63');
@@ -1345,6 +1445,8 @@ function buildTerrain() {
         scene.add(m);
     });
 
+    buildPlazaGround();
+
     // Herbes des dunes
     var RG = rand(17);
     for (var gi = 0; gi < 60; gi++) {
@@ -1374,6 +1476,7 @@ function bubbleOf(el) { var b = el.querySelector('.speech-bubble'); return b && 
 function kindOf(el, e) {
     var cl = el.classList, id = el.id;
     if (cl.contains('farm-pen')) return 'pen';   // enclos : sol de terre + barrières, il suit sa position
+    if (cl.contains('plaza-deco')) return 'plazadeco';   // place du village : banc, lampadaire, mât de guirlande, fête
     if (id === 'player' || cl.contains('mountain-snow') || e === '❄️') return 'skip';
     if (id === 'garden-area') return 'garden';
     if (id === 'fountain-anchor') return 'fountain';
@@ -1443,6 +1546,7 @@ function buildFor(el, kind, e, label) {
         case 'hay': obj = makeHay(el.offsetWidth * U); break;
         case 'field': obj = makeField(el); break;
         case 'pen': obj = makePen(el); break;
+        case 'plazadeco': obj = makePlazaDeco(el.dataset.kind); obj.rotation.y = +(el.dataset.rot || 0); break;
         default: {
             obj = new T.Group();
             if (e) { var sp = emojiSprite(e, Math.max(0.8, size * 1.25)); obj.add(sp); obj.userData.sprite = sp; }
@@ -1479,7 +1583,7 @@ function groundPoint(el, kind) {
     var wxy = worldXY(el), x = wxy.x, y = wxy.y;
     var first = el.firstElementChild && !el.firstElementChild.classList.contains('building-label') ? el.firstElementChild : null;
     var w = el.offsetWidth, h = first ? first.offsetHeight : el.offsetHeight;
-    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'pen' || kind === 'dock' || kind === 'path') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
+    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'pen' || kind === 'dock' || kind === 'path' || kind === 'plazadeco') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
     if (kind === 'barn') return { x: x + w / 2, y: y + 140 };
     if (el.classList.contains('house-exterior') || /-anchor$/.test(el.id)) return { x: x + w / 2, y: y + h * 0.75 };
     return { x: x + w / 2, y: y + h * 0.9 };
@@ -1589,6 +1693,8 @@ var _scanT = 0, _dtFrame = 0.016, _phaseT = 0;
 // Ce qui bloque Charlie : bâtiments (rectangles), arbres, montagnes, villageois... (cercles).
 // Cailloux et fleurs ne bloquent pas (on les ramasse en marchant dessus), ni l'eau (on pêche au bord).
 var CHARLIE_R = 20;
+var DECOR_COL = { '⛱️': 1.35, '🏖️': 0.95, '🪵': 0.55, '🏐': 0.3 };   // rayon solide (unités 3D) du décor de plage
+var PLAZA_COL = { bench: 0.75, lamp: 0.22, pole: 0.18, party: 1.05 };
 function colliderFor(el, kind, obj) {
     var sc = obj.scale.x;
     switch (kind) {
@@ -1607,6 +1713,9 @@ function colliderFor(el, kind, obj) {
         case 'tractor':      return { r: 1.9 / U };
         case 'villager': case 'farmer': return { r: 14 };
         case 'rock':         return el.classList.contains('stone') ? null : { r: 0.45 * sc / U };
+        case 'decor':        return DECOR_COL[emojiOf(el)] ? { r: DECOR_COL[emojiOf(el)] / U } : null;   // parasol, château de sable, bûche...
+        case 'pen':          return { hw: el.offsetWidth / 2, hd: el.offsetHeight / 2 };            // on ne passe pas à travers les barrières
+        case 'plazadeco':    return { r: (PLAZA_COL[el.dataset.kind] || 0.3) / U };
         default:             return null;
     }
 }
@@ -3318,7 +3427,12 @@ function loop(now) {
     if (seaTex) { seaTex.offset.x += dt * 0.03; seaTex.offset.y = Math.sin(time * 0.5) * 0.08; }
     if (lakeTex) { lakeTex.offset.x = Math.sin(time * 0.4) * 0.06; lakeTex.offset.y = Math.cos(time * 0.3) * 0.06; }   // un lac ondule sans couler
     _scanT += dt;
-    if (_scanT > 0.4) { _scanT = 0; scan(); }
+    if (_scanT > 0.4) { _scanT = 0; scan(); updateGarlands(); }
+    lightPlaza(Game.time.isNight(), time);
+    tracked.forEach(function(rec) {   // ballons de la fête qui se balancent doucement
+        var bl = rec.obj.userData.balloons;
+        if (bl) bl.forEach(function(b, i) { b.rotation.z = Math.sin(time * 1.3 + i * 2) * 0.08; b.rotation.x = Math.cos(time * 1.1 + i) * 0.06; });
+    });
     _phaseT = (_phaseT || 0) + dt;
     if (_phaseT > 0.2) { _phaseT = 0; applyPhase(); applySeasonGround(); }
     syncMoving(time);

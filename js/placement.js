@@ -90,6 +90,10 @@ P.footprint = function(el) {
         return null;
     }
     if (cl.indexOf('entity') === -1) return null;
+    if (cl.indexOf('plaza-deco') > -1) {   // place du village : banc, lampadaire, mât, table de fête (solides)
+        var PR = { bench: 34, lamp: 10, pole: 9, party: 46 }[el.dataset.kind] || 12;
+        return { x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0, r: PR, kind: 'solid' };
+    }
     var e = emojiOf(el);
     if (!e || e === '❄️') return null;   // étiquettes seules, plaques de neige
     var fs = fontPx(el), size = fs / U, f = foot(el, fs);

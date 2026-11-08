@@ -80,8 +80,15 @@ Game.villagers.update = function(dt) {
         if (v.el.style.display === 'none') v.el.style.display = '';
         if (v.talkUntil && performance.now() < v.talkUntil) return;   // il discute avec Charlie : il ne bouge pas
 
+        // Jour d'anniversaire : il attend à sa fête sur la place
+        var party = Game.plaza && Game.plaza.partyTarget(v.name);
+        if (party) {   // le point de fête est au sol (les pieds) : on le convertit en position de l'image
+            var go = Game.placement.groundOffset(v.el);
+            party = { x: party.x - go.x, y: party.y - go.y };
+            if (!(v.detourUntil && performance.now() < v.detourUntil)) { v.tx = party.x; v.ty = party.y; }
+        }
         // Cible de marche : au départ, ou renouvelée toutes les UPDATE_INTERVAL
-        if (v.tx === undefined || pickNew) {
+        else if (v.tx === undefined || pickNew) {
             // Chaque villageois se promène autour de sa maison (Max reste près de son refuge)
             v.tx = Math.max(v.homeX - 300, Math.min(v.homeX + 300, v.x + (Math.random() - 0.5) * 260));
             v.ty = Math.max(v.homeY - 300, Math.min(v.homeY + 300, v.y + (Math.random() - 0.5) * 260));
@@ -96,7 +103,13 @@ Game.villagers.update = function(dt) {
             var st = Game.placement.move(v.el, v.x, v.y, v.x + (dx / dist) * mv, v.y + (dy / dist) * mv, 14);
             if (st.hit) {
                 v.stuck = (v.stuck || 0) + 1;
-                if (v.stuck > 25 || (st.x === v.x && st.y === v.y)) { v.tx = undefined; v.stuck = 0; }   // autre chemin
+                if (party) {
+                    // En route pour sa fête mais coincé derrière une maison : il fait un détour par le côté,
+                    // et s'il reste vraiment bloqué il finit par arriver (il connaît un raccourci)
+                    v.partyStuck = (v.partyStuck || 0) + 1;
+                    if (v.partyStuck > 240) { var o = Game.placement.groundOffset(v.el); if (!Game.placement.blocked(party.x + o.x, party.y + o.y, 14)) { st.x = party.x; st.y = party.y; } v.partyStuck = 0; }
+                    else if (v.stuck > 25) { v.tx = v.x + (Math.random() - 0.5) * 300; v.ty = v.y + (Math.random() - 0.5) * 300; v.detourUntil = performance.now() + 2500; v.stuck = 0; }
+                } else if (v.stuck > 25 || (st.x === v.x && st.y === v.y)) { v.tx = undefined; v.stuck = 0; }   // autre chemin
             } else v.stuck = 0;
             v.x = st.x; v.y = st.y;
             v.el.style.left = v.x + 'px';

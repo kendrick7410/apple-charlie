@@ -407,7 +407,8 @@ Game.buildings.buildShop = function(shop) {
     }
     s.inventory.materials -= shop.cost;
     s.builtShops.push(shop.id);
-    Game.world.renderShopSite(shop);
+    Game.placeTag('loc:' + shop.loc, function() { Game.world.renderShopSite(shop); });
+    if (Game.plaza) Game.plaza.placePoles();   // un mât de guirlande de plus devant la nouvelle boutique
     var l = Game.CONFIG.LOCATIONS[shop.loc];
     Game.xp.add(60);
     Game.audio.play('craft');
@@ -435,7 +436,8 @@ Game.buildings.buildVillagerHouse = function(house) {
     }
     s.inventory.materials -= house.cost;
     s.builtHouses.push(house.id);
-    Game.world.renderVillagerHouse(house);
+    Game.placeTag('house:' + house.id, function() { Game.world.renderVillagerHouse(house); });
+    if (Game.plaza) Game.plaza.placePoles();   // la guirlande relie aussi la nouvelle maison
     Game.villagers.spawn(house.name);
     Game.xp.add(30);
     Game.audio.play('craft');

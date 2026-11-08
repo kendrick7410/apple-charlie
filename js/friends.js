@@ -54,6 +54,7 @@ function st() {
     return s;
 }
 function today() { return Game.state.dayNumber || 0; }
+function bday(name) { return !!(Game.plaza && Game.plaza.isBirthday(name)); }
 Game.friends.points = function(name) { return st().friendship[name] || 0; };
 Game.friends.hearts = function(name) { return Math.min(5, Math.floor(Game.friends.points(name) / PER_HEART)); };
 function heartsHtml(name) {
@@ -105,6 +106,7 @@ Game.friends.open = function(name) {
     if (v) v.talkUntil = Infinity;   // il s'arrête pour parler
     line = data.greetings[Math.floor(Math.random() * data.greetings.length)];
     if (questState(name) === 'ready') line = "Oh, tu as ce que je t'avais demandé ? 😃";
+    if (bday(name)) line = "🎂 C'est mon anniversaire aujourd'hui ! Tu viens à ma fête ?";
     render();
 };
 Game.friends.close = function() {
@@ -154,6 +156,8 @@ function render() {
         if (qs === 'ready') html += '<div class="fp-quest ready">📜 ' + quest.desc + '<br><button data-a="quest">✅ Donner (' + needText(quest.need) + ')</button></div>';
         else if (qs === 'open') html += '<div class="fp-quest">📜 ' + quest.desc + '<br><small>Il te faut : ' + needText(quest.need) + '</small></div>';
         if (gifted) html += '<div class="fp-note">🎁 Tu lui as déjà fait un cadeau aujourd\'hui.</div>';
+        if (bday(name)) html += '<div class="fp-note">🎂 Anniversaire aujourd\'hui : ton cadeau compte double !</div>';
+        else if (Game.plaza && Game.plaza.daysUntil(name) !== null) { var dd = Game.plaza.daysUntil(name); html += '<div class="fp-note">🎂 Anniversaire dans ' + dd + ' jour' + (dd > 1 ? 's' : '') + '.</div>'; }
         if (Game.friends.hearts(name) >= 5) html += '<div class="fp-note">💝 Meilleurs amis ! Son portrait est dans ta maison.</div>';
     }
     panel.innerHTML = html;
@@ -187,11 +191,19 @@ function onClick(e) {
         s.friendKnown[name] = s.friendKnown[name] || {}; s.friendKnown[name][id] = kind;
         s.friendDay[name] = s.friendDay[name] || {}; s.friendDay[name].gift = today();
         line = kind === 'love' ? 'Oh ! J\'adore ça ! Merci mille fois Charlie 😍' : kind === 'like' ? 'Merci, c\'est gentil ! 😊' : 'Oh... merci quand même 🙂';
+        var pts = GIFT_PTS[kind];
+        if (bday(name)) {   // jour d'anniversaire : le cadeau compte double, et le gâteau encore plus
+            pts *= 2;
+            if (id === 'cake') { pts += 100; line = 'Un gâteau d\'anniversaire ?! C\'est le plus beau jour de ma vie !! 🎂🥳'; }
+            else line = '🎁 Un cadeau pour mon anniversaire ! ' + line;
+            Game.particles.spawn('🎉', window.innerWidth / 2, window.innerHeight / 2 - 60, { count: 8, spread: 120, vy: -110 });
+            if (Game.particles.confetti) Game.particles.confetti();
+        }
         if (kind === 'love') Game.particles.spawn('💖', window.innerWidth / 2, window.innerHeight / 2 - 60, { count: 5, spread: 70, vy: -80 });
         Game.audio.playChime();
         Game.ui.update();
         mode = 'talk';
-        Game.friends.add(name, GIFT_PTS[kind]);
+        Game.friends.add(name, pts);
         render(); return;
     }
 }

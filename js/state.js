@@ -112,7 +112,7 @@ Game.saveGame = function() {
         season: s.season,
         seasonIndex: s.seasonIndex,
         seasonElapsed: s.seasonElapsed || 0,
-        dayNumber: s.dayNumber || 0,
+        dayNumber: s.dayNumber || 0, bdayAnnounced: s.bdayAnnounced,
         friendship: s.friendship || {}, friendDay: s.friendDay || {}, friendKnown: s.friendKnown || {}, friendReward: s.friendReward || {},
         gardenPlots: JSON.parse(JSON.stringify(s.gardenPlots)),
         questProgress: Object.assign({}, s.questProgress),
@@ -171,7 +171,7 @@ Game.loadGame = function() {
         if (data.season) s.season = data.season;
         if (data.seasonIndex !== undefined) s.seasonIndex = data.seasonIndex;
         s.seasonElapsed = typeof data.seasonElapsed === 'number' ? data.seasonElapsed : 0;
-        s.dayNumber = data.dayNumber || 0;
+        s.dayNumber = data.dayNumber || 0; s.bdayAnnounced = data.bdayAnnounced;
         s.friendship = data.friendship || {}; s.friendDay = data.friendDay || {}; s.friendKnown = data.friendKnown || {}; s.friendReward = data.friendReward || {};
         if (data.gardenPlots) s.gardenPlots = data.gardenPlots;
         if (data.questProgress) Object.assign(s.questProgress, data.questProgress);
