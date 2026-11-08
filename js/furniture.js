@@ -11,7 +11,8 @@ var USE_RADIUS = 110;          // distance pour pouvoir utiliser un meuble
 var DAY_MS = 12 * 60 * 1000;   // 1 jour de jeu = 12 minutes réelles (2h de jeu par minute)
 var DRAG_THRESHOLD = 6;        // en dessous, c'est un clic ; au-dessus, on déplace
 var BREAD_APPLES = 2;          // un pain cuit à la cuisinière coûte 2 pommes
-var SLEEP_FROM = 17;           // comme dans Minecraft : on peut dormir dès le soir (17h → 6h)
+var SLEEP_FROM = 20;           // comme dans Minecraft : on peut dormir dès le soir (20h → 8h)
+var WAKE_AT = 8;               // la nuit finit à 8h
 
 var BOOK_FACTS = [
     "Les loutres se tiennent la main en dormant pour ne pas dériver. 🦦",
@@ -58,7 +59,7 @@ var HELP = {
     chair:     "Assieds-toi ! Collée à une table 🪵, tes repas comptent double.",
     bookshelf: "Lis un livre 📖 (+25 XP par jour). La nuit, il faut de la lumière 💡.",
     plant:     "Cueille 2 fleurs 🌻 chaque jour.",
-    bed:       "Dors la nuit (dès 17h) pour passer directement au matin ☀️.",
+    bed:       "Dors la nuit (dès 20h) pour passer directement au matin ☀️.",
     lamp:      "Sans lampe allumée, la maison est sombre (et très noire la nuit).",
     mirror:    "Change de tenue 🎭.",
     stove:     "Cuis du pain 🍞 et des plats.",
@@ -176,7 +177,7 @@ Game.furniture.ensureHome = function(house) {
     arr.forEach(clampF);   // anciens meubles qui dépassaient dans un mur
 };
 
-function canSleepNow() { var h = Game.state.gameHour; return h >= SLEEP_FROM || h < 6; }
+function canSleepNow() { var h = Game.state.gameHour; return h >= SLEEP_FROM || h < WAKE_AT; }
 
 // ── Ce que fait Charlie en ce moment (lire, dormir, bain, piano) : il ne bouge pas ──
 var busy = null;
@@ -649,10 +650,10 @@ var USES = {
         document.body.appendChild(fade);
         requestAnimationFrame(function() { fade.classList.add('dark'); });
         setTimeout(function() {
-            s.gameHour = 7;
+            s.gameHour = WAKE_AT;
             s.gameMinute = 0;
             Game.furniture.updateLight();
-            fade.querySelector('.sleep-text').textContent = '☀️ Bonjour ! Il est 7h';
+            fade.querySelector('.sleep-text').textContent = '☀️ Bonjour ! Il est ' + WAKE_AT + 'h';
             Game.audio.playChime();
         }, 2200);
         setTimeout(function() { fade.classList.remove('dark'); }, 3600);

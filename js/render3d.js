@@ -1928,7 +1928,7 @@ var DAY_KEYS = (function() {
     var dawn  = { top: '#8fb4e8', bot: '#ffd9bf', fog: '#f6d2b8', hemi: 0.5, sun: 0.9, sunC: '#ffc89a', win: 0.4, lamp: 0.3, spr: 0.8, glow: 0.35, exp: 1, hC: '#cfe9ff', gC: '#4d6b2f', stars: 0.15 };
     var day   = { top: '#5fb3ee', bot: '#d3eefc', fog: '#bfe2f6', hemi: 0.7, sun: 1.3, sunC: '#fff0d0', win: 0, lamp: 0, spr: 1, glow: 0, exp: 1, hC: '#cfe9ff', gC: '#4d6b2f', stars: 0 };
     var dusk  = { top: '#5a64b0', bot: '#ffae86', fog: '#e7a98f', hemi: 0.4, sun: 0.7, sunC: '#ff9f6a', win: 0.9, lamp: 0.6, spr: 0.65, glow: 0.6, exp: 0.95, hC: '#e8c9ff', gC: '#4d5b3f', stars: 0.1 };
-    return [[0, night], [5, night], [6.5, dawn], [8.5, day], [16, day], [17.5, dusk], [19.5, night], [24, night]];
+    return [[0, night], [7.8, night], [8.6, dawn], [9.6, day], [19.4, day], [20.4, dusk], [21.2, night], [24, night]];   // nuit 21h → 8h
 })();
 var _skyCanvas = null, _skyTex = null, _starsCanvas = null, _cA = null, _cB = null;
 function mixHex(a, b, t) { _cA.set(a); _cB.set(b); _cA.lerp(_cB, t); return _cA; }

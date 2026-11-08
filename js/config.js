@@ -167,10 +167,11 @@ Game.SEASON_HARVESTED_TREE = {
 // Jour = 6h→18h (12h), Nuit = 18h→6h (12h) : durées égales.
 // L'aube et le crépuscule sont de courtes transitions à l'intérieur de la journée.
 Game.TIME_PHASES = {
-    dawn:     { start: 6,  end: 7,  overlay: "rgba(255,180,100,0.15)", label: "Aube 🌅"        },
-    day:      { start: 7,  end: 17, overlay: "rgba(0,0,0,0)",          label: "Jour ☀️"         },
-    dusk:     { start: 17, end: 18, overlay: "rgba(200,100,50,0.2)",   label: "Crépuscule 🌇"  },
-    night:    { start: 18, end: 6,  overlay: "rgba(20,20,80,0.45)",    label: "Nuit 🌙"         }
+    // La nuit va de 21h à 8h (demandé par Charlie)
+    dawn:     { start: 8,  end: 9,  overlay: "rgba(255,180,100,0.15)", label: "Aube 🌅"        },
+    day:      { start: 9,  end: 20, overlay: "rgba(0,0,0,0)",          label: "Jour ☀️"         },
+    dusk:     { start: 20, end: 21, overlay: "rgba(200,100,50,0.2)",   label: "Crépuscule 🌇"  },
+    night:    { start: 21, end: 8,  overlay: "rgba(20,20,80,0.45)",    label: "Nuit 🌙"         }
 };
 
 // Maisons des villageois. Au début il n'y a que la maison d'Eloise (start: true).

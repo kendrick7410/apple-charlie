@@ -18,7 +18,7 @@ Game.state = {
     shovelMode: false,
     xp: 0,
     level: 1,
-    gameHour: 8,
+    gameHour: 9,
     gameMinute: 0,
     season: 'spring',
     seasonIndex: 0,

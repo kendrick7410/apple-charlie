@@ -13,7 +13,7 @@ Game.time.init = function() {
 };
 
 Game.time.update = function(now) {
-    var dt = now - lastUpdate;
+    var dt = Math.max(0, now - lastUpdate);   // jamais négatif (sinon l'horloge affichait 09:0-1)
     lastUpdate = now;
     if (Game.state.paused || Game.state.currentView === 'title') return;
 
@@ -55,7 +55,7 @@ Game.time.getPhase = function() {
 };
 
 Game.time.isNight = function() {
-    // Nuit = 18h→6h (12h), exactement l'inverse du jour (12h). Le crépuscule reste "jour".
+    // Nuit = 21h→8h. L'aube et le crépuscule restent "jour".
     return Game.time.getPhase() === 'night';
 };
 
