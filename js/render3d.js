@@ -1707,9 +1707,12 @@ function placeBubble(rec) {
 var _mtnRay = null, _mtnFrom = null, _mtnDown = null;
 // Récolte de pierre en montagne : 1 pierre 🪨 toutes les 10 s tant que Charlie reste sur une montagne.
 // S'il redescend, le compteur repart de zéro.
-var _stoneT = 0, _stoneHint = false;
-function mountainStones(onMountain, dt) {
-    var s = Game.state;
+var _stoneT = 0, _stoneHint = false, _stoneOn = false, _stoneLast = 0;
+function mountainStones(onMountain) {
+    var s = Game.state, nowS = performance.now() / 1000;
+    var dt = _stoneLast ? Math.min(1, nowS - _stoneLast) : 0;   // vrai temps (pas le nombre d'images) : 10 s = 10 vraies secondes
+    _stoneLast = nowS;
+    _stoneOn = onMountain;
     if (!onMountain || s.paused || s.currentView !== 'world') { if (!onMountain) _stoneT = 0; return; }
     if (!_stoneHint) { _stoneHint = true; Game.ui.notify('⛰️ Reste sur la montagne : tu gagnes 1 pierre 🪨 toutes les 10 secondes !'); }
     _stoneT += dt;
@@ -1890,6 +1893,7 @@ Game.r3d.shopSlotScreen = function(i) {   // tests automatiques
 Game.r3d.roomColliders = function() {   // pour furniture.blocks : obstacles fixes de la pièce
     return room3d && room3d.colliders && Game.state.activeShop ? room3d.colliders : [];
 };
+Game.r3d.stoneDebug = function() { return { t: _stoneT, on: _stoneOn }; };   // tests automatiques
 Game.r3d.bellScreen = function() {   // tests automatiques : la cloche du Magasin à l'écran
     if (!shopOwner || !room3d) return null;
     var v = new T.Vector3(); shopOwner.bell.getWorldPosition(v); v.y += 0.12; v.project(room3d.camera);
@@ -2329,6 +2333,7 @@ function syncRoom() {
     if (!(s.activeShop && s.activeShop.id === 'shop')) document.querySelectorAll('#current-room .shop-decor').forEach(function(el) {
         var p = roomPos(parseFloat(el.style.left), parseFloat(el.style.top));
         var sp = emojiSprite(el.textContent.trim(), 1.0); sp.position.set(p.x, 0.06, p.z); items.add(sp);
+        room3d.colliders.push({ cx: parseFloat(el.style.left) + 24, cy: parseFloat(el.style.top) + 24, hw: 24, hd: 20 });   // objet posé : solide
     });
     var npc = document.getElementById('shop-npc');
     shopOwner = null;
@@ -2444,22 +2449,34 @@ function buildShopCounter(items, R) {
     var hole = new T.Mesh(new T.PlaneGeometry(1.3, 2.2), mat('#140d08')); hole.position.set(0, 1.1, back + 0.012); items.add(hole);
     rbox(items, 1.6, 0.16, 0.14, 0.04, '#8a5a3c', 0, 2.26, back + 0.05);
     [-0.73, 0.73].forEach(function(x) { rbox(items, 0.14, 2.3, 0.14, 0.04, '#8a5a3c', x, 1.12, back + 0.05); });
-    // Rideau : fines ficelles à perles en bois et en couleur, en deux morceaux pour qu'elles se plient
-    var strings = [], BEADS = ['#b5651d', '#e53935', '#d9a066', '#fdd835', '#b5651d', '#43a047', '#d9a066', '#1e88e5'];
+    // Rideau de perles comme un vrai : une tringle en bois, des fils où les perles se touchent
+    // (perles de bois allongées + petites perles de couleur), longueurs un peu différentes, en deux rangées
+    rbox(items, 1.5, 0.08, 0.08, 0.03, '#6e4428', 0, 2.2, back + 0.09);
+    var strings = [];
+    var WOOD = ['#c8915a', '#a86c3a', '#d9a86c'], ACC = ['#d84a3a', '#2f8f6a', '#e0b13a', '#3a6fb8'];
     var STR = mat('#e8dcc0', { roughness: 0.9 });
-    function segment(parent, n0) {
-        put(parent, new T.Mesh(geo('string2', function() { return new T.CylinderGeometry(0.006, 0.006, 1.05, 4); }), STR), 0, -0.525, 0);
-        for (var b = 0; b < 8; b++) {
-            var bead = put(parent, new T.Mesh(geo('bead', function() { return new T.SphereGeometry(1, 8, 6); }), mat(BEADS[(n0 + b) % BEADS.length], { roughness: 0.5 })), 0, -0.07 - b * 0.13, 0);
-            bead.scale.set(0.024, 0.032, 0.024); bead.castShadow = false;
+    function strand(parent, len, n0) {
+        put(parent, new T.Mesh(geo('string3', function() { return new T.CylinderGeometry(0.005, 0.005, 1, 4); }), STR), 0, -len / 2, 0).scale.y = len;
+        var y = -0.02, k = 0;
+        while (y > -len + 0.04) {
+            var acc = (k + n0) % 4 === 3;                  // une petite perle de couleur toutes les 3 perles de bois
+            var h = acc ? 0.035 : 0.075, r = acc ? 0.024 : 0.03;
+            var bead = put(parent, new T.Mesh(geo('bead2', function() { return new T.SphereGeometry(1, 10, 8); }),
+                mat(acc ? ACC[(n0 + k) % ACC.length] : WOOD[(n0 + k) % WOOD.length], { roughness: acc ? 0.35 : 0.6 })), 0, y - h / 2, 0);
+            bead.scale.set(r, h / 2, r); bead.castShadow = false;
+            y -= h + 0.006; k++;
         }
+        return y;
     }
-    for (var i = 0; i < 21; i++) {
-        var x = -0.62 + i * 0.062, piv = new T.Group(); piv.position.set(x, 2.18, back + 0.07); items.add(piv);
-        segment(piv, i);
-        var low = new T.Group(); low.position.y = -1.05; piv.add(low);
-        segment(low, i + 3);
-        piv.userData = { x0: x, side: x < 0 ? -1 : 1, low: low, a: 0, v: 0, b: 0, vb: 0, sway: Math.random() * 6.28 };
+    for (var i = 0; i < 16; i++) {
+        var row = i % 2, x = -0.6 + i * 0.08;
+        var piv = new T.Group(); piv.position.set(x, 2.16, back + 0.07 + row * 0.04); items.add(piv);
+        var full = 2.0 - (i * 37 % 7) * 0.025;            // fils de longueurs un peu différentes
+        strand(piv, full * 0.5, i);
+        var low = new T.Group(); low.position.y = -full * 0.5; piv.add(low);
+        strand(low, full * 0.5, i + 5);
+        ball(low, 0.034, '#6e4428', 0, -full * 0.5 - 0.02, 0);   // perle du bout, un peu plus grosse
+        piv.userData = { x0: x, side: x < 0 ? -1 : 1, low: low, a: 0, v: 0, b: 0, vb: 0, sway: i * 1.3 };
         strings.push(piv);
     }
     // Le propriétaire (caché derrière le rideau tant qu'on n'a pas sonné)
@@ -2469,7 +2486,7 @@ function buildShopCounter(items, R) {
     [['hello', "Bonjour ! Qu'avez-vous acheté ?"], ['nothing', "Prends un objet sur les étagères, je t'attends 😊"], ['thanks', 'Merci et à bientôt ! 👋'], ['poor', "Oh, il te manque des clochettes 😕"]].forEach(function(b) {
         var sp = labelSprite(b[1], 0.42); sp.position.set(0, 2.75, 0); sp.visible = false; owner.add(sp); bubbles[b[0]] = sp;
     });
-    var sign = labelSprite('🛒 Caisse', 0.6); sign.position.set(0, 3.0, cz - 0.4); items.add(sign);
+    var sign = labelSprite('🛒 Caisse', 0.5); sign.position.set(1.45, 1.75, cz + 0.2); items.add(sign);   // à droite de la caisse, sans cacher le rideau
     shopOwner = { obj: owner, bell: bell, strings: strings, back: back, cz: cz, bubbles: bubbles, drawer: drawer, screen: screen };
     applyOwner(0);
 }
@@ -3062,7 +3079,7 @@ function loop(now) {
         climbPose(onMtn && canClimb() && onMtn.y - heightAt(cx, cy) > 0.5 ? onMtn : null, moved, dt, time);
         if (onMtn && canClimb()) checkSummit(onMtn);
     }
-    mountainStones(onMtn && onMtn.y - heightAt(cx, cy) > 0.3, dt);
+    mountainStones(onMtn && onMtn.y - heightAt(cx, cy) > 0.3);
     _prev = { x: cx, y: cy };
 
     // Caméra de biais qui suit Charlie ; le soleil (et ses ombres) suit aussi
