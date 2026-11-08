@@ -1736,11 +1736,31 @@ var _mtnRay = null, _mtnFrom = null, _mtnDown = null;
 // Récolte de pierre en montagne : 1 pierre 🪨 toutes les 10 s tant que Charlie reste sur une montagne.
 // S'il redescend, le compteur repart de zéro.
 var _stoneT = 0, _stoneHint = false, _stoneOn = false, _stoneLast = 0;
+// Petit compte à rebours en haut de l'écran : « 🪨 dans 7 s » avec une barre qui se remplit
+var _stoneHud = null, _stoneHudTxt = '';
+function stoneHud(show) {
+    if (!_stoneHud) {
+        _stoneHud = document.createElement('div');
+        _stoneHud.id = 'stone-hud';
+        _stoneHud.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:1500;pointer-events:none;' +
+            'background:#fffdf6;border:3px solid #e8dcc0;border-radius:999px;padding:6px 16px 8px;font-family:"Varela Round",sans-serif;' +
+            'color:#4e342e;font-weight:bold;font-size:15px;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,.18);display:none;min-width:150px;';
+        _stoneHud.innerHTML = '<div class="t"></div><div style="height:7px;border-radius:9px;background:#eadfc4;margin-top:4px;overflow:hidden"><div class="b" style="height:100%;width:0;background:#8d9aa5;border-radius:9px"></div></div>';
+        document.body.appendChild(_stoneHud);
+    }
+    _stoneHud.style.display = show ? 'block' : 'none';
+    if (!show) return;
+    var left = Math.max(0, Math.ceil(10 - _stoneT));
+    var txt = '⛰️ 🪨 dans ' + left + ' s';
+    if (txt !== _stoneHudTxt) { _stoneHudTxt = txt; _stoneHud.querySelector('.t').textContent = txt; }
+    _stoneHud.querySelector('.b').style.width = Math.min(100, _stoneT * 10) + '%';
+}
 function mountainStones(onMountain) {
     var s = Game.state, nowS = performance.now() / 1000;
     var dt = _stoneLast ? Math.min(1, nowS - _stoneLast) : 0;   // vrai temps (pas le nombre d'images) : 10 s = 10 vraies secondes
     _stoneLast = nowS;
     _stoneOn = onMountain;
+    stoneHud(onMountain && s.currentView === 'world' && !Game.adminMode);
     if (!onMountain || s.paused || s.currentView !== 'world') { if (!onMountain) _stoneT = 0; return; }
     if (!_stoneHint) { _stoneHint = true; Game.ui.notify('⛰️ Reste sur la montagne : tu gagnes 1 pierre 🪨 toutes les 10 secondes !'); }
     _stoneT += dt;
@@ -3213,7 +3233,7 @@ function loop(now) {
         climbPose(onMtn && canClimb() && onMtn.y - heightAt(cx, cy) > 0.5 ? onMtn : null, moved, dt, time);
         if (onMtn && canClimb()) checkSummit(onMtn);
     }
-    mountainStones(onMtn && onMtn.y - heightAt(cx, cy) > 0.3);
+    mountainStones(onMtn && onMtn.y - heightAt(cx, cy) > 0.15);   // sur les pentes de n'importe quelle montagne
     _prev = { x: cx, y: cy };
 
     // Caméra de biais qui suit Charlie ; le soleil (et ses ombres) suit aussi
