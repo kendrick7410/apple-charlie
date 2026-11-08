@@ -169,7 +169,9 @@ Game.coast.update = function(dt) {
         }
         var ease = Math.min(1, dt / 400);
         a.vx += ((a.tvx || 0) - a.vx) * ease; a.vy += ((a.tvy || 0) - a.vy) * ease;
-        a.x += a.vx * dt / 16.67; a.y += a.vy * dt / 16.67;
+        var mst = Game.placement.move(a.el, a.x, a.y, a.x + a.vx * dt / 16.67, a.y + a.vy * dt / 16.67, 14, { mountain: true });
+        if (mst.hit && mst.x === a.x && mst.y === a.y) { a.vx = -a.vx; a.vy = -a.vy; a.tvx = -(a.tvx || 0); a.tvy = -(a.tvy || 0); }
+        a.x = mst.x; a.y = mst.y;
         a.el.style.left = a.x + 'px';
         a.el.style.top = a.y + 'px';
         if (Math.hypot(cx - a.x, cy - a.y) < 78) collectCreature('mtn', mtn, k, 'mountainCollection');

@@ -138,10 +138,10 @@ Game.farm.init = function() {
     fel.className = 'entity farmer-sprite';
     fel.style.cssText = 'position:absolute;font-size:2.6rem;z-index:12;pointer-events:none;';
     fel.style.left = L.x + 'px';
-    fel.style.top = (L.y - 40) + 'px';
+    fel.style.top = (L.y - 95) + 'px';
     fel.textContent = '🧑‍🌾';
     world.appendChild(fel);
-    F.farmer = { el: fel, x: L.x, y: L.y - 40, targetPen: 0, waitUntil: 0 };
+    F.farmer = { el: fel, x: L.x, y: L.y - 95, targetPen: 0, waitUntil: 0 };
 };
 
 // Le fermier se promène d'enclos en enclos et nourrit les animaux (🌾)
@@ -150,7 +150,7 @@ function updateFarmer(dt, now) {
     var f = F.farmer;
     if (!f) return;
     var pen = F.pens[f.targetPen];
-    var tx = pen.cx, ty = pen.cy - 100;   // devant l'enclos
+    var tx = pen.cx, ty = pen.cy - 155;   // sur le chemin devant l'enclos (pas dans la clôture)
     var dx = tx - f.x, dy = ty - f.y;
     var dist = Math.hypot(dx, dy);
 
@@ -253,7 +253,7 @@ Game.farm.update = function(dt, now) {
     var near = Math.hypot(s.charlie.x - L.x, s.charlie.y - (L.y + 40)) < 340;
     var enterEl = document.getElementById('action-enter');
     var enterShown = enterEl && getComputedStyle(enterEl).display !== 'none';
-    panel.style.display = (near && now >= F.cooldownUntil && !enterShown) ? 'flex' : 'none';
+    panel.style.display = (near && now >= F.cooldownUntil) ? 'flex' : 'none';   // s'empile avec « Entrer » (ui.stackPanels)
 };
 
 // Déplace un animal échappé : d'abord il court hors de l'enclos ('run'),
@@ -269,9 +269,11 @@ function moveEscaped(a, dt, now) {
     var d = Math.hypot(dx, dy);
     var sp = (a.mode === 'run' ? 1.15 : 0.55) * step;   // course puis balade lente
 
+    var fst = d > sp ? Game.placement.move(a.el, a.x, a.y, a.x + (dx / d) * sp, a.y + (dy / d) * sp, 14) : null;
+    if (fst && fst.hit && fst.x === a.x && fst.y === a.y) { a.tx = a.x; a.ty = a.y; d = 0; }   // bloqué : il choisit un autre endroit
     if (d > sp) {
-        a.x += (dx / d) * sp;
-        a.y += (dy / d) * sp;
+        a.x = fst.x;
+        a.y = fst.y;
     } else {
         a.x = a.tx; a.y = a.ty;
         // Arrivé : il repart flâner vers un nouveau point autour de la ferme

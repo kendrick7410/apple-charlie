@@ -91,8 +91,13 @@ Game.villagers.update = function(dt) {
         var dist = Math.hypot(dx, dy);
         if (dist > 1) {
             var mv = Math.min(step, dist);
-            v.x += (dx / dist) * mv;
-            v.y += (dy / dist) * mv;
+            // Ne traverse ni arbres, ni maisons, ni rochers, ni balançoire, ni la rivière
+            var st = Game.placement.move(v.el, v.x, v.y, v.x + (dx / dist) * mv, v.y + (dy / dist) * mv, 14);
+            if (st.hit) {
+                v.stuck = (v.stuck || 0) + 1;
+                if (v.stuck > 25 || (st.x === v.x && st.y === v.y)) { v.tx = undefined; v.stuck = 0; }   // autre chemin
+            } else v.stuck = 0;
+            v.x = st.x; v.y = st.y;
             v.el.style.left = v.x + 'px';
             v.el.style.top = v.y + 'px';
             // Regarde dans le sens de la marche

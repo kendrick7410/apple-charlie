@@ -7,6 +7,7 @@ var wasps = [];
 
 Game.creatures = {};
 
+Game.creatures.list = function() { return creatures; };   // tests automatiques
 Game.creatures.init = function() {
     creatures = [];
     wasps = [];
@@ -40,8 +41,12 @@ function createCreature() {
     el.style.fontSize = '1.5rem';
     el.style.transition = 'none';
     el.style.zIndex = '15';
-    var x = 200 + Math.random() * (Game.CONFIG.WORLD_W - 400);
-    var y = 200 + Math.random() * (Game.CONFIG.BEACH_TOP - 350); // reste sur la terre
+    // Naît sur une place libre (pas dans un arbre, une maison, l'eau...)
+    var x, y, tries = 0;
+    do {
+        x = 200 + Math.random() * (Game.CONFIG.WORLD_W - 400);
+        y = 200 + Math.random() * (Game.CONFIG.BEACH_TOP - 350); // reste sur la terre
+    } while (++tries < 30 && Game.placement && Game.placement.blocked && Game.placement.blocked(x + 20, y + 20, 16));
     el.style.left = x + 'px';
     el.style.top = y + 'px';
     document.getElementById('game-world').appendChild(el);
@@ -125,8 +130,15 @@ Game.creatures.update = function(dt) {
         c.vy += ((c.tvy || 0) - c.vy) * ease;
 
         var sm = (c.speedMul == null) ? 1 : c.speedMul;  // 0 = fixe (papillons)
-        c.x += c.vx * sm * dt / 16.67;
-        c.y += c.vy * sm * dt / 16.67;
+        var nx = c.x + c.vx * sm * dt / 16.67, ny = c.y + c.vy * sm * dt / 16.67;
+        if (sm && !FLYERS[c.type]) {
+            // Les animaux qui marchent contournent arbres, rochers, maisons... (le castor peut nager)
+            var st = Game.placement.move(c.el, c.x, c.y, nx, ny, 14, { water: c.type !== '🦫' });
+            if (st.hit && st.x === c.x && st.y === c.y) { c.vx = -c.vx; c.vy = -c.vy; c.tvx = -(c.tvx || 0); c.tvy = -(c.tvy || 0); }
+            nx = st.x; ny = st.y;
+        }
+        c.x = nx;
+        c.y = ny;
 
         // Wrap (limité à la terre, pas la mer)
         var landBottom = Game.CONFIG.BEACH_TOP - 100;
@@ -134,6 +146,13 @@ Game.creatures.update = function(dt) {
         if (c.x > Game.CONFIG.WORLD_W - 50) c.x = 100;
         if (c.y < 50) c.y = landBottom;
         if (c.y > landBottom) c.y = 100;
+        // Réapparu de l'autre côté de la carte sur un obstacle : on le décale jusqu'à une place libre
+        if (!FLYERS[c.type] && Game.placement.blocked(c.x + 20, c.y + 20, 14)) {
+            for (var tr = 0; tr < 12; tr++) {
+                var tx = c.x + (Math.random() - 0.5) * 300, ty = Math.max(100, Math.min(landBottom, c.y + (Math.random() - 0.5) * 300));
+                if (!Game.placement.blocked(tx + 20, ty + 20, 14)) { c.x = tx; c.y = ty; break; }
+            }
+        }
 
         c.el.style.left = c.x + 'px';
         c.el.style.top = c.y + 'px';
@@ -247,6 +266,8 @@ function spawnWasp() {
     });
 }
 
+// Ceux qui volent passent au-dessus de tout
+var FLYERS = { '🦇': 1, '✨': 1, '🦅': 1, '🦋': 1, '🐦': 1 };
 function getCreatureType(season, isNight) {
     if (isNight) {
         // Night creatures: fireflies, hedgehogs, and owls

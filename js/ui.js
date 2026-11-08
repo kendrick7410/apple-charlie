@@ -4,7 +4,35 @@
 
 Game.ui = {};
 
+// Panneaux d'action en bas à droite (Entrer, Défi du Cervin, chasse au trésor, ferme...) :
+// ils étaient tous au même endroit et se cachaient. On les empile les uns au-dessus des autres.
+var _panelBase = null, _panelBaseKey = '';
+Game.ui.stackPanels = function() {
+    var panels = Array.prototype.slice.call(document.querySelectorAll('body > [id^="action-"]'));
+    var inShop = document.body.classList.contains('in-shop') || (Game.state && Game.state.currentView !== 'world');
+    if (inShop) { panels.forEach(function(p) { if (p._stacked) { p.style.removeProperty('bottom'); p._stacked = false; } }); return; }
+    var key = window.innerWidth + 'x' + window.innerHeight;
+    if (_panelBase === null || key !== _panelBaseKey) {
+        _panelBaseKey = key;
+        var ref = document.getElementById('action-enter');
+        var had = ref.style.getPropertyValue('bottom');
+        ref.style.removeProperty('bottom');
+        _panelBase = parseFloat(getComputedStyle(ref).bottom) || 80;   // 80 px (ordinateur), plus haut sur téléphone
+        if (had) ref.style.setProperty('bottom', had, 'important');
+    }
+    var y = _panelBase;
+    // « Entrer » toujours en bas (le plus près du pouce), les missions au-dessus
+    panels.sort(function(a, b) { return (a.id === 'action-enter' ? 0 : 1) - (b.id === 'action-enter' ? 0 : 1); });
+    panels.forEach(function(p) {
+        if (getComputedStyle(p).display === 'none') return;
+        p.style.setProperty('bottom', y + 'px', 'important');
+        p._stacked = true;
+        y += p.offsetHeight + 8;
+    });
+};
+
 Game.ui.init = function() {
+    if (!Game.ui._stackTimer) Game.ui._stackTimer = setInterval(function() { try { Game.ui.stackPanels(); } catch (e) {} }, 150);
     Game.ui.update();
     Game.ui.updateXP();
     Game.ui.updateClock();

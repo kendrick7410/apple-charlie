@@ -193,6 +193,81 @@ function problem(el, fp, others) {
     }
     return '';
 }
+// ── Obstacles pour ce qui bouge (habitants, animaux) ──
+// Arbres, rochers, bâtiments, enclos, grange, foin, tracteur, palmiers, décor, balançoire, montagnes...
+// rangés dans une grille (cases de 200 px) recalculée toutes les 1,5 s : rapide à interroger à chaque pas.
+var SOLID_SKIP = { small: 1, player: 1, grass: 1, pickup: 1, animal: 1, 'water-ok': 1, dock: 1, crate: 1 };
+var CELL = 200, _grid = null, _gridT = 0;
+function gridAdd(g, fp) {
+    var x1, y1, x2, y2;
+    if (fp.rect) { x1 = fp.x1; y1 = fp.y1; x2 = fp.x2; y2 = fp.y2; }
+    else { x1 = fp.x - fp.r; y1 = fp.y - fp.r; x2 = fp.x + fp.r; y2 = fp.y + fp.r; }
+    for (var cx = Math.floor(x1 / CELL); cx <= Math.floor(x2 / CELL); cx++)
+        for (var cy = Math.floor(y1 / CELL); cy <= Math.floor(y2 / CELL); cy++) {
+            var k = cx + ',' + cy; (g[k] || (g[k] = [])).push(fp);
+        }
+}
+function solidGrid() {
+    var now = performance.now();
+    if (_grid && now - _gridT < 1500) return _grid;
+    _gridT = now;
+    var g = {};
+    all(null).forEach(function(o) { if (!SOLID_SKIP[o.fp.kind]) gridAdd(g, o.fp); });
+    var sw = Game.state && Game.state.swing;
+    if (sw && sw.x != null) gridAdd(g, { x: sw.x, y: sw.y, r: 75, kind: 'solid' });   // balançoire (dessinée en 3D seulement)
+    _grid = g;
+    return g;
+}
+// Vrai si un rond de rayon r posé en (x, y) (point au sol) touche un obstacle.
+// opts.mountain : les montagnes ne bloquent pas (animaux de montagne) ; opts.water === false : l'eau ne bloque pas
+P.blocked = function(x, y, r, opts) {
+    opts = opts || {};
+    if (x < 30 || y < 30 || x > Game.CONFIG.WORLD_W - 30 || y > Game.CONFIG.WORLD_H - 30) return true;
+    var me = { x: x, y: y, r: r, kind: 'animal' };
+    if (opts.water !== false && inWater(me)) return true;
+    var list = solidGrid()[Math.floor(x / CELL) + ',' + Math.floor(y / CELL)];
+    if (list) for (var i = 0; i < list.length; i++) {
+        var fp = list[i];
+        if (opts.mountain && fp.kind === 'mountain') continue;
+        if (overlap(me, fp)) return true;
+    }
+    // le rond peut déborder sur une case voisine
+    var dx = [-1, 0, 1], seen = list || [];
+    for (var a = 0; a < 3; a++) for (var b = 0; b < 3; b++) {
+        if (!dx[a] && !dx[b]) continue;
+        var cx = Math.floor((x + dx[a] * r) / CELL), cy = Math.floor((y + dx[b] * r) / CELL);
+        var l2 = solidGrid()[cx + ',' + cy];
+        if (!l2 || l2 === list) continue;
+        for (var j = 0; j < l2.length; j++) {
+            if (seen.indexOf(l2[j]) > -1 || (opts.mountain && l2[j].kind === 'mountain')) continue;
+            if (overlap(me, l2[j])) return true;
+        }
+    }
+    return false;
+};
+P.refreshObstacles = function() { _grid = null; };
+// Point au sol d'un élément qui bouge, par rapport à son coin haut-gauche (mis en cache)
+P.groundOffset = function(el) {
+    if (!el._gOff || !el._gOff.w) { var w = el.offsetWidth, h = el.offsetHeight; el._gOff = { w: w, x: (w || 40) / 2, y: (h || 40) * 0.85 }; }
+    return el._gOff;
+};
+// Un pas sans traverser : on essaie le pas entier, sinon on glisse le long de l'obstacle (axe x ou y).
+// Renvoie { x, y, hit } ; hit = true quand quelque chose a gêné.
+P.move = function(el, x, y, nx, ny, r, opts) {
+    var o = P.groundOffset(el);
+    if (P.canStep(x, y, nx, ny, o.x, o.y, r, opts)) return { x: nx, y: ny, hit: false };
+    if (P.canStep(x, y, nx, y, o.x, o.y, r, opts)) return { x: nx, y: y, hit: true };
+    if (P.canStep(x, y, x, ny, o.x, o.y, r, opts)) return { x: x, y: ny, hit: true };
+    return { x: x, y: y, hit: true };
+};
+// Fait avancer quelque chose qui bouge de (x,y) vers (nx,ny) sans entrer dans un obstacle.
+// (ox, oy) = décalage entre la position stockée (coin de l'élément) et son point au sol.
+// Renvoie true si le pas est accepté. S'il était déjà coincé dedans, on le laisse sortir.
+P.canStep = function(x, y, nx, ny, ox, oy, r, opts) {
+    if (!P.blocked(nx + ox, ny + oy, r, opts)) return true;
+    return P.blocked(x + ox, y + oy, r, opts);   // déjà coincé dedans (apparu là) : il peut se dégager
+};
+
 P.isFree = function(el) {
     var fp = P.footprint(el);
     return !fp || !problem(el, fp, all(el));

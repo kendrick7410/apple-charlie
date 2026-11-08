@@ -88,7 +88,7 @@ Game.beach.update = function(dt, now) {
     var onBeach = s.charlie.y >= Game.CONFIG.BEACH_TOP - 50;
     var enterEl = document.getElementById('action-enter');
     var enterShown = enterEl && getComputedStyle(enterEl).display !== 'none';
-    p.style.display = (onBeach && now >= B.cooldownUntil && !enterShown) ? 'flex' : 'none';
+    p.style.display = (onBeach && now >= B.cooldownUntil) ? 'flex' : 'none';   // s'empile avec « Entrer » (ui.stackPanels)
 };
 
 function chestFound(now) {
