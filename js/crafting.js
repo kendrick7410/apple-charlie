@@ -21,7 +21,9 @@ Game.crafting.craftFurniture = function(recipeId) {
         if (!s.houseFurniture[s.activeHouse.id]) {
             s.houseFurniture[s.activeHouse.id] = [];
         }
-        s.houseFurniture[s.activeHouse.id].push([recipe.emoji, fx, fy]);
+        var nf = [recipe.emoji, fx, fy];
+        Game.furniture.placeFree(s.houseFurniture[s.activeHouse.id], nf);   // pas dans un mur ni sur un autre meuble
+        s.houseFurniture[s.activeHouse.id].push(nf);
         Game.furniture.render();   // tout de suite déplaçable et utilisable
 
         Game.xp.add(10);

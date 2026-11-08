@@ -193,7 +193,7 @@ Game.player.updateInterior = function(dt) {
 
     s.interiorCharlie.x += dx * speed;
     s.interiorCharlie.y += dy * speed;
-    s.interiorCharlie.x = Math.max(20, Math.min(540, s.interiorCharlie.x));
+    s.interiorCharlie.x = Math.max(20, Math.min(522, s.interiorCharlie.x));
     s.interiorCharlie.y = Math.max(20, Math.min(540, s.interiorCharlie.y));
 
     var ic = document.getElementById('interior-charlie');

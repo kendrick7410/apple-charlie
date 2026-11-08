@@ -177,21 +177,25 @@ Game.world.createForest = function() {
 
     // Grande forêt touffue : beaucoup d'arbres, mais toujours un passage (120 px min entre deux)
     var placed = [];
+    function forestPick() {
+        var a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random());
+        return { x: loc.x + Math.cos(a) * d * 640, y: loc.y + Math.sin(a) * d * 420 };
+    }
     for (var i = 0, tries = 0; i < 80 && tries < 8000; tries++) {
         var angle = Math.random() * Math.PI * 2;
         var dist = Math.sqrt(Math.random());
         var tx = loc.x + Math.cos(angle) * dist * 640;
         var ty = loc.y + Math.sin(angle) * dist * 420;
         if (placed.some(function(p) { return Math.hypot(p[0] - tx, p[1] - ty) < 120; })) continue;
-        placed.push([tx, ty]); i++;
         var tree = document.createElement('div');
         tree.className = 'entity tree forest-tree';
-        tree.style.left = tx + 'px';
-        tree.style.top = ty + 'px';
         tree.style.fontSize = (3 + Math.random() * 2) + 'rem';
         tree.innerHTML = Game.SEASON_TREE[season];
         tree.dataset.hasApple = (season !== 'winter') ? 'true' : 'false';
-        world.appendChild(tree);
+        // Garde-fou : l'arbre ne touche ni un autre arbre, ni un chemin, ni la rivière
+        if (!Game.placement.place(tree, (function(x, y) { return function() { return { x: x, y: y }; }; })(tx, ty), 1)) continue;
+        tree._pick = forestPick;   // s'il gêne plus tard, on le replace ailleurs dans la forêt
+        placed.push([tx, ty]); i++;
     }
 };
 
@@ -222,7 +226,7 @@ Game.world.createMountainTerrain = function() {
     // Zones à ne pas encombrer (lac, sommets, refuge)
     var avoid = [
         { x: 3200, y: 600,  r: 270 }, { x: 3500, y: 800,  r: 180 },
-        { x: 3980, y: 1080, r: 150 }, { x: 3020, y: 1080, r: 150 },
+        { x: 3980, y: 1080, r: 150 }, { x: 2980, y: 1120, r: 150 },
         { x: 3500, y: 1420, r: 150 }, { x: 3300, y: 950,  r: 140 }
     ];
     function free(x, y) {
@@ -242,16 +246,14 @@ Game.world.createMountainTerrain = function() {
     }
     function scatter(emoji, count, minR, maxR, opacity, z) {
         for (var i = 0; i < count; i++) {
-            var p = pickPos();
-            if (!p) continue;
             var d = document.createElement('div');
             d.className = 'entity';
-            d.style.cssText = 'position:absolute;left:' + p.x + 'px;top:' + p.y + 'px;font-size:' +
+            d.style.cssText = 'position:absolute;font-size:' +
                 (minR + Math.random() * (maxR - minR)).toFixed(2) + 'rem;z-index:' + (z || 4) +
                 ';pointer-events:none;' + (opacity ? 'opacity:' + opacity + ';' : '') +
                 'text-shadow:0 2px 2px rgba(0,0,0,0.2);';
             d.textContent = emoji;
-            world.appendChild(d);
+            Game.placement.place(d, pickPos, 40);   // ni sur une montagne, ni sur un chemin, ni sur un autre rocher
         }
     }
     // Sapin enneigé : un 🌲 recouvert de plaques de neige blanches (sans filtre coûteux)
@@ -377,13 +379,12 @@ Game.world.createLake = function() {
         var reed = document.createElement('div');
         reed.className = 'entity';
         reed.style.fontSize = (1.5 + Math.random() * 0.5) + 'rem';
-        var angle = (i / 6) * Math.PI * 2;
-        var dist = 220 + Math.random() * 40;
-        reed.style.left = (loc.x + Math.cos(angle) * dist) + 'px';
-        reed.style.top = (loc.y + Math.sin(angle) * dist * 0.6) + 'px';
         reed.innerHTML = '🌾';
         reed.style.opacity = '0.7';
-        world.appendChild(reed);
+        Game.placement.place(reed, (function(angle) { return function() {
+            var dist = 220 + Math.random() * 40, a = angle + (Math.random() - 0.5) * 0.4;
+            return { x: loc.x + Math.cos(a) * dist, y: loc.y + Math.sin(a) * dist * 0.6 };
+        }; })((i / 6) * Math.PI * 2), 20);
     }
 };
 
@@ -483,6 +484,7 @@ Game.world.createSeaAndBeach = function() {
         return Math.sin(x / 560 + ph) * a + Math.sin(x / 230 + ph * 1.7) * (a * 0.5) + Math.sin(x / 90 + ph * 2.3) * (a * 0.25);
     }
     var grassLine = function(x) { return beachTop + coast(x, 155, 0.4); };
+    Game.world.grassLineY = grassLine;   // limite herbe / sable (partagée avec le garde-fou du décor)
     var seaLine = Game.world.shorelineY;
 
     // Le sable et la mer débordent largement hors de la carte pour qu'on ne voie jamais
@@ -523,10 +525,9 @@ Game.world.createSeaAndBeach = function() {
     for (var gx = 80; gx < W; gx += 170 + Math.random() * 170) {
         var gel = document.createElement('div');
         gel.className = 'entity';
-        gel.style.cssText = 'left:' + gx + 'px;top:' + (grassLine(gx) + 6) +
-            'px;font-size:' + (1.3 + Math.random()) + 'rem;z-index:3;opacity:0.85;';
+        gel.style.cssText = 'font-size:' + (1.3 + Math.random()) + 'rem;z-index:3;opacity:0.85;';
         gel.innerHTML = Math.random() > 0.5 ? '🌾' : '🌿';
-        world.appendChild(gel);
+        Game.placement.place(gel, (function(x0) { return function() { var x = x0 + (Math.random() - 0.5) * 60; return { x: x, y: grassLine(x) + 6 }; }; })(gx), 10);
     }
 
     // Bassins de marée (petites flaques sur le sable, entre la côte et l'eau)
@@ -553,21 +554,25 @@ Game.world.createSeaAndBeach = function() {
     // Décor dispersé : placé entre la côte (herbe/sable) et l'eau, PAR position x,
     // donc il suit la courbe du rivage et continue jusqu'au bord de l'eau
     // (fromFrac/toFrac : 0 = bord herbe, 1 = bord de l'eau)
+    // Garde-fou : chaque objet est tiré au sort jusqu'à trouver une place où il ne touche rien
+    // (pas de transat dans un château de sable, rien dans la rivière, sur le port ou sur une boutique)
+    var port = Game.CONFIG.LOCATIONS.port;
     function scatter(emoji, count, minSize, maxSize, fromFrac, toFrac) {
-        for (var i = 0; i < count; i++) {
+        function pick() {
             var x = 90 + Math.random() * (W - 180);
             var top = grassLine(x) + 25;     // juste sous la limite herbe/sable
             var bottom = seaLine(x) - 30;    // juste avant l'eau
-            if (bottom <= top) continue;
-            var y = top + (fromFrac + Math.random() * (toFrac - fromFrac)) * (bottom - top);
+            if (bottom <= top) return null;
+            if (port && Math.abs(x - port.x) < 220) return null;   // le port reste dégagé
+            return { x: x, y: top + (fromFrac + Math.random() * (toFrac - fromFrac)) * (bottom - top) };
+        }
+        for (var i = 0; i < count; i++) {
             var el = document.createElement('div');
             el.className = 'entity';
-            el.style.left = x + 'px';
-            el.style.top = y + 'px';
             el.style.fontSize = (minSize + Math.random() * (maxSize - minSize)) + 'rem';
             el.style.zIndex = '3';
             el.innerHTML = emoji;
-            world.appendChild(el);
+            Game.placement.place(el, pick, 60);
         }
     }
     scatter('🌴', 16, 3.5, 5.2, 0,    0.4);   // palmiers (côté herbe)
@@ -602,7 +607,7 @@ Game.world.createPort = function() {
     // Pilotis au bout du ponton (dans l'eau)
     [ -45, 45 ].forEach(function(dx) {
         var post = document.createElement('div');
-        post.className = 'entity';
+        post.className = 'entity dock-post';   // fait partie du ponton (le garde-fou le laisse dans l'eau)
         post.style.left = (loc.x + dx) + 'px';
         post.style.top = (dockBottom - 26) + 'px';
         post.style.fontSize = '1.6rem';

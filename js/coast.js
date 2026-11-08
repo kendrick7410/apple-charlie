@@ -42,6 +42,12 @@ function spawnSeaCreature() {
     // sur le sable, au-dessus du bord de l'eau (côte courbe)
     var shore = Game.world.shorelineY ? Game.world.shorelineY(x) : Game.CONFIG.SEA_TOP;
     var y = (Game.CONFIG.BEACH_TOP + 70) + Math.random() * Math.max(60, (shore - 90) - (Game.CONFIG.BEACH_TOP + 70));
+    // Pas dans un château de sable, sous un parasol ou dans la rivière : on retire au sort
+    for (var t = 0; t < 20 && !Game.placement.spotFree(x + 19, y + 34, 18, 'small'); t++) {
+        x = 320 + Math.random() * (Game.CONFIG.WORLD_W - 640);
+        shore = Game.world.shorelineY ? Game.world.shorelineY(x) : Game.CONFIG.SEA_TOP;
+        y = (Game.CONFIG.BEACH_TOP + 70) + Math.random() * Math.max(60, (shore - 90) - (Game.CONFIG.BEACH_TOP + 70));
+    }
     var el = makeEntity(sp.emoji, x, y, 'sea-creature', '1.9rem', sp.rarity);
     sea.push({ el: el, x: x, y: y, id: id });
 }
@@ -109,6 +115,10 @@ function dropCrate() {
     var port = Game.CONFIG.LOCATIONS.port;
     var x = port.x + (Math.random() - 0.5) * 120;
     var y = port.y + 70 + Math.random() * 80;
+    for (var t = 0; t < 15 && !Game.placement.spotFree(x + 24, y + 42, 18, 'crate'); t++) {   // pas sur un parasol ou un rocher
+        x = port.x + (Math.random() - 0.5) * 120;
+        y = port.y + 70 + Math.random() * 80;
+    }
     var el = makeEntity('📦', x, y, 'cargo-crate', '2.4rem');
     crates.push({ el: el, x: x, y: y, mats: 2 + Math.floor(Math.random() * 3), wood: 3 + Math.floor(Math.random() * 4) });
 }

@@ -40,6 +40,9 @@
                 <button onclick="Game.crafting.craftFurniture('tv')" class="btn-animal btn-craft">📺 Télé (3🪵,3🪨)</button>
                 <button onclick="Game.crafting.craftFurniture('piano')" class="btn-animal btn-craft">🎹 Piano (8🪵,2🪨)</button>
                 <button onclick="Game.crafting.craftFurniture('bath')" class="btn-animal btn-craft">🛁 Baignoire (1🪵,6🪨)</button>
+                <button onclick="Game.crafting.craftFurniture('armchair')" class="btn-animal btn-craft">🛋️ Fauteuil (4🪵)</button>
+                <button onclick="Game.crafting.craftFurniture('fridge')" class="btn-animal btn-craft">🧊 Frigo (1🪵,5🪨)</button>
+                <button onclick="Game.crafting.craftFurniture('counter')" class="btn-animal btn-craft">🚰 Évier (4🪵,2🪨)</button>
                 <button id="rotate-mode-btn" onclick="Game.furniture.toggleRotateMode()" class="btn-animal btn-craft" style="background:#7fa8c9;">🔄 Tourner un meuble</button>
                 <button id="store-mode-btn" onclick="Game.furniture.toggleStoreMode()" class="btn-animal btn-craft" style="background:#a1887f;">📦 Ranger un meuble</button>
             </div>
@@ -361,6 +364,7 @@
 <script src="js/time.js"></script>
 <script src="js/weather.js"></script>
 <script src="js/player.js"></script>
+<script src="js/placement.js"></script>
 <script src="js/world.js"></script>
 <script src="js/entities.js"></script>
 <script src="js/buildings.js"></script>
@@ -452,6 +456,8 @@ Game.startGame = function() {
     Game.beach.reset();
     Game.farm.reset();
     Game.minimap.init();
+    Game.placement.settle();     // garde-fou : rien ne reste posé sur un autre objet, dans l'eau ou sur un chemin
+    Game.placement.devCheck();   // ?checkdecor : liste ce qui se chevauche encore
 
     // Init UI
     Game.ui.init();

@@ -64,7 +64,10 @@ var HELP = {
     stove:     "Cuis du pain 🍞 et des plats.",
     tv:        "Allume la télé et regarde une émission (+10 XP par jour).",
     piano:     "Joue de la musique 🎵 (+10 XP par jour).",
-    bath:      "Prends un bain 🛁 (+15 XP par jour)."
+    bath:      "Prends un bain 🛁 (+15 XP par jour).",
+    armchair:  "Installe-toi dans le fauteuil 🛋️ : avec la télé allumée, c'est encore mieux !",
+    fridge:    "Prends un goûter dans le frigo 🧊 (+30 de faim).",
+    counter:   "L'évier du coin cuisine : fais la vaisselle 🧽 (+5 XP par jour)."
 };
 
 Game.furniture.help = function(type) { return HELP[type]; };
@@ -91,6 +94,88 @@ function elOf(f) {
     for (var i = 0; i < els.length; i++) if (els[i]._f === f) return els[i];
     return null;
 }
+// ── Taille au sol de chaque meuble (demi-largeur, demi-profondeur en px, comme le modèle 3D) ──
+// Sert à empêcher les meubles d'entrer dans les murs, et à poser les nouveaux sans chevauchement.
+var FOOT = {
+    bed: [43, 63], table: [43, 43], chair: [17, 17], bookshelf: [40, 14], lamp: [14, 14], plant: [17, 17],
+    mirror: [26, 8], stove: [31, 22], tv: [37, 14], piano: [49, 20], bath: [54, 30],
+    armchair: [36, 30], fridge: [27, 24], counter: [48, 22]
+};
+function roomSize() { var r = room(); return { w: (r && r.clientWidth) || 570, h: (r && r.clientHeight) || 570 }; }
+Game.furniture.footprint = function(f) {
+    var d = FOOT[Game.furniture.typeOf(f[0])] || [22, 22];
+    return (f[5] || 0) % 2 ? { hw: d[1], hd: d[0] } : { hw: d[0], hd: d[1] };
+};
+// Position (coin haut-gauche d'un emoji de 48 px) ramenée à l'intérieur des murs
+Game.furniture.clampPos = function(f, x, y) {
+    var R = roomSize(), fp = Game.furniture.footprint(f);
+    var cx = Math.max(fp.hw, Math.min(R.w - fp.hw, x + 24));
+    var cy = Math.max(fp.hd, Math.min(R.h - fp.hd, y + 24));
+    return { x: Math.round(cx - 24), y: Math.round(cy - 24) };
+};
+function clampF(f) { var p = Game.furniture.clampPos(f, f[1], f[2]); f[1] = p.x; f[2] = p.y; }
+// Deux meubles se touchent-ils ? (le tapis de sortie compte comme un meuble)
+function overlaps(a, ax, ay, b) {
+    var fa = Game.furniture.footprint(a), fb = Game.furniture.footprint(b);
+    return Math.abs(ax - b[1]) < fa.hw + fb.hw + 6 && Math.abs(ay - b[2]) < fa.hd + fb.hd + 6;
+}
+function onExitMat(f, x, y) {
+    var fp = Game.furniture.footprint(f), cx = x + 24, cy = y + 24, R = roomSize();
+    return cy + fp.hd > R.h - 110 && cx + fp.hw > 230 && cx - fp.hw < 400;
+}
+// Pose un meuble au plus près de (x, y) sans toucher les autres, ni les murs, ni le tapis de sortie
+function placeFree(arr, f) {
+    clampF(f);
+    var x0 = f[1], y0 = f[2], R = roomSize(), best = null, bd = Infinity;
+    for (var y = -40; y <= R.h; y += 20) for (var x = -40; x <= R.w; x += 20) {
+        var p = Game.furniture.clampPos(f, x, y);
+        var d = Math.hypot(p.x - x0, p.y - y0);
+        if (d >= bd || onExitMat(f, p.x, p.y)) continue;
+        if (arr.some(function(o) { return o !== f && overlaps(f, p.x, p.y, o); })) continue;
+        bd = d; best = p;
+    }
+    if (best) { f[1] = best.x; f[2] = best.y; }
+}
+Game.furniture.placeFree = placeFree;
+
+// Chaque maison a un petit coin cuisine (frigo, évier, cuisinière) et un coin télé (télé + fauteuil).
+// Ajoutés une seule fois par maison (Game.state.homeKit), y compris dans les anciennes sauvegardes.
+var HOME_KIT = [
+    ['fridge', 16, 16, 0], ['counter', 96, 4, 0], ['stove', 178, 8, 0],
+    ['tv', 410, 0, 0], ['armchair', 410, 170, 2]
+];
+Game.furniture.ensureHome = function(house) {
+    var s = Game.state;
+    s.homeKit = s.homeKit || {};
+    var arr = s.houseFurniture[house.id] || (s.houseFurniture[house.id] = []);
+    if (!s.homeKit[house.id]) {
+        s.homeKit[house.id] = true;
+        var kit = HOME_KIT.slice();
+        if (house.id !== 'charlie') kit.push(['bed', 40, 260, 0]);   // le lit du villageois devient un vrai meuble
+        // 1) Le coin cuisine et le coin télé prennent leur place prévue
+        var added = [];
+        kit.forEach(function(k) {
+            var same = arr.find(function(o) { return Game.furniture.typeOf(o[0]) === k[0]; });
+            if (same) {
+                // Meuble déjà là chez un villageois (ex. son lit) : on le range à sa place dans la nouvelle maison
+                if (house.id !== 'charlie') { same[1] = k[1]; same[2] = k[2]; same[5] = k[3]; added.push(same); }
+                return;
+            }
+            var f = [Game.RECIPES[k[0]].emoji, k[1], k[2], 0, 0, k[3]];
+            placeFree(added, f);
+            added.push(f);
+        });
+        // 2) Les autres objets qui gênent sont poussés à la place libre la plus proche
+        var others = arr.filter(function(o) { return added.indexOf(o) === -1; });
+        added.forEach(function(f) { if (arr.indexOf(f) === -1) arr.push(f); });
+        others.forEach(function(o) {
+            clampF(o);
+            if (onExitMat(o, o[1], o[2]) || arr.some(function(x) { return x !== o && overlaps(o, o[1], o[2], x); })) placeFree(arr, o);
+        });
+    }
+    arr.forEach(clampF);   // anciens meubles qui dépassaient dans un mur
+};
+
 function canSleepNow() { var h = Game.state.gameHour; return h >= SLEEP_FROM || h < 6; }
 
 // ── Ce que fait Charlie en ce moment (lire, dormir, bain, piano) : il ne bouge pas ──
@@ -164,7 +249,7 @@ document.addEventListener('pointerdown', function(e) {
     if (e.target !== r && e.target.id !== 'room-light' && !e.target.classList.contains('exit-mat')) return;
     var rect = r.getBoundingClientRect(), k = scale();
     Game.state.interiorTarget = {
-        x: Math.max(20, Math.min(540, (e.clientX - rect.left) / k - 24)),
+        x: Math.max(20, Math.min(522, (e.clientX - rect.left) / k - 24)),
         y: Math.max(20, Math.min(540, (e.clientY - rect.top) / k - 24))
     };
     pending = null;
@@ -174,7 +259,7 @@ document.addEventListener('pointerdown', function(e) {
 // Pour la vue 3D (render3d.js) : marcher vers un point de la pièce, retrouver l'élément d'un meuble
 Game.furniture.floorClick = function(x, y) {
     if (busy) return;
-    Game.state.interiorTarget = { x: Math.max(20, Math.min(540, x)), y: Math.max(20, Math.min(540, y)) };
+    Game.state.interiorTarget = { x: Math.max(20, Math.min(522, x)), y: Math.max(20, Math.min(540, y)) };
     pending = null;
     Game.furniture.closeMenu();
 };
@@ -194,6 +279,7 @@ Game.furniture.render = function() {
         var div = document.createElement('div');
         div.className = 'furniture';
         div.textContent = f[0];
+        clampF(f);
         div.style.left = f[1] + 'px';
         div.style.top = f[2] + 'px';
         div.title = type ? Game.RECIPES[type].label + ' : ' + HELP[type] : 'Décoration';
@@ -202,6 +288,16 @@ Game.furniture.render = function() {
         attachPointer(div, f);
         r.appendChild(div);
         if (type === 'tv' && f[4]) showTvScreen(div, true);
+        // La nuit, le villageois dort dans son lit (où qu'on l'ait déplacé)
+        if (type === 'bed' && !isMine() && !r.querySelector('.house-sleeper') && Game.time.isNight()) {
+            var v = Game.VILLAGER_DATA[Game.state.activeHouse.name];
+            if (v) {
+                var sl = document.createElement('span');
+                sl.className = 'house-sleeper';
+                sl.innerHTML = '<span class="sleeper-emoji">' + v.emoji + '</span><span class="zzz">💤</span>';
+                div.appendChild(sl);
+            }
+        }
     });
     Game.furniture.updateLight();
 };
@@ -227,8 +323,8 @@ function attachPointer(el, f) {
         var r = room(), rect = r.getBoundingClientRect(), k = scale();
         var nx = Math.round(((e.clientX - rect.left) / k - offX) / 20) * 20;
         var ny = Math.round(((e.clientY - rect.top) / k - offY) / 20) * 20;
-        nx = Math.max(0, Math.min(r.clientWidth - 50, nx));
-        ny = Math.max(0, Math.min(r.clientHeight - 50, ny));
+        var cp = Game.furniture.clampPos(f, nx, ny);   // jamais dans les murs
+        nx = cp.x; ny = cp.y;
         el.style.left = nx + 'px';
         el.style.top = ny + 'px';
         f[1] = nx; f[2] = ny;   // sauvegardé avec la maison
@@ -257,7 +353,7 @@ Game.furniture.interact = function(f, el) {
     if (busy) return;
     var type = Game.furniture.typeOf(f[0]);
     if (storeMode && isMine()) { Game.furniture.store(f); return; }
-    if (rotateMode && isMine()) { Game.furniture.rotate(f); return; }
+    if (rotateMode) { Game.furniture.rotate(f); return; }
     if (!type) {
         Game.ui.notify(f[0] + " C'est une décoration : fais-la glisser pour la déplacer !");
         return;
@@ -266,7 +362,7 @@ Game.furniture.interact = function(f, el) {
         Game.furniture.use(f, el);
     } else {
         // Charlie marche jusqu'au meuble, puis l'utilise
-        Game.state.interiorTarget = { x: Math.max(20, Math.min(540, f[1])), y: Math.max(20, Math.min(540, f[2] + 55)) };
+        Game.state.interiorTarget = { x: Math.max(20, Math.min(522, f[1])), y: Math.max(20, Math.min(540, f[2] + 55)) };
         pending = f;
     }
 };
@@ -293,8 +389,10 @@ Game.furniture.toggleStoreMode = function(force) {
 // Tourner un meuble d'un quart de tour (f[5] = nombre de quarts de tour, sauvegardé avec la maison)
 var rotateMode = false;
 Game.furniture.rotate = function(f) {
-    if (!isMine()) { Game.ui.notify("Ce n'est pas ta maison : tu ne peux pas tourner ses meubles"); return; }
     f[5] = ((f[5] || 0) + 1) % 4;
+    clampF(f);   // en tournant, un meuble long ne doit pas rentrer dans le mur
+    var el = elOf(f);
+    if (el) { el.style.left = f[1] + 'px'; el.style.top = f[2] + 'px'; }
     Game.audio.play('craft');
 };
 Game.furniture.toggleRotateMode = function(force) {
@@ -533,6 +631,10 @@ var USES = {
     // Lit (comme dans Minecraft) : la nuit, Charlie se couche et on passe au matin
     bed: function(f) {
         var s = Game.state;
+        if (!isMine()) {
+            Game.ui.notify("🛏️ C'est le lit de " + s.activeHouse.name.split(' ')[0] + " : va dormir dans ta maison !");
+            return;
+        }
         if (!canSleepNow()) {
             Game.ui.notify("Tu ne peux dormir que le soir et la nuit 🌙 (dès " + SLEEP_FROM + "h). Il est " + s.gameHour + "h ☀️");
             return;
@@ -559,7 +661,7 @@ var USES = {
             busy = null;
             setPose(null);
             setFx('');
-            moveCharlieTo(Math.min(540, f[1] + 70), f[2] + 30);
+            moveCharlieTo(Math.min(522, f[1] + 70), f[2] + 30);
             Game.xp.add(10);
             Game.ui.notify("☀️ Bien dormi ! C'est le matin (+10 XP)");
         }, 4400);
@@ -623,7 +725,9 @@ var USES = {
         Game.audio.play('craft');
         Game.furniture.updateLight();
         if (f[4]) {
-            moveCharlieTo(f[1], Math.min(540, f[2] + 90));
+            var seat = nearestOfType('armchair', f, 400);
+            if (seat) moveCharlieTo(seat[1], seat[2] - 6);
+            else moveCharlieTo(f[1], Math.min(540, f[2] + 90));
             setPose('sit');
             var title = el ? el.querySelector('.tv-title') : null;
             if (readyAgain(f)) {
@@ -632,6 +736,46 @@ var USES = {
                 Game.ui.notify("📺 Tu regardes : " + (title ? title.textContent : "une émission") + " (+10 XP)");
             }
         }
+    },
+
+    // Fauteuil : on s'assoit ; si la télé est allumée, on la regarde
+    armchair: function(f) {
+        moveCharlieTo(f[1], f[2] - 6);
+        setPose('sit');
+        var tv = nearestOfType('tv', f, 400);
+        if (tv && tv[4]) {
+            var tel = elOf(tv), title = tel ? tel.querySelector('.tv-title') : null;
+            if (readyAgain(tv)) { tv[3] = now(); Game.xp.add(10); }
+            Game.ui.notify("🛋️ Bien installé devant la télé : " + (title ? title.textContent : "une émission") + " 📺");
+        } else {
+            Game.ui.notify(tv ? "🛋️ Confortable ! Clique la télé 📺 pour l'allumer" : "🛋️ Confortable ! Avec une télé 📺, ce serait parfait");
+        }
+    },
+
+    // Frigo : un goûter (une fois toutes les 3 minutes)
+    fridge: function(f) {
+        var s = Game.state, max = Game.CONFIG.HUNGER_MAX;
+        if (f[3] && now() - f[3] < DAY_MS / 4) {
+            Game.ui.notify("🧊 Le frigo est vide pour l'instant, reviens dans " + Math.max(1, Math.ceil((DAY_MS / 4 - (now() - f[3])) / 60000)) + " min");
+            return;
+        }
+        if (s.hunger >= max) { Game.ui.notify("🧊 Tu n'as pas faim !"); return; }
+        f[3] = now();
+        s.hunger = Math.min(max, s.hunger + 30);
+        var snack = ['🧀', '🥛', '🍓', '🧃', '🍰', '🥕'][Math.floor(Math.random() * 6)];
+        moveCharlieTo(f[1], Math.min(540, f[2] + 60));
+        sparkle(f, snack, 3);
+        Game.audio.playChime();
+        Game.ui.notify(snack + " Miam, un goûter du frigo ! (+30 de faim)");
+    },
+
+    // Évier : faire la vaisselle
+    counter: function(f) {
+        moveCharlieTo(f[1], Math.min(540, f[2] + 60));
+        sparkle(f, '🫧', 4);
+        Game.audio.play('craft');
+        if (readyAgain(f)) { f[3] = now(); Game.xp.add(5); Game.ui.notify("🧽 Tu fais la vaisselle : tout brille ! (+5 XP)"); }
+        else Game.ui.notify("🧽 La vaisselle est déjà propre ✨");
     },
 
     // Piano : un vrai clavier qui joue des notes
@@ -694,7 +838,7 @@ var USES = {
             setPose(null);
             setFx('✨', 'fx-pop');
             setTimeout(function() { if (!busy) setFx(''); }, 1000);
-            moveCharlieTo(Math.min(540, f[1] + 70), f[2] + 30);
+            moveCharlieTo(Math.min(522, f[1] + 70), f[2] + 30);
             if (readyAgain(f)) {
                 f[3] = now();
                 Game.xp.add(15);

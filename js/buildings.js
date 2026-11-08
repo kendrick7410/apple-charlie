@@ -128,6 +128,7 @@ Game.buildings.enterHouse = function(house) {
 
     // Meubles de la maison : utilisables, déplaçables (voir furniture.js)
     if (!s.houseFurniture[house.id]) s.houseFurniture[house.id] = house.furniture.map(function(f){ return f.slice(); });
+    Game.furniture.ensureHome(house);   // coin cuisine + coin télé (+ lit du villageois), une seule fois
     Game.furniture.render();
 
     // Étagère de boules à neige (uniquement chez Charlie)
@@ -148,31 +149,11 @@ Game.buildings.enterHouse = function(house) {
         });
     }
 
-    // Lit du villageois : chaque maison en a un ; la nuit son habitant y dort
+    // Ancien lit fixe du villageois : remplacé par un vrai meuble déplaçable (furniture.ensureHome)
     var oldBeds = room.querySelectorAll('.house-bed');
     for (var b = 0; b < oldBeds.length; b++) oldBeds[b].remove();
-    if (house.id !== 'charlie') {
-        var bed = document.createElement('div');
-        bed.className = 'house-bed';
-        bed.style.left = '360px';
-        bed.style.top = '60px';
-        bed.innerHTML =
-            '<div class="bed-frame"></div>' +
-            '<div class="bed-mattress"></div>' +
-            '<div class="bed-pillow"></div>' +
-            '<div class="bed-blanket"></div>';
-        var villager = Game.VILLAGER_DATA[house.name];
-        if (Game.time.isNight() && villager) {
-            var sleeper = document.createElement('div');
-            sleeper.className = 'house-sleeper';
-            sleeper.innerHTML = '<span class="sleeper-emoji">' + villager.emoji + '</span>' +
-                '<span class="zzz">💤</span>';
-            bed.appendChild(sleeper);
-        }
-        room.appendChild(bed);
-        if (Game.time.isNight() && villager) {
-            Game.ui.notify(house.name.split(' ')[0] + " dort profondément 😴");
-        }
+    if (house.id !== 'charlie' && Game.time.isNight() && Game.VILLAGER_DATA[house.name]) {
+        Game.ui.notify(house.name.split(' ')[0] + " dort profondément 😴");
     }
 
     document.getElementById('interior-view').style.display = 'flex';

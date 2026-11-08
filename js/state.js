@@ -48,6 +48,7 @@ Game.state = {
     placedFlowers: [],   // [{x,y,emoji}]
     placedPaths: [],     // [{x,y}]
     houseFurniture: {},  // per-house id
+    homeKit: {},         // maisons qui ont reçu leur coin cuisine + coin télé
     builtHouses: [],     // maisons de villageois construites [id, ...] (voir Game.HOUSES)
     builtShops: [],      // bâtiments construits [id, ...] (voir Game.SHOPS, champ level)
     totalTimePlayed: 0,
@@ -79,6 +80,7 @@ Game.newGame = function() {
     }
     // init house furniture from config
     Game.state.houseFurniture = {};
+    Game.state.homeKit = {};
     Game.HOUSES.forEach(function(h) {
         Game.state.houseFurniture[h.id] = h.furniture.map(function(f){ return f.slice(); });
     });
@@ -126,6 +128,7 @@ Game.saveGame = function() {
         placedFlowers: s.placedFlowers.slice(),
         placedPaths: s.placedPaths.slice(),
         houseFurniture: JSON.parse(JSON.stringify(s.houseFurniture)),
+        homeKit: Object.assign({}, s.homeKit || {}),
         builtHouses: s.builtHouses.slice(),
         builtShops: s.builtShops.slice(),
         totalTimePlayed: s.totalTimePlayed
@@ -180,6 +183,7 @@ Game.loadGame = function() {
         if (data.placedFlowers) s.placedFlowers = data.placedFlowers;
         if (data.placedPaths) s.placedPaths = data.placedPaths;
         if (data.houseFurniture) s.houseFurniture = data.houseFurniture;
+        s.homeKit = data.homeKit || {};
         // Ancienne sauvegarde (avant les terrains à bâtir) : on garde tout le village déjà là
         s.builtHouses = data.builtHouses || Game.HOUSES.map(function(h){ return h.id; });
         // Maisons présentes dès le début (refuge du Cervin) : aussi dans les anciennes parties

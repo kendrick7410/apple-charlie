@@ -43,7 +43,8 @@ Game.mountain.start = function() {
             var dist = 160 + Math.random() * 180; // entre 160 et 340 px → toujours visibles
             fx = Math.max(120, Math.min(Game.CONFIG.WORLD_W - 120, center.x + Math.cos(angle) * dist));
             fy = Math.max(120, Math.min(Game.CONFIG.WORLD_H - 120, center.y + Math.sin(angle) * dist));
-            if (!Game.r3d || !Game.r3d.reachable || Game.r3d.reachable(fx, fy)) break;
+            var reach = !Game.r3d || !Game.r3d.reachable || Game.r3d.reachable(fx, fy);
+            if (reach && Game.placement.spotFree(fx + 20, fy + 35, 12, 'pickup')) break;   // pas dans un rocher ni sur un chemin
         }
         var el = document.createElement('div');
         el.className = 'entity mountain-edelweiss';

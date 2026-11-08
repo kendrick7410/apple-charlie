@@ -68,48 +68,39 @@ function landSpawn() {
     };
 }
 
-// Cherche une position libre (bâtiments + rivière évités), avec garde-fou anti-boucle.
-// avoidMountain = true pour aussi exclure la zone des montagnes (fleurs).
-function freeSpawn(avoidMountain) {
-    var pos;
-    for (var tries = 0; tries < 60; tries++) {
-        pos = landSpawn();
-        if (validSpawnPos(pos.x, pos.y, avoidMountain)) return pos;
-    }
-    return pos;   // au pire, la dernière position tirée
+// Tirage d'une position sur la terre (bâtiments, rivière, plage évités) ; null si elle ne convient pas.
+// Le registre Game.placement vérifie ensuite que l'objet ne touche rien (autre arbre, chemin, rocher...).
+// avoidMountain = true pour aussi exclure la zone des montagnes (arbres, fleurs).
+function landPick(avoidMountain) {
+    return function() {
+        var pos = landSpawn();
+        return validSpawnPos(pos.x, pos.y, avoidMountain) ? pos : null;
+    };
 }
 
 Game.entities.spawnTree = function(season) {
     season = season || Game.state.season;
-    var pos = freeSpawn(true), x = pos.x, y = pos.y;   // pas d'arbres dans les montagnes
-
     var tree = document.createElement('div');
     tree.className = 'entity tree';
-    tree.style.left = x + 'px';
-    tree.style.top = y + 'px';
     tree.style.fontSize = '3.5rem';
     tree.innerHTML = Game.SEASON_TREE[season];
     tree.dataset.hasApple = (season !== 'winter') ? 'true' : 'false';
-    document.getElementById('game-world').appendChild(tree);
+    Game.placement.place(tree, landPick(true), 80);   // pas d'arbres dans les montagnes, ni collés à autre chose
 };
 
 Game.entities.spawnStone = function() {
-    var pos = freeSpawn(), x = pos.x, y = pos.y;
-
     var stone = document.createElement('div');
     stone.className = 'entity stone';
-    stone.style.left = x + 'px';
-    stone.style.top = y + 'px';
     // Caillou dessiné en CSS (l'emoji 🪨 s'affiche en rectangle noir sur certains ordinateurs)
     stone.innerHTML = '<span class="rock"></span>';
-    document.getElementById('game-world').appendChild(stone);
+    Game.placement.place(stone, landPick(false), 80);
 };
 
 Game.entities.spawnFlower = function(season) {
     season = season || Game.state.season;
     if (season === 'winter') return; // No flowers in winter
-    var pos = freeSpawn(true);   // les fleurs évitent aussi la zone des montagnes
-    Game.entities.createFlowerEl(pos.x, pos.y, Game.FLOWER_TYPES[Math.floor(Math.random() * Game.FLOWER_TYPES.length)], false);
+    var f = Game.entities.createFlowerEl(0, 0, Game.FLOWER_TYPES[Math.floor(Math.random() * Game.FLOWER_TYPES.length)], false);
+    Game.placement.place(f, landPick(true), 80);   // les fleurs évitent aussi la zone des montagnes
 };
 
 Game.entities.createFlowerEl = function(x, y, emoji, isPlaced) {
@@ -120,6 +111,7 @@ Game.entities.createFlowerEl = function(x, y, emoji, isPlaced) {
     f.style.fontSize = '1.5rem';
     f.innerHTML = emoji;
     document.getElementById('game-world').appendChild(f);
+    return f;
 };
 
 Game.entities.checkCollect = function() {

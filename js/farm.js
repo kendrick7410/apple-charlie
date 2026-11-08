@@ -47,7 +47,7 @@ Game.farm.init = function() {
 
     // Tracteur (décor) : garé à gauche de la grange, sans la toucher
     var tractor = document.createElement('div');
-    tractor.style.cssText = 'position:absolute;left:' + (L.x - 282) + 'px;top:' + (L.y - 220) +
+    tractor.style.cssText = 'position:absolute;left:' + (L.x - 282) + 'px;top:' + (L.y - 250) +
         'px;font-size:3.2rem;z-index:8;filter:drop-shadow(0 3px 2px rgba(0,0,0,0.25));';
     tractor.textContent = '🚜';
     world.appendChild(tractor);

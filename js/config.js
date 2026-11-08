@@ -65,7 +65,7 @@ Game.CONFIG = {
         forest:       { x: 1900, y: 450  },
         mountain:     { x: 3500, y: 800  },
         mountain2:    { x: 3980, y: 1080 },
-        mountain3:    { x: 3020, y: 1080 },
+        mountain3:    { x: 2980, y: 1120 },   // écartée du refuge du Cervin
         mountain4:    { x: 3500, y: 1420 },
         lake:         { x: 3200, y: 600  },
         beach:        { x: 3000, y: 5200 },
@@ -102,8 +102,8 @@ Game.PATHS = [
     { x: 1010, y: 1530, w: 340,  h: 50  },   // branche vers le musée (sud)
     { x: 1400, y: 1260, w: 250,  h: 40  },   // vers le jardin
     { x: 1550, y: 1300, w: 40,   h: 100 },
-    { x: 970,  y: 1560, w: 60,   h: 900 },   // route vers le sud (jusqu'à la ferme)
-    { x: 970,  y: 2400, w: 1600, h: 60  }    // route vers l'est jusqu'à la ferme
+    { x: 970,  y: 1560, w: 60,   h: 1000 },  // route vers le sud (jusqu'à la ferme)
+    { x: 970,  y: 2500, w: 1600, h: 60  }    // route vers l'est : passe entre la grange et les enclos
 ];
 
 // ── Rivière : bras ouest qui se divise, part au milieu de la carte et rejoint la mer ──
@@ -177,7 +177,7 @@ Game.TIME_PHASES = {
 // Les autres sont des terrains à bâtir : il faut atteindre le niveau `level`
 // puis payer `cost` matériaux 🧱 (achetés au Magasin) pour que le villageois emménage.
 Game.HOUSES = [
-    { id: 'lya',  name: 'Eloise 🐰',  x: 850,  y: 1200, emoji: '🏡', start: true, furniture: [['🛏️',50,50],['🎨',450,100],['🧶',250,250]] },
+    { id: 'lya',  name: 'Eloise 🐰',  x: 850,  y: 1220, emoji: '🏡', start: true, furniture: [['🛏️',50,50],['🎨',450,100],['🧶',250,250]] },
     { id: 'melo', name: 'Lea 🐱', x: 1100, y: 1400, emoji: '🏠', level: 2, cost: 3, furniture: [['🛋️',400,50],['📺',450,50],['🍜',100,300]] },
     { id: 'jo',   name: 'Tom 🐶',   x: 1500, y: 900,  emoji: '🏠', level: 3, cost: 5, furniture: [['🎸',50,400],['🍕',300,300],['🏆',50,50]] },
     { id: 'celestine', name: 'Lucie 🦊', x: 860, y: 1520, emoji: '🏡', level: 5, cost: 8, furniture: [['🔮',50,50],['📖',400,100],['🕯️',250,300]] },
@@ -320,7 +320,7 @@ Game.OWL_PRICES = {
 };
 
 Game.VILLAGER_DATA = {
-    'Eloise 🐰':  { emoji: '🐰', home: { x: 850,  y: 1200 }, greetings: ["Salut Charlie !", "Tu as des fleurs ?", "J'adore peindre !"],
+    'Eloise 🐰':  { emoji: '🐰', home: { x: 850,  y: 1220 }, greetings: ["Salut Charlie !", "Tu as des fleurs ?", "J'adore peindre !"],
                   dialogues: [
                       "Tu savais que les fleurs poussent mieux au printemps ? 🌸",
                       "J'ai commencé une peinture du village, elle est presque finie !",
@@ -559,7 +559,10 @@ Game.RECIPES = {
     stove:  { emoji: '🍳', label: 'Cuisinière', wood: 3, stone: 4 },
     tv:     { emoji: '📺', label: 'Télé',       wood: 3, stone: 3 },
     piano:  { emoji: '🎹', label: 'Piano',      wood: 8, stone: 2 },
-    bath:   { emoji: '🛁', label: 'Baignoire',  wood: 1, stone: 6 }
+    bath:   { emoji: '🛁', label: 'Baignoire',  wood: 1, stone: 6 },
+    armchair: { emoji: '🛋️', label: 'Fauteuil', wood: 4, stone: 0 },
+    fridge:   { emoji: '🧊', label: 'Frigo',    wood: 1, stone: 5 },
+    counter:  { emoji: '🚰', label: 'Évier',    wood: 4, stone: 2 }
 };
 
 Game.COOKING_RECIPES = {

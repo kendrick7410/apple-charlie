@@ -2102,6 +2102,32 @@ function makeFurniture(type, f) {
             rbox(g, 1.9, 0.6, 1.05, 0.3, '#ffffff', 0, 0.3, 0);
             put(g, new T.Mesh(new T.PlaneGeometry(1.6, 0.75), new T.MeshStandardMaterial({ color: lin('#8fd3f4'), roughness: 0.1, transparent: true, opacity: 0.85 })), 0, 0.56, 0).rotation.x = -Math.PI / 2;
             break;
+        case 'armchair':   // fauteuil moelleux : dossier vers l'arrière (-z), on s'assoit face à +z
+            rbox(g, 1.2, 0.45, 1.0, 0.18, '#c0504d', 0, 0.3, 0.05);
+            rbox(g, 1.2, 1.0, 0.32, 0.16, '#c0504d', 0, 0.75, -0.36);
+            [-0.52, 0.52].forEach(function(x) { rbox(g, 0.22, 0.68, 1.0, 0.11, '#a8403d', x, 0.42, 0.02); });
+            rbox(g, 0.82, 0.16, 0.72, 0.08, '#e57373', 0, 0.6, 0.12);
+            rbox(g, 0.5, 0.32, 0.14, 0.07, '#ffe0b2', 0.12, 0.92, -0.16).rotation.z = 0.2;   // petit coussin
+            [[-0.48, -0.4], [0.48, -0.4], [-0.48, 0.45], [0.48, 0.45]].forEach(function(p) { put(g, new T.Mesh(new T.CylinderGeometry(0.05, 0.04, 0.1, 8), mat('#5d4037')), p[0], 0.05, p[1]); });
+            break;
+        case 'fridge':
+            rbox(g, 0.92, 1.95, 0.8, 0.12, '#f4f6f8', 0, 0.98, 0);
+            rbox(g, 0.9, 0.03, 0.04, 0.01, '#b0bec5', 0, 1.3, 0.41);
+            [1.65, 0.85].forEach(function(y) { rbox(g, 0.06, 0.4, 0.07, 0.03, '#90a4ae', 0.33, y, 0.44); });
+            ball(g, 0.06, '#e53935', -0.2, 1.7, 0.42, 1, 1, 0.5);   // aimants
+            ball(g, 0.06, '#43a047', -0.05, 1.55, 0.42, 1, 1, 0.5);
+            rbox(g, 0.22, 0.28, 0.02, 0.01, '#fff59d', -0.18, 1.0, 0.42);   // dessin de Charlie collé
+            break;
+        case 'counter':   // plan de travail avec évier et robinet
+            rbox(g, 1.7, 0.86, 0.72, 0.08, '#a1887f', 0, 0.43, 0);
+            rbox(g, 1.78, 0.08, 0.8, 0.03, '#eceff1', 0, 0.9, 0);
+            [-0.42, 0.42].forEach(function(x) { rbox(g, 0.78, 0.7, 0.03, 0.04, '#bcaaa4', x, 0.43, 0.37); ball(g, 0.04, '#5d4037', x + (x < 0 ? 0.3 : -0.3), 0.6, 0.39); });
+            rbox(g, 0.62, 0.04, 0.46, 0.06, '#90a4ae', 0.38, 0.94, 0.04);
+            put(g, new T.Mesh(new T.CylinderGeometry(0.04, 0.04, 0.4, 10), mat('#b0bec5', { metalness: 0.7, roughness: 0.3 })), 0.38, 1.12, -0.24);
+            rbox(g, 0.06, 0.06, 0.26, 0.02, '#b0bec5', 0.38, 1.3, -0.13);
+            rbox(g, 0.5, 0.05, 0.34, 0.02, '#d7a86e', -0.45, 0.96, 0.05);   // planche à découper
+            ball(g, 0.1, '#e53935', -0.55, 1.06, 0.05); ball(g, 0.08, '#fb8c00', -0.36, 1.04, 0.1);
+            break;
         default:
             g.add(emojiSprite(f[0], 0.9));
     }
@@ -2133,6 +2159,26 @@ function buildRoom() {
         put(g, new T.Mesh(geo('wframe', function() { return new T.TorusGeometry(0.42, 0.07, 10, 28); }), mat('#ffffff')), x, 2.1, -D / 2 + 0.02);
         var gl = new T.Mesh(geo('wglass', function() { return new T.CircleGeometry(0.4, 28); }), glass); gl.position.set(x, 2.1, -D / 2 + 0.01); g.add(gl);
     });
+    // Maisons : carrelage du coin cuisine, tapis rond du coin télé, lambris en bas des murs (décor fixe au sol)
+    if (s.activeHouse) {
+        var KW = 300 * RU, KD = 120 * RU, tiles = 8, td = Math.round(tiles * KD / KW);
+        for (var tx = 0; tx < tiles; tx++) for (var tz = 0; tz < td; tz++) {
+            var tile = put(g, new T.Mesh(geo('tile', function() { return new T.PlaneGeometry(1, 1); }), mat((tx + tz) % 2 ? '#f4f1ea' : '#7fb3c9')),
+                -W / 2 + (tx + 0.5) * KW / tiles, 0.105, -D / 2 + (tz + 0.5) * KD / td);
+            tile.rotation.x = -Math.PI / 2; tile.scale.set(KW / tiles - 0.03, KD / td - 0.03, 1);
+        }
+        var rug = new T.Mesh(geo('homerug', function() { return new T.CylinderGeometry(1.7, 1.7, 0.03, 40); }), mat('#c45c4a', { roughness: 1 }));
+        put(g, rug, (434 - R.w / 2) * RU, 0.1, (110 - R.h / 2) * RU).scale.set(1.15, 1, 1);
+        var rug2 = new T.Mesh(geo('homerug2', function() { return new T.CylinderGeometry(1.15, 1.15, 0.035, 40); }), mat('#f3d39b', { roughness: 1 }));
+        put(g, rug2, (434 - R.w / 2) * RU, 0.106, (110 - R.h / 2) * RU).scale.set(1.15, 1, 1);
+        rbox(g, W, 0.9, 0.06, 0.02, th.trim, 0, 0.5, -D / 2 + 0.01, { transparent: true, opacity: 0.35 });
+        rbox(g, 0.06, 0.9, D, 0.02, th.trim, -W / 2 + 0.01, 0.5, 0, { transparent: true, opacity: 0.35 });
+        rbox(g, 0.06, 0.9, D, 0.02, th.trim, W / 2 - 0.01, 0.5, 0, { transparent: true, opacity: 0.35 });
+        // Rideaux de chaque côté des fenêtres
+        [-W / 4, W / 4].forEach(function(x) {
+            [-0.62, 0.62].forEach(function(dx) { rbox(g, 0.28, 1.2, 0.06, 0.08, '#e57373', x + dx, 2.0, -D / 2 + 0.06); });
+        });
+    }
     // Tapis de sortie (étoile) en bas au centre, comme dans la pièce 2D
     var matZ = (R.h / 2 - 40) * RU;
     rbox(g, 1.4, 0.05, 0.7, 0.2, '#ffd54f', 0, 0.07, matZ);
@@ -2199,16 +2245,15 @@ function syncRoom() {
         var ns = emojiSprite(npc.textContent.trim(), 1.5); ns.position.set(0, 0.6, -R.h / 2 * RU + 1.6);
         ns.userData.el = npc; items.add(ns);
     }
-    // Lit du villageois (avec le villageois qui dort la nuit)
-    var bed = document.querySelector('#current-room .house-bed');
-    if (bed) {
-        var bp = roomPos(parseFloat(bed.style.left) + 30, parseFloat(bed.style.top) + 40);
-        var b = makeFurniture('bed', ['🛏️']); b.position.set(bp.x, 0.06, bp.z); items.add(b);
-        var sleeper = bed.querySelector('.sleeper-emoji');
-        if (sleeper) {
-            var c = makeCritter(sleeper.textContent.trim()); c.rotation.x = -Math.PI / 2; c.position.set(bp.x, 0.75, bp.z + 0.75); items.add(c);
-            var z = emojiSprite('💤', 0.6); z.position.set(bp.x + 0.6, 1.4, bp.z - 0.6); items.add(z);
-        }
+    // Le villageois dort dans son lit (un meuble déplaçable comme les autres)
+    var sleeper = document.querySelector('#current-room .house-sleeper .sleeper-emoji');
+    var bedF = s.activeHouse && sleeper ? (s.houseFurniture[s.activeHouse.id] || []).find(function(f) { return Game.furniture.typeOf(f[0]) === 'bed'; }) : null;
+    if (bedF) {
+        var bp = roomPos(bedF[1], bedF[2]), sg = new T.Group();
+        sg.position.set(bp.x, 0.06, bp.z); sg.rotation.y = (bedF[5] || 0) * Math.PI / 2;
+        var c = makeCritter(sleeper.textContent.trim()); c.rotation.x = -Math.PI / 2; c.position.set(0, 0.7, 0.5); sg.add(c);
+        var z = emojiSprite('💤', 0.6); z.position.set(0.6, 1.4, -0.6); sg.add(z);
+        items.add(sg);
     }
     // Boules à neige sur le mur du fond (chez Charlie)
     document.querySelectorAll('#current-room .snow-globe-display').forEach(function(el) {
@@ -2384,8 +2429,8 @@ function onRoomMove(e) {
     var p = floorToRoom(roomPoint(e)), R = roomPx();
     if (!p) return;
     var f = _drag.f;
-    f[1] = Math.max(0, Math.min(R.w - 50, Math.round(p.x / 20) * 20));
-    f[2] = Math.max(0, Math.min(R.h - 50, Math.round(p.y / 20) * 20));
+    var cp = Game.furniture.clampPos(f, Math.round(p.x / 20) * 20, Math.round(p.y / 20) * 20);   // jamais dans les murs
+    f[1] = cp.x; f[2] = cp.y;
     var el = Game.furniture.elFor(f);
     if (el) { el.style.left = f[1] + 'px'; el.style.top = f[2] + 'px'; }
 }
@@ -2620,6 +2665,7 @@ function init() {
         var rec = _lastBuildingId ? doorRecFor(_lastBuildingId) : null, d = rec && rec.obj.userData.door;
         return { cutscene: _cutscene, door: d ? d.rotation.y : null, room: !!room3d, iris: (document.getElementById('r3d-iris') || {}).style ? document.getElementById('r3d-iris').style.width : '' };
     };
+    Game.r3d.roomScene = function() { return room3d && room3d.scene; };   // tests automatiques
     // Gros plan sur Charlie (tests automatiques)
     Game.r3d.closeUp = function(z) { _camFocus = z ? { x: charlie.position.x, z: charlie.position.z + 0.2, zoom: z, snap: true } : null; };
     // Position à l'écran d'un meuble de la pièce 3D (tests automatiques)
