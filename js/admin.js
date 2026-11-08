@@ -63,6 +63,7 @@ var PASS_KEY = 'village_admin';
 function password() { try { return sessionStorage.getItem(PASS_KEY) || ''; } catch (e) { return ''; } }
 
 var A = Game.admin = { zoom: 0.6, sel: null, drag: null, palette: [] };
+function is3d() { return !!(Game.r3d && Game.r3d.active && Game.r3d.ready && Game.r3d.ready()); }
 
 function api(method, path, body) {
     return fetch('admin-api/' + path, {
@@ -88,8 +89,12 @@ function openWorld() {
     Game.titlescreen.hide();
     Game.startGame();
     Game.CONFIG.PLAYER_SPEED = 16;          // on se déplace vite sur la carte (flèches)
-    Game.adminZoom = A.zoom;
+    setZoom(A.zoom);
     buildPanel();
+    // La 3D se charge un peu après : dès qu'elle est prête, zoom et zones au sol
+    var tries = 0, wait = setInterval(function() {
+        if (is3d() || ++tries > 60) { clearInterval(wait); setZoom(A.zoom); refresh(); }
+    }, 500);
     // Brouillon déjà validé sur le serveur ? On le reprend
     api('GET', 'layout').then(function(r) { return r.status === 200 ? r.json() : null; }).then(function(d) {
         if (d && d.layout && d.layout.items && d.layout.items.length) {
@@ -126,7 +131,7 @@ function buildPanel() {
     var places = [['🏖️ Plage', 3000, 5100], ['⚓ Port', 4100, 5050], ['🏡 Village', 1000, 1000], ['🌳 Forêt', 1900, 450], ['⛰️ Montagnes', 3400, 1000], ['🚜 Ferme', 2500, 2450]];
     p.innerHTML =
         '<h2>🛠️ Placer le décor</h2>' +
-        '<div>Glisse un objet pour le déplacer. Glisse le fond (ou les flèches) pour te promener. Molette = zoom.</div>' +
+        '<div>Glisse un objet pour le déplacer. Glisse le fond (ou les flèches) pour te promener. Molette = zoom. Sous chaque objet, sa vraie place : <b style="color:#43a047">verte</b> = bien, <b style="color:#e53935">rouge</b> = il gêne.</div>' +
         '<div class="row">' + places.map(function(pl, i) { return '<button data-go="' + i + '">' + pl[0] + '</button>'; }).join('') + '</div>' +
         '<div class="row"><button data-z="-">➖ Zoom</button><button data-z="+">➕ Zoom</button></div>' +
         '<div><b>Ajouter</b> (au centre de l\'écran) :</div><div class="row pal" id="admin-pal"></div>' +
@@ -134,6 +139,7 @@ function buildPanel() {
         '<div id="admin-count"></div>' +
         '<div class="row"><button class="go" id="admin-save">✅ Valider et envoyer</button></div>' +
         '<div class="row"><button id="admin-random">🎲 Revenir au décor au hasard</button></div>' +
+        (params.has('dev2d') ? '<div class="row"><a href="./?admin" style="font-size:13px;color:#5b7d4c">🧊 Passer en vue 3D (vrais objets)</a></div>' : '<div class="row"><a href="./?dev2d&admin" style="font-size:13px;color:#5b7d4c">🗺️ Passer en vue 2D (ordinateur lent)</a></div>') +
         '<div id="admin-status"></div>';
     document.body.appendChild(p);
     p.addEventListener('click', function(e) {
@@ -158,7 +164,11 @@ function buildPanel() {
     }).join('');
 }
 
-function setZoom(z) { A.zoom = Math.max(0.15, Math.min(1.5, z)); Game.adminZoom = A.zoom; }
+function setZoom(z) {
+    A.zoom = Math.max(0.15, Math.min(1.5, z));
+    if (is3d()) { Game.adminZoom = 1; Game.r3d.viewZoom = Math.max(0.6, Math.min(4, 1 / A.zoom)); }   // 3D : la caméra recule
+    else Game.adminZoom = A.zoom;                                                                       // 2D : la carte rétrécit
+}
 function status(t, bad) {
     var s = document.getElementById('admin-status');
     if (s) { s.textContent = t; s.className = bad ? 'warn' : ''; }
@@ -171,6 +181,7 @@ function refresh() {
         var ok = Game.placement.isFree(el);
         el.classList.toggle('admin-bad', !ok);
         if (!ok) bad++;
+        mark(el, ok);
     });
     var c = document.getElementById('admin-count');
     if (c) c.innerHTML = list.length + ' objets • ' + (bad ? '<span class="warn">' + bad + ' mal placés (en rouge)</span>' : 'tout est bien placé ✔');
@@ -178,10 +189,19 @@ function refresh() {
     return bad;
 }
 
+// 3D : zone au sol sous chaque objet (sa vraie place) : verte, rouge s'il gêne, bleue s'il est choisi
+function mark(el, ok) {
+    if (!is3d()) return;
+    if (ok === undefined) ok = !el.classList.contains('admin-bad');
+    Game.r3d.adminMark(el, Game.placement.footprint(el), el === A.sel ? 'sel' : (ok ? 'ok' : 'bad'));
+}
 function select(el) {
+    var old = A.sel;
     if (A.sel) A.sel.classList.remove('admin-sel');
     A.sel = el;
     if (el) el.classList.add('admin-sel');
+    if (old) mark(old);
+    if (el) mark(el);
 }
 function addItem(it) {
     if (!it) return;
@@ -191,15 +211,18 @@ function addItem(it) {
 }
 function deleteSel() {
     if (!A.sel) { status('Clique d\'abord sur un objet'); return; }
+    if (is3d()) Game.r3d.adminMark(A.sel, null, null);
     A.sel.remove(); A.sel = null; refresh();
 }
 
 // ── Souris / doigt : glisser un objet, ou glisser le fond pour se déplacer ──
 function worldPoint(e) {
+    if (is3d()) return Game.r3d.groundPx(e.clientX, e.clientY) || { x: 0, y: 0 };
     var r = document.getElementById('game-world').getBoundingClientRect();
     return { x: (e.clientX - r.left) / A.zoom, y: (e.clientY - r.top) / A.zoom };
 }
 function hit(e) {
+    if (is3d()) return Game.r3d.pick(e.clientX, e.clientY, Game.decorLayout.editable());
     var best = null, area = Infinity;
     Game.decorLayout.editable().forEach(function(el) {
         var r = el.getBoundingClientRect();
@@ -225,12 +248,17 @@ window.addEventListener('pointermove', function(e) {
     e.preventDefault(); e.stopPropagation();
     if (A.drag.pan) {
         var c = Game.state.charlie;
-        Game.player.teleport(c.x - (e.clientX - A.drag.x) / A.zoom, c.y - (e.clientY - A.drag.y) / A.zoom);
+        if (is3d()) {
+            // le point du sol attrapé reste sous la souris
+            var a = Game.r3d.groundPx(A.drag.x, A.drag.y), b = Game.r3d.groundPx(e.clientX, e.clientY);
+            if (a && b) Game.player.teleport(c.x - (b.x - a.x), c.y - (b.y - a.y));
+        } else Game.player.teleport(c.x - (e.clientX - A.drag.x) / A.zoom, c.y - (e.clientY - A.drag.y) / A.zoom);
         A.drag.x = e.clientX; A.drag.y = e.clientY;
     } else {
         var p = worldPoint(e);
         A.drag.el.style.left = Math.round(p.x - A.drag.dx) + 'px';
         A.drag.el.style.top = Math.round(p.y - A.drag.dy) + 'px';
+        if (is3d()) { Game.r3d.syncNow(A.drag.el); mark(A.drag.el); }
     }
 }, true);
 window.addEventListener('pointerup', function(e) {

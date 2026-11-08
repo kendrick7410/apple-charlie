@@ -38,7 +38,7 @@ document.getElementById('f').onsubmit = function(e) {
     fetch('admin-api/check', { method: 'POST', headers: { 'X-Admin-Password': pw }, cache: 'no-store' }).then(function(r) {
         if (r.status === 200) {
             try { sessionStorage.setItem('village_admin', pw); } catch (err) {}
-            location.href = './?dev2d&admin';
+            location.href = './?admin';   // vue 3D (les vrais objets) ; lien vers la 2D dans le panneau
         } else msg.textContent = r.status === 429 ? 'Trop d\'essais, attends une minute.' : 'Mot de passe incorrect.';
     }).catch(function() { msg.textContent = 'Serveur admin injoignable.'; });
 };

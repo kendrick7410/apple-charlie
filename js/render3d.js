@@ -1890,6 +1890,62 @@ Game.r3d.shopSlotScreen = function(i) {   // tests automatiques
     var v = new T.Vector3(); sl.group.getWorldPosition(v); v.project(room3d.camera);
     return { x: (v.x + 1) / 2 * window.innerWidth, y: (1 - v.y) / 2 * window.innerHeight, label: sl.info.label, checkout: shopSlots.checkout, carrying: carrying && carrying.info.label };
 };
+// ═══════════════════════ Page admin en 3D (js/admin.js) ═══════════════════════
+// Zoom de la caméra, objet sous la souris, point du sol sous la souris, et zones au sol
+// qui montrent la vraie place de chaque objet (verte = bien placé, rouge = gêne, bleue = choisi)
+Game.r3d.viewZoom = 1;
+Game.r3d.ready = function() { return !!(T && scene && camera && renderer); };   // la 3D est chargée
+var _adm = { marks: new Map(), ray: null, ndc: null };
+function admRay(cx, cy) {
+    if (!_adm.ray) { _adm.ray = new T.Raycaster(); _adm.ndc = new T.Vector2(); }
+    var r = renderer.domElement.getBoundingClientRect();
+    _adm.ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+    _adm.ray.setFromCamera(_adm.ndc, camera);
+    return _adm.ray;
+}
+Game.r3d.groundPx = function(cx, cy) {   // point de la carte (px) sous la souris
+    var ray = admRay(cx, cy).ray, y = 0;
+    for (var k = 0; k < 3; k++) {         // on affine avec la hauteur du sol
+        var t = (y - ray.origin.y) / ray.direction.y;
+        if (!(t > 0)) return null;
+        var px = (ray.origin.x + ray.direction.x * t) / U, py = (ray.origin.z + ray.direction.z * t) / U;
+        y = heightAt(px, py);
+    }
+    return { x: px, y: py };
+};
+Game.r3d.pick = function(cx, cy, els) {   // élément (parmi els) dont le modèle 3D est sous la souris
+    var objs = [], byObj = new Map();
+    els.forEach(function(el) { var rec = tracked.get(el); if (rec && rec.obj.visible) { objs.push(rec.obj); byObj.set(rec.obj, el); } });
+    var hits = admRay(cx, cy).intersectObjects(objs, true);
+    for (var i = 0; i < hits.length; i++) {
+        var o = hits[i].object;
+        while (o && !byObj.has(o)) o = o.parent;
+        if (o) return byObj.get(o);
+    }
+    return null;
+};
+Game.r3d.syncNow = function(el) { syncElement(el); };
+var MARK_COL = { ok: '#43a047', bad: '#e53935', sel: '#2979ff' };
+// fp = emprise au sol (Game.placement.footprint) ; state = 'ok' | 'bad' | 'sel' ; null = enlever
+Game.r3d.adminMark = function(el, fp, state) {
+    var m = _adm.marks.get(el);
+    if (!fp || !state) { if (m) { scene.remove(m); _adm.marks.delete(el); } return; }
+    var shape = fp.rect ? 'r' : 'c';
+    if (!m || m.userData.shape !== shape) {
+        if (m) scene.remove(m);
+        var g = shape === 'r' ? new T.PlaneGeometry(1, 1) : new T.CircleGeometry(1, 32);
+        m = new T.Mesh(g, new T.MeshBasicMaterial({ transparent: true, opacity: 0.38, depthWrite: false, side: T.DoubleSide }));
+        m.rotation.x = -Math.PI / 2; m.renderOrder = 3; m.userData.shape = shape;
+        scene.add(m); _adm.marks.set(el, m);
+    }
+    m.material.color.set(lin(MARK_COL[state] || MARK_COL.ok));
+    m.material.opacity = state === 'ok' ? 0.28 : 0.5;
+    var cx = fp.rect ? (fp.x1 + fp.x2) / 2 : fp.x, cy = fp.rect ? (fp.y1 + fp.y2) / 2 : fp.y;
+    m.position.set(cx * U, heightAt(cx, cy) + 0.08, cy * U);
+    if (fp.rect) m.scale.set((fp.x2 - fp.x1) * U, (fp.y2 - fp.y1) * U, 1);
+    else m.scale.set(fp.r * U, fp.r * U, 1);
+};
+Game.r3d.clearAdminMarks = function() { _adm.marks.forEach(function(m) { scene.remove(m); }); _adm.marks.clear(); };
 Game.r3d.roomColliders = function() {   // pour furniture.blocks : obstacles fixes de la pièce
     return room3d && room3d.colliders && Game.state.activeShop ? room3d.colliders : [];
 };
@@ -3140,9 +3196,14 @@ function loop(now) {
         else camera.position.lerp(_camTarget, Math.min(1, dt * 3));
         _look.set(camera.position.x, camera.position.y - CAM_H * z + 1.1, camera.position.z - CAM_D * z);
     } else {
-        _camTarget.set(cx * U, gy + CAM_H, cy * U + CAM_D);
+        var vz = Game.r3d.viewZoom || 1;   // > 1 : la caméra recule (page admin)
+        _camTarget.set(cx * U, gy + CAM_H * vz, cy * U + CAM_D * vz);
         camera.position.lerp(_camTarget, Math.min(1, dt * 4));
-        _look.set(camera.position.x, camera.position.y - CAM_H + 1, camera.position.z - CAM_D);
+        _look.set(camera.position.x, camera.position.y - CAM_H * vz + 1, camera.position.z - CAM_D * vz);
+        if (Game.adminMode) {   // page admin : pas de brouillard, Charlie caché, ombres sur une zone plus large
+            charlie.visible = false;
+            if (scene.fog) { scene.fog.near = 400; scene.fog.far = 900; }
+        }
     }
     camera.lookAt(_look);
     sun.position.set(cx * U - 12, 20, cy * U + 10);

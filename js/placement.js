@@ -12,7 +12,8 @@ var P = Game.placement = {};
 var U = 40;   // 40 px de la carte = 1 unité 3D (comme render3d.js)
 var MOVING = /villager-sprite|creature|sea-creature|mtn-animal|farmer-sprite|farm-escaped|farm-animal|wasp|cargo-boat|charlie-sprite|player-path|river-segment|^path$|hill|forest-ground|lake-water|lake-shimmer|mountain-base|mountain-snow|particle/;
 // Taille au sol des objets de plage (rayon en unités 3D, cf. makeParasol, makeSandCastle...)
-var DECOR_R = { '⛱️': 1.6, '🏖️': 1.2, '🏐': 0.32, '🩴': 0.35, '🪵': 0.75, '🪁': 0.25, '🌿': 0.2, '🌾': 0.2 };
+var DECOR_R = { '⛱️': 2.05,   // parasol + ses deux transats + la serviette (le modèle 3D tourne au hasard)
+    '🏖️': 1.2, '🏐': 0.32, '🩴': 0.35, '🪵': 0.75, '🪁': 0.25, '🌿': 0.2, '🌾': 0.2 };
 var HOUSE_S = 0.62, SHOP_S = 0.72;
 
 function world() { return document.getElementById('game-world'); }
