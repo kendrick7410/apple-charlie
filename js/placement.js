@@ -263,7 +263,13 @@ P.move = function(el, x, y, nx, ny, r, opts) {
 // Fait avancer quelque chose qui bouge de (x,y) vers (nx,ny) sans entrer dans un obstacle.
 // (ox, oy) = décalage entre la position stockée (coin de l'élément) et son point au sol.
 // Renvoie true si le pas est accepté. S'il était déjà coincé dedans, on le laisse sortir.
+function nearCharlie(x, y, r) {
+    var c = Game.state && Game.state.charlie;
+    return !!c && Game.state.currentView === 'world' && Math.hypot(x - c.x, y - c.y) < r + 22;
+}
 P.canStep = function(x, y, nx, ny, ox, oy, r, opts) {
+    // Ils ne passent pas à travers Charlie non plus (s'ils sont déjà collés à lui, ils peuvent s'écarter)
+    if (nearCharlie(nx + ox, ny + oy, r) && !nearCharlie(x + ox, y + oy, r)) return false;
     if (!P.blocked(nx + ox, ny + oy, r, opts)) return true;
     return P.blocked(x + ox, y + oy, r, opts);   // déjà coincé dedans (apparu là) : il peut se dégager
 };
