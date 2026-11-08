@@ -161,28 +161,28 @@ Game.world.createForest = function() {
     var ground = document.createElement('div');
     ground.className = 'forest-ground';
     ground.style.cssText = 'position:absolute;border-radius:50%;pointer-events:none;z-index:0;';
-    ground.style.left = (loc.x - 350) + 'px';
-    ground.style.top = (loc.y - 350) + 'px';
-    ground.style.width = '700px';
-    ground.style.height = '700px';
+    ground.style.left = (loc.x - 700) + 'px';
+    ground.style.top = (loc.y - 470) + 'px';
+    ground.style.width = '1400px';
+    ground.style.height = '940px';
     world.appendChild(ground);
 
     // Label
     var label = document.createElement('div');
     label.className = 'entity';
     label.style.left = loc.x + 'px';
-    label.style.top = (loc.y - 330) + 'px';
+    label.style.top = (loc.y - 450) + 'px';
     label.innerHTML = '<div class="building-label">🌳 Grande Forêt</div>';
     world.appendChild(label);
 
-    // Arbres espacés (au moins 150 px entre deux) : on peut marcher entre eux
+    // Grande forêt touffue : beaucoup d'arbres, mais toujours un passage (120 px min entre deux)
     var placed = [];
-    for (var i = 0, tries = 0; i < 24 && tries < 600; tries++) {
+    for (var i = 0, tries = 0; i < 80 && tries < 8000; tries++) {
         var angle = Math.random() * Math.PI * 2;
-        var dist = Math.sqrt(Math.random()) * 320;
-        var tx = loc.x + Math.cos(angle) * dist;
-        var ty = loc.y + Math.sin(angle) * dist;
-        if (placed.some(function(p) { return Math.hypot(p[0] - tx, p[1] - ty) < 150; })) continue;
+        var dist = Math.sqrt(Math.random());
+        var tx = loc.x + Math.cos(angle) * dist * 640;
+        var ty = loc.y + Math.sin(angle) * dist * 420;
+        if (placed.some(function(p) { return Math.hypot(p[0] - tx, p[1] - ty) < 120; })) continue;
         placed.push([tx, ty]); i++;
         var tree = document.createElement('div');
         tree.className = 'entity tree forest-tree';

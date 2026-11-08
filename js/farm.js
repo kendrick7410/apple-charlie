@@ -28,9 +28,10 @@ Game.farm.init = function() {
     F.pens = penDefs();
     F.active = false; F.escaped = []; F.remaining = 0;
 
-    // Grange rouge (décor) + panneau du nom
+    // Grange rouge (décor) + panneau du nom.
+    // Placée plus au nord : un vrai passage entre la grange et les enclos.
     var barn = document.createElement('div');
-    barn.style.cssText = 'position:absolute;left:' + (L.x - 80) + 'px;top:' + (L.y - 240) + 'px;width:160px;z-index:8;';
+    barn.style.cssText = 'position:absolute;left:' + (L.x - 80) + 'px;top:' + (L.y - 340) + 'px;width:160px;z-index:8;';
     barn.innerHTML =
         // Toit
         '<div style="width:0;height:0;margin:0 auto;border-left:80px solid transparent;border-right:80px solid transparent;border-bottom:52px solid #7b2d2d;"></div>' +
@@ -44,9 +45,9 @@ Game.farm.init = function() {
         '<div class="building-label" style="position:absolute;left:50%;top:158px;transform:translateX(-50%);">🚜 La Ferme</div>';
     world.appendChild(barn);
 
-    // Tracteur (décor)
+    // Tracteur (décor) : garé à gauche de la grange, sans la toucher
     var tractor = document.createElement('div');
-    tractor.style.cssText = 'position:absolute;left:' + (L.x - 185) + 'px;top:' + (L.y - 150) +
+    tractor.style.cssText = 'position:absolute;left:' + (L.x - 282) + 'px;top:' + (L.y - 220) +
         'px;font-size:3.2rem;z-index:8;filter:drop-shadow(0 3px 2px rgba(0,0,0,0.25));';
     tractor.textContent = '🚜';
     world.appendChild(tractor);
@@ -69,9 +70,10 @@ Game.farm.init = function() {
         b.appendChild(cap);
         world.appendChild(b);
     }
-    hayBale(L.x + 110, L.y - 150, 66);
-    hayBale(L.x + 170, L.y - 122, 56);
-    hayBale(L.x + 138, L.y - 92, 50);
+    // Bottes de foin à droite de la grange, bien à l'écart du mur
+    hayBale(L.x + 160, L.y - 230, 66);
+    hayBale(L.x + 235, L.y - 205, 56);
+    hayBale(L.x + 190, L.y - 160, 50);
 
     // Deux champs cultivés derrière la grange (au nord)
     function cropField(x, y, w, h, crop) {
@@ -93,8 +95,8 @@ Game.farm.init = function() {
         }
         world.appendChild(f);
     }
-    cropField(L.x - 230, L.y - 430, 200, 150, '🌽');   // champ de maïs
-    cropField(L.x + 30,  L.y - 430, 200, 150, '🌾');   // champ de blé
+    cropField(L.x - 230, L.y - 570, 200, 150, '🌽');   // champ de maïs
+    cropField(L.x + 30,  L.y - 570, 200, 150, '🌾');   // champ de blé
 
     // Enclos (clôtures) avec animaux
     F.pens.forEach(function(pen) {
