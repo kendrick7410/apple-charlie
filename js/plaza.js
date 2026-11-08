@@ -7,7 +7,12 @@
 Game.plaza = {};
 
 function world() { return document.getElementById('game-world'); }
-function fountain() { return Game.CONFIG.LOCATIONS.fountain; }
+// Centre réel de la fontaine (là où elle est dessinée), sinon sa position de référence
+function fountain() {
+    var el = document.getElementById('fountain-anchor'), fp = el && Game.placement.footprint(el);
+    return fp && !fp.rect ? { x: fp.x, y: fp.y } : Game.CONFIG.LOCATIONS.fountain;
+}
+Game.plaza.center = fountain;
 function free(x, y, r) { return !(Game.placement && Game.placement.blocked && Game.placement.blocked(x, y, r, { water: true })); }
 function deco(kind, x, y, extra) {
     var el = document.createElement('div');

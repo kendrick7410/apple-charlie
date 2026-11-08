@@ -971,7 +971,7 @@ function cobbleTexture() {
     return t;
 }
 function buildPlazaGround() {
-    var L = Game.CONFIG.LOCATIONS.fountain, R = (Game.CONFIG.PLAZA_R || 250) * U;
+    var L = Game.plaza ? Game.plaza.center() : Game.CONFIG.LOCATIONS.fountain, R = (Game.CONFIG.PLAZA_R || 250) * U;   // centrée sur la vraie fontaine
     var disc = new T.Mesh(new T.CircleGeometry(R, 64), new T.MeshStandardMaterial({ map: cobbleTexture(), roughness: 0.95 }));
     disc.rotation.x = -Math.PI / 2; disc.position.set(L.x * U, 0.045, L.y * U); disc.receiveShadow = true; scene.add(disc);
     var rim = new T.Mesh(new T.RingGeometry(R, R + 0.35, 64), mat('#8d8070', { roughness: 1 }));
