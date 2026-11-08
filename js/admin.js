@@ -32,7 +32,7 @@ Game.decorLayout = {
         return {
             version: 2,
             items: Game.decorLayout.editable().map(function(el) {
-                var it = { c: el.dataset.decor ? '' : el.className.replace(/\s*admin-(sel|bad)\b/g, '').trim(), x: Math.round(parseFloat(el.style.left) || 0), y: Math.round(parseFloat(el.style.top) || 0) };
+                var it = { c: el.dataset.decor ? '' : el.className.trim(), x: Math.round(parseFloat(el.style.left) || 0), y: Math.round(parseFloat(el.style.top) || 0) };
                 if (el.dataset.decor) { it.k = el.dataset.decor; if (el.dataset.w) it.w = +el.dataset.w; return it; }   // foin, tracteur
                 if (!el.classList.contains('tree')) it.h = el.textContent.trim();
                 if (el.style.fontSize) it.f = el.style.fontSize.replace(/^([0-9]+\.[0-9]{2})[0-9]*/, '$1');   // taille arrondie
@@ -171,8 +171,8 @@ function buildPanel() {
         '#admin-panel .go{background:#8fbf7f;color:#fff;border-color:#7aa96b;font-weight:bold;width:100%;padding:10px;font-size:16px}' +
         '#admin-panel .warn{color:#c62828;font-weight:bold}' +
         '#admin-status{margin-top:8px;font-size:13px;min-height:18px}' +
-        '.admin-sel{outline:3px solid #2979ff !important;outline-offset:2px;border-radius:8px}' +
-        '.admin-bad{outline:3px dashed #e53935 !important;outline-offset:2px;border-radius:8px}' +
+        '[data-admin-sel]{outline:3px solid #2979ff !important;outline-offset:2px;border-radius:8px}' +
+        '[data-admin-bad]{outline:3px dashed #e53935 !important;outline-offset:2px;border-radius:8px}' +
         'body.admin-mode #game-world > *{pointer-events:none}' +
         'body.admin-mode #player{opacity:.25}' +
         'body.admin-mode .ui-card, body.admin-mode [id^="action-"], body.admin-mode #minimap, body.admin-mode #notify-stack, body.admin-mode #mobile-toggle, body.admin-mode #joystick{display:none !important}';
@@ -233,7 +233,7 @@ function refresh() {
     var bad = 0, list = Game.decorLayout.editable();
     list.forEach(function(el) {
         var ok = Game.placement.isFree(el);
-        el.classList.toggle('admin-bad', !ok);
+        flag(el, 'adminBad', !ok);
         if (!ok) bad++;
         mark(el, ok);
     });
@@ -241,7 +241,7 @@ function refresh() {
     placeEls().forEach(function(el) {
         if (!Game.placement.footprint(el)) return;
         var ok = Game.placement.isFree(el);
-        el.classList.toggle('admin-bad', !ok);
+        flag(el, 'adminBad', !ok);
         if (!ok) bad++;
         mark(el, ok);
     });
@@ -251,17 +251,20 @@ function refresh() {
     return bad;
 }
 
+// Marques de l'éditeur : des attributs data-*, JAMAIS des classes (le tracteur et le foin sont reconnus par
+// la 3D justement parce qu'ils n'ont pas de classe : une classe en plus les transformait en emoji ou les cachait)
+function flag(el, name, on) { if (on) el.dataset[name] = '1'; else delete el.dataset[name]; }
 // 3D : zone au sol sous chaque objet (sa vraie place) : verte, rouge s'il gêne, bleue s'il est choisi
 function mark(el, ok) {
     if (!is3d()) return;
-    if (ok === undefined) ok = !el.classList.contains('admin-bad');
+    if (ok === undefined) ok = !el.dataset.adminBad;
     Game.r3d.adminMark(el, Game.placement.footprint(el), el === A.sel ? 'sel' : (ok ? 'ok' : 'bad'));
 }
 function select(el) {
     var old = A.sel;
-    if (A.sel) A.sel.classList.remove('admin-sel');
+    if (A.sel) flag(A.sel, 'adminSel', false);
     A.sel = el;
-    if (el) el.classList.add('admin-sel');
+    if (el) flag(el, 'adminSel', true);
     if (old) mark(old);
     if (el) mark(el);
 }

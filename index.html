@@ -459,7 +459,7 @@ Game.startGame = function() {
     Game.farm.reset();
     Game.minimap.init();
     Game.placement.settle();     // garde-fou : rien ne reste posé sur un autre objet, dans l'eau ou sur un chemin
-    Game.decorLayout.apply();    // décor placé à la main dans la page admin (s'il y en a un)
+    if (Game.decorLayout.apply()) Game.placement.settle();   // décor placé à la main (page admin) ; les fleurs et cailloux au hasard se décalent s'ils tombent dessus
     Game.placement.devCheck();   // ?checkdecor : liste ce qui se chevauche encore
 
     // Init UI

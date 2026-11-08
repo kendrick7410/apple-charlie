@@ -289,7 +289,7 @@ var SKIN_LOOKS = {
     magicien:   { skin: '#f2c39a', shirt: '#5b3fa8', pants: '#5b3fa8', boot: '#3a2a6a', hair: '#e8e8e8', beard: '#f0f0f0', hat: 'wizard', robe: '#5b3fa8' },
     pecheur:    { skin: '#f2c39a', shirt: '#f2c230', pants: '#3f6aa0', boot: '#2f4f7a', hair: '#7a4a28', hat: 'bucket', rod: true },
     heros:      { skin: '#f2c39a', shirt: '#2e6fd8', pants: '#2e6fd8', boot: '#d63a3a', belt: true, hair: '#2a1d14', cape: '#d63a3a', mask: '#d63a3a', emblem: '#f2c94c' },
-    prince:     { skin: '#f2c39a', shirt: '#f4f1ea', pants: '#2f4f9a', boot: '#2a1d14', belt: true, hair: '#d9a54a', hat: 'crown', cape: '#b3243a' },
+    prince:     { skin: '#f2c39a', shirt: '#f4f1ea', pants: '#2f4f9a', boot: '#2a1d14', belt: true, hair: '#d9a54a', hat: 'crown', cape: '#b3243a', capeIn: '#f2c94c', ermine: true },
     vampire:    { skin: '#e9e3ea', shirt: '#2b2b33', pants: '#2b2b33', boot: '#1d1d22', hair: '#1d1d22', cape: '#1d1d22', capeIn: '#b3243a', collar: true, fangs: true },
     triton:     { skin: '#f2c39a', shirt: '#2fa79a', pants: '#2fa79a', hair: '#e8742e', tail: '#2fa79a', hat: 'crown', trident: true, noShirt: true },
     genie:      { skin: '#6fb6f2', shirt: '#7b3fa8', pants: '#e8c04a', boot: '#7b3fa8', hat: 'turban', bracelets: true },
@@ -334,11 +334,24 @@ function makeCharlie(skinId) {
             put(head, new T.Mesh(geo('bucketbrim', function() { return new T.CylinderGeometry(0.62, 0.66, 0.08, 32); }), mat('#f2c230')), 0, 0.26, 0);
             put(head, new T.Mesh(geo('buckettop', function() { return new T.CylinderGeometry(0.38, 0.44, 0.32, 28); }), mat('#f2c230')), 0, 0.44, 0);
             break;
-        case 'crown':
-            put(head, new T.Mesh(geo('crown', function() { return new T.CylinderGeometry(0.34, 0.34, 0.2, 24, 1, true); }), mat('#f2c94c', { metalness: 0.7, roughness: 0.3, side: T.DoubleSide })), 0, 0.46, -0.02);
-            for (var k = 0; k < 6; k++) { var a = k / 6 * Math.PI * 2; put(head, new T.Mesh(geo('crownpt', function() { return new T.ConeGeometry(0.07, 0.15, 8); }), mat('#f2c94c', { metalness: 0.7, roughness: 0.3 })), Math.cos(a) * 0.32, 0.62, Math.sin(a) * 0.32 - 0.02); }
-            ball(head, 0.06, mat('#d63a3a', { roughness: 0.2 }), 0, 0.48, 0.33);
+        case 'crown': {
+            // Couronne posée SUR la tête (bandeau à la taille du crâne + cheveux), bonnet de velours, 5 pointes perlées
+            var GOLD = mat('#f2c94c', { metalness: 0.55, roughness: 0.3, side: T.DoubleSide, emissive: '#5a4000', emissiveIntensity: 0.15 });
+            var cr = new T.Group(); cr.position.set(0, 0.34, -0.03); cr.rotation.x = -0.12; head.add(cr);
+            put(cr, new T.Mesh(geo('crownband', function() { return new T.CylinderGeometry(0.39, 0.37, 0.2, 32, 1, true); }), GOLD), 0, 0.1, 0);
+            [0.0, 0.2].forEach(function(y) { var rim = put(cr, new T.Mesh(geo('crownrim', function() { return new T.TorusGeometry(0.385, 0.025, 8, 40); }), GOLD), 0, y, 0); rim.rotation.x = Math.PI / 2; });
+            ball(cr, 0.34, mat('#a3203a', { roughness: 0.85 }), 0, 0.17, 0, 1, 0.55, 1);       // bonnet de velours
+            ball(cr, 0.05, GOLD, 0, 0.36, 0);                                                    // petite boule au sommet
+            for (var k = 0; k < 5; k++) {
+                var a = k / 5 * Math.PI * 2;
+                var pt = put(cr, new T.Mesh(geo('crownpt2', function() { return new T.ConeGeometry(0.075, 0.2, 4); }), GOLD), Math.sin(a) * 0.37, 0.3, Math.cos(a) * 0.37);
+                pt.rotation.y = a; pt.rotation.x = 0.12 * Math.cos(a);
+                ball(cr, 0.035, mat('#fff8e8', { roughness: 0.2 }), Math.sin(a) * 0.37, 0.42, Math.cos(a) * 0.37);   // perle
+            }
+            ball(cr, 0.06, mat('#d63a3a', { roughness: 0.15, metalness: 0.2 }), 0, 0.1, 0.39, 1, 1, 0.5);              // rubis devant
+            [-1, 1].forEach(function(sx) { ball(cr, 0.045, mat('#2e6fd8', { roughness: 0.15, metalness: 0.2 }), sx * 0.39, 0.1, 0, 0.5, 1, 1); });   // saphirs
             break;
+        }
         case 'turban':
             ball(head, 0.48, mat('#f4f1ea'), 0, 0.28, -0.03, 1, 0.6, 1);
             ball(head, 0.08, mat('#d63a3a', { roughness: 0.2 }), 0, 0.33, 0.45);
@@ -347,8 +360,17 @@ function makeCharlie(skinId) {
     }
     // Cape (super-héros, prince, vampire) : un grand pan arrondi dans le dos
     if (o.cape) {
-        var cape = rbox(body, 0.7, 1.0, 0.05, 0.06, o.cape, 0, 0.82, -0.36); cape.rotation.x = 0.18;
-        if (o.capeIn) rbox(body, 0.66, 0.95, 0.02, 0.05, o.capeIn, 0, 0.82, -0.33).rotation.x = 0.18;
+        // Vraie cape : elle part des épaules, entoure le dos et s'évase jusqu'aux mollets (doublure à l'intérieur)
+        // (jusqu'aux genoux, dans le dos seulement : les bras et le devant restent libres)
+        var cg = new T.Group(); cg.position.set(0, 0.86, -0.06); cg.rotation.x = 0.16; body.add(cg);
+        var capeGeo = geo('cape3', function() { return new T.CylinderGeometry(0.33, 0.44, 0.86, 24, 6, true, Math.PI - 1.05, 2.1); });
+        put(cg, new T.Mesh(capeGeo, mat(o.cape, { roughness: 0.75 })), 0, 0, 0);
+        put(cg, new T.Mesh(capeGeo, mat(o.capeIn || o.cape, { roughness: 0.75, side: T.BackSide })), 0, 0, 0);
+        // Col autour du cou et attaches dorées sur les épaules
+        var col = put(body, new T.Mesh(geo('capecol', function() { return new T.TorusGeometry(0.27, 0.07, 10, 28); }), mat(o.ermine ? '#ffffff' : o.cape, { roughness: 0.9 })), 0, 1.33, -0.02);
+        col.rotation.x = Math.PI / 2;
+        if (o.ermine) for (var e = 0; e < 7; e++) { var ea = e / 7 * Math.PI * 2; ball(body, 0.025, '#1d1d22', Math.sin(ea) * 0.3, 1.36, Math.cos(ea) * 0.3 - 0.02); }
+        [-1, 1].forEach(function(sx) { ball(body, 0.055, mat('#f2c94c', { metalness: 0.6, roughness: 0.3 }), sx * 0.22, 1.3, 0.17); });
         if (o.collar) [-1, 1].forEach(function(sx) { var c = rbox(body, 0.3, 0.38, 0.04, 0.05, o.capeIn || o.cape, sx * 0.28, 1.45, -0.12); c.rotation.y = sx * 0.6; c.rotation.z = -sx * 0.25; });
     }
     if (o.emblem) put(body, new T.Mesh(geo('emblem', function() { return new T.CircleGeometry(0.12, 5); }), mat(o.emblem)), 0, 1.0, 0.315);
@@ -3077,6 +3099,7 @@ function init() {
     };
     Game.r3d.roomScene = function() { return room3d && room3d.scene; };   // tests automatiques
     // Gros plan sur Charlie (tests automatiques)
+    Game.r3d.faceCharlie = function(a) { charlie.userData.facing = a; charlie.rotation.y = a; };   // tests automatiques
     Game.r3d.closeUp = function(z) { _camFocus = z ? { x: charlie.position.x, z: charlie.position.z + 0.2, zoom: z, snap: true } : null; };
     // Position à l'écran d'un meuble de la pièce 3D (tests automatiques)
     Game.r3d.furnitureScreen = function(f) {
