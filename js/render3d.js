@@ -800,6 +800,44 @@ function makeHay(w) {
     g.scale.set(s, s * 0.85, s * 0.85);
     return g;
 }
+// ═══════════════════════ Fêtes de saison (js/festivals.js) ═══════════════════════
+function makeFest(kind) {
+    var g = new T.Group(), k;
+    function egg(p, x, y, z, s, c1, c2) { var e = ball(p, 0.16 * s, c1, x, y, z, 0.8, 1.05, 0.8); rbox(p, 0.27 * s, 0.05 * s, 0.27 * s, 0.02, c2, x, y + 0.02 * s, z); return e; }
+    function pumpkin(p, x, y, z, s) {
+        for (k = 0; k < 6; k++) { var a = k / 6 * Math.PI * 2; ball(p, 0.2 * s, '#ef7d1a', x + Math.cos(a) * 0.1 * s, y + 0.18 * s, z + Math.sin(a) * 0.1 * s, 0.8, 0.85, 0.8); }
+        put(p, new T.Mesh(new T.CylinderGeometry(0.03 * s, 0.04 * s, 0.14 * s, 6), mat('#5d7c2b')), x, y + 0.38 * s, z);
+    }
+    var EGG = [['#f48fb1', '#fff59d'], ['#81d4fa', '#ffffff'], ['#c5e1a5', '#ce93d8'], ['#ffe082', '#ef9a9a']];
+    switch (kind) {
+        case 'egg': var ec = EGG[Math.floor(Math.random() * 4)]; egg(g, 0, 0.18, 0, 1.3, ec[0], ec[1]); break;
+        case 'shell': var shl = put(g, new T.Mesh(new T.ConeGeometry(0.22, 0.5, 12), mat('#ffccbc', { roughness: 0.5 })), 0, 0.15, 0); shl.rotation.z = Math.PI / 2; break;
+        case 'pumpkin': pumpkin(g, 0, 0, 0, 1.1); break;
+        case 'snowball': ball(g, 0.22, '#f7fbff', 0, 0.2, 0); break;
+        case 'eggbasket':   // grand panier en osier rempli d'œufs décorés
+            put(g, new T.Mesh(new T.CylinderGeometry(0.95, 0.7, 0.7, 24, 1, true), mat('#b5834a', { side: T.DoubleSide, roughness: 0.9 })), 0, 0.35, 0);
+            put(g, new T.Mesh(new T.TorusGeometry(0.95, 0.07, 8, 28), mat('#9c6b38')), 0, 0.7, 0).rotation.x = Math.PI / 2;
+            put(g, new T.Mesh(new T.TorusGeometry(0.9, 0.06, 8, 28, Math.PI), mat('#9c6b38')), 0, 0.7, 0);
+            for (k = 0; k < 9; k++) { var ea = k / 9 * Math.PI * 2, er = k % 3 ? 0.5 : 0.15; egg(g, Math.cos(ea) * er, 0.72 + (k % 3 ? 0 : 0.12), Math.sin(ea) * er, 2.2, EGG[k % 4][0], EGG[k % 4][1]); }
+            break;
+        case 'castle':   // château de sable géant
+            var c = makeSandCastle(); c.scale.setScalar(2.4); g.add(c); break;
+        case 'pumpkins':   // pyramide de citrouilles et une botte de paille
+            [[-0.45, 0, -0.2], [0.45, 0, -0.2], [0, 0, 0.35], [0, 0.42, 0]].forEach(function(q) { pumpkin(g, q[0], q[1], q[2], 1.6); });
+            break;
+        case 'snowman':   // bonhomme de neige : 3 boules, yeux en charbon, nez carotte, écharpe, chapeau
+            ball(g, 0.55, '#f7fbff', 0, 0.5, 0); ball(g, 0.4, '#f7fbff', 0, 1.25, 0); ball(g, 0.3, '#f7fbff', 0, 1.85, 0);
+            [-0.1, 0.1].forEach(function(x) { ball(g, 0.04, '#222222', x, 1.92, 0.27); });
+            var nose = put(g, new T.Mesh(new T.ConeGeometry(0.05, 0.28, 8), mat('#ff8a00')), 0, 1.84, 0.4); nose.rotation.x = Math.PI / 2;
+            put(g, new T.Mesh(new T.TorusGeometry(0.3, 0.07, 8, 20), mat('#e53935')), 0, 1.58, 0).rotation.x = Math.PI / 2;
+            put(g, new T.Mesh(new T.CylinderGeometry(0.2, 0.2, 0.32, 16), mat('#2b2b2b')), 0, 2.28, 0);
+            put(g, new T.Mesh(new T.CylinderGeometry(0.32, 0.32, 0.04, 16), mat('#2b2b2b')), 0, 2.12, 0);
+            [-1, 1].forEach(function(sx) { var arm = put(g, new T.Mesh(new T.CylinderGeometry(0.025, 0.03, 0.7, 6), mat('#6e4b2a')), sx * 0.6, 1.35, 0); arm.rotation.z = sx * 1.0; });
+            break;
+    }
+    return g;
+}
+
 // ═══════════════════════ Grand port et île secrète ═══════════════════════
 var lighthouseBeams = [];
 function makeHarbor(kind, el) {
@@ -1613,6 +1651,7 @@ function kindOf(el, e) {
     if (cl.contains('plaza-deco')) return 'plazadeco';
     if (id === 'bridge') return 'bridge';   // pont du torrent (cassé ou réparé)
     if (id === 'pet-refuge') return 'refuge';
+    if (cl.contains('fest-item')) return 'fest';   // fêtes de saison (œufs, coquillages, citrouilles, neige, décorations)
     if (cl.contains('harbor-item')) {   // grand port, vieux bateau, île secrète (js/harbor.js)
         var HK = ['fish-boat', 'lighthouse', 'sail-boat', 'old-boat', 'giant-shell', 'island-hut', 'island-chest', 'island-dock'];
         for (var hk = 0; hk < HK.length; hk++) if (cl.contains(HK[hk])) return 'h:' + HK[hk];
@@ -1688,6 +1727,7 @@ function buildFor(el, kind, e, label) {
         case 'pen': obj = makePen(el); break;
         case 'plazadeco': obj = makePlazaDeco(el.dataset.kind); obj.rotation.y = +(el.dataset.rot || 0); break;
         case 'bridge': obj = makeBridge(el.classList.contains('fixed')); break;
+        case 'fest': obj = makeFest(el.dataset.kind); break;
         case 'h:fish-boat': case 'h:lighthouse': case 'h:sail-boat': case 'h:old-boat': case 'h:giant-shell': case 'h:island-hut': case 'h:island-chest': case 'h:island-dock':
             obj = makeHarbor(kind.slice(2), el); obj.rotation.y = +(el.dataset.rot || 0); break;
         case 'refuge': {   // maison vert sapin avec une grande patte sur la façade
@@ -1731,7 +1771,7 @@ function groundPoint(el, kind) {
     var wxy = worldXY(el), x = wxy.x, y = wxy.y;
     var first = el.firstElementChild && !el.firstElementChild.classList.contains('building-label') ? el.firstElementChild : null;
     var w = el.offsetWidth, h = first ? first.offsetHeight : el.offsetHeight;
-    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'pen' || kind === 'dock' || kind === 'path' || kind === 'plazadeco' || kind === 'bridge' || kind.indexOf('h:') === 0) return { x: x + w / 2, y: y + el.offsetHeight / 2 };
+    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'pen' || kind === 'dock' || kind === 'path' || kind === 'plazadeco' || kind === 'bridge' || kind === 'fest' || kind.indexOf('h:') === 0) return { x: x + w / 2, y: y + el.offsetHeight / 2 };
     if (kind === 'barn') return { x: x + w / 2, y: y + 140 };
     if (kind === 'refuge') { var RF = Game.CONFIG.LOCATIONS.petRefuge; return { x: RF.x, y: RF.y }; }
     if (el.classList.contains('house-exterior') || /-anchor$/.test(el.id)) return { x: x + w / 2, y: y + h * 0.75 };
@@ -1870,6 +1910,7 @@ function colliderFor(el, kind, obj) {
         case 'pen':          return { hw: el.offsetWidth / 2, hd: el.offsetHeight / 2 };            // on ne passe pas à travers les barrières
         case 'refuge':       return { hw: 2.9 * HOUSE_S * 0.9 / U, hd: 3.8 * HOUSE_S / 2 / U };
         case 'h:lighthouse': return { r: 1.3 / U };
+        case 'fest':         return el.classList.contains('fest-trophy') ? { r: 1.0 / U } : null;
         case 'h:old-boat':   return { r: 1.7 / U };
         case 'h:island-hut': return { hw: 1.4 / U, hd: 1.2 / U };
         case 'h:island-chest': return { r: 0.55 / U };

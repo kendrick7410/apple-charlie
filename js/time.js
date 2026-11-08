@@ -44,7 +44,9 @@ Game.time.update = function(now) {
         Game.state.seasonElapsed = Math.min(Game.state.seasonElapsed - seasonLen, Game.CONFIG.SEASON_DURATION_MS - 1000);
         Game.state.seasonIndex = (Game.state.seasonIndex + 1) % 4;
         Game.state.season = Game.SEASONS[Game.state.seasonIndex];
+        Game.state.seasonCount = (Game.state.seasonCount || 0) + 1;
         Game.time.onSeasonChange(Game.state.season);
+        if (Game.fest) Game.fest.onSeasonChange();   // nouvelle fête de saison
     }
 };
 

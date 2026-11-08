@@ -91,6 +91,8 @@ P.footprint = function(el) {
         return null;
     }
     if (cl.indexOf('entity') === -1) return null;
+    if (cl.indexOf('fest-trophy') > -1) return { x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0, r: 40, kind: 'solid' };   // décoration de fête
+    if (cl.indexOf('fest-pick') > -1) return null;   // œuf, coquillage... (on marche dessus pour les ramasser)
     if (cl.indexOf('plaza-deco') > -1) {   // place du village : banc, lampadaire, mât, table de fête (solides)
         var PR = { bench: 34, lamp: 10, pole: 9, party: 46 }[el.dataset.kind] || 12;
         return { x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0, r: PR, kind: 'solid' };

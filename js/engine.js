@@ -220,6 +220,7 @@ Game.engine.loop = function(now) {
     Game.bridge.update();
     Game.pets.update(dt);
     Game.harbor.update();
+    Game.fest.update();
     Game.farming.update(dt);
     Game.creatures.update(dt);
     Game.mountain.update(dt, now);
