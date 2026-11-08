@@ -365,6 +365,8 @@
 <script src="js/weather.js"></script>
 <script src="js/player.js"></script>
 <script src="js/placement.js"></script>
+<script src="js/decor-layout.js"></script>
+<script src="js/admin.js"></script>
 <script src="js/world.js"></script>
 <script src="js/entities.js"></script>
 <script src="js/buildings.js"></script>
@@ -457,6 +459,7 @@ Game.startGame = function() {
     Game.farm.reset();
     Game.minimap.init();
     Game.placement.settle();     // garde-fou : rien ne reste posé sur un autre objet, dans l'eau ou sur un chemin
+    Game.decorLayout.apply();    // décor placé à la main dans la page admin (s'il y en a un)
     Game.placement.devCheck();   // ?checkdecor : liste ce qui se chevauche encore
 
     // Init UI
@@ -492,6 +495,7 @@ function buildCookingUI() {
 // On page load → show title screen
 window.onload = function() {
     detectMobile();
+    if (Game.adminMode) { Game.admin.start(); return; }   // page admin cachée (admin.html → ?dev2d&admin)
     Game.titlescreen.show();
 };
 

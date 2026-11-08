@@ -130,7 +130,10 @@ Game.player.updateCamera = function() {
     var tx = -(s.charlie.visualX - window.innerWidth / 2);
     var ty = -(s.charlie.visualY - window.innerHeight / 2);
     var world = document.getElementById('game-world');
-    if (world) world.style.transform = 'translate(' + tx + 'px, ' + ty + 'px)';
+    if (!world) return;
+    var z = Game.adminZoom || 1;   // zoom de la page admin (vue de toute la carte)
+    if (z !== 1) world.style.transformOrigin = s.charlie.visualX + 'px ' + s.charlie.visualY + 'px';
+    world.style.transform = 'translate(' + tx + 'px, ' + ty + 'px)' + (z !== 1 ? ' scale(' + z + ')' : '');
 };
 
 Game.player.teleport = function(x, y) {

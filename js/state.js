@@ -297,6 +297,7 @@ Game.worlds = {
     var meta = document.querySelector('meta[name="game-version"]');
     var current = meta && meta.content;
     if (!current) return;   // en local (pas publié) : pas de vérification
+    if (/[?&]admin\b/.test(location.search)) return;   // page admin : jamais de rechargement (on perdrait les placements en cours)
     function reloadInto(worldId) {
         try { if (worldId) sessionStorage.setItem('village_resume', worldId); } catch (e) {}
         location.reload();

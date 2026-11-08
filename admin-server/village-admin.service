@@ -1,0 +1,17 @@
+[Unit]
+Description=Village de Charlie - service de la page admin du décor
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/village-admin/server.py
+EnvironmentFile=/etc/village-admin.env
+DynamicUser=yes
+StateDirectory=village-admin
+Restart=on-failure
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
