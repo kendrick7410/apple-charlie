@@ -108,6 +108,7 @@ P.footprint = function(el) {
     if (DECOR_R[e]) { out.r = DECOR_R[e] * U; out.kind = (e === '🌾' || e === '🌿') ? 'grass' : 'solid'; return out; }
     if (cl.indexOf('mountain-goat') > -1) { out.r = 20; out.kind = 'animal'; return out; }
     if (cl.indexOf('mountain-edelweiss') > -1) { out.r = 12; out.kind = 'pickup'; return out; }
+    if (cl.indexOf('island-item') > -1) { out.r = 30; out.kind = 'water-ok'; return out; }   // île secrète : posée dans la mer exprès
     out.r = Math.max(0.8, size * 1.25) * U / 2; out.kind = 'sprite';   // autre emoji (panneau du port...)
     return out;
 };

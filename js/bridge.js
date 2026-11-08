@@ -90,14 +90,14 @@ var PROJECTS = [
     { icon: '🌉', name: 'Réparer le pont du torrent', where: 'Au bout de la route de la ferme, à l\'est', done: function() { return Game.bridge.fixed(); },
       what: 'Ouvre la Prairie aux Lucioles et le refuge des animaux', cost: COST },
     { icon: '⚓', name: 'Agrandir le port', where: 'Au port, sur la plage', done: function() { return !!Game.state.portBig; },
-      what: 'Un grand port avec des quais, des bateaux de pêche et un phare', soon: true },
-    { icon: '⛵', name: 'Réparer le vieux bateau', where: 'Au grand port', done: function() { return !!Game.state.boatFixed; },
-      what: 'Navigue jusqu\'à l\'île secrète…', soon: true }
+      what: 'Un grand port avec des quais, des bateaux de pêche et un phare', cost: { wood: 25, stone: 15, materials: 10, money: 300 } },
+    { icon: '⛵', name: 'Réparer le vieux bateau', where: 'Le bateau échoué sur la plage, à gauche du port', done: function() { return !!Game.state.boatFixed; },
+      what: 'Navigue jusqu\'à l\'île secrète… et son trésor', cost: { wood: 20, materials: 5, money: 200 } }
 ];
 Game.bridge.toggleCarnet = function() {
     var old = document.getElementById('carnet-panel');
     if (old) { old.remove(); return; }
-    var p = document.createElement('div'), E = { wood: '🪵', stone: '🪨', money: '💰' };
+    var p = document.createElement('div'), E = { wood: '🪵', stone: '🪨', materials: '🧱', money: '💰' };
     p.id = 'carnet-panel';
     p.innerHTML = '<div class="controls-card" style="max-width:460px"><button class="controls-close" aria-label="Fermer">✕</button>' +
         '<h2>📒 Carnet du village</h2><p class="controls-intro">Les grands projets du village, un par un.</p>' +

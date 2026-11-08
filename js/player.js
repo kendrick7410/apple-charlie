@@ -82,6 +82,7 @@ Game.player.update = function(dt, now) {
     }
     // Le torrent : jamais à la nage, seulement par le pont réparé
     if (Game.bridge) Game.bridge.guard(prevX, prevY);
+    if (Game.harbor) Game.harbor.guard(prevX, prevY);   // l'île : seulement en bateau
     // Vue 3D : on bute contre les maisons, arbres... AVANT de dessiner (sinon Charlie y entre un instant)
     if (Game.player.afterMove) Game.player.afterMove();
 

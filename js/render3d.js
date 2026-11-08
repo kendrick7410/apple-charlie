@@ -725,6 +725,7 @@ function makePalm(s) {
 }
 // Port : ponton en planches sur pilotis, bateau de marchandise, caisses
 function makeDock(w, len) {
+    if (w > len) { var rg = new T.Group(), inner = makeDock(len, w); inner.rotation.y = Math.PI / 2; rg.add(inner); return rg; }   // quai en travers
     var g = new T.Group(), n = Math.round(len / 0.55);
     for (var i = 0; i < n; i++) rbox(g, w, 0.12, 0.48, 0.04, i % 2 ? '#a67c52' : '#94693f', 0, 0.3, -len / 2 + 0.28 + i * (len - 0.56) / Math.max(1, n - 1));
     for (i = 0; i <= Math.floor(len / 2.2); i++) [-w / 2 + 0.1, w / 2 - 0.1].forEach(function(x) { put(g, new T.Mesh(geo('pile', function() { return new T.CylinderGeometry(0.1, 0.1, 1.4, 10); }), mat('#7a5530')), x, -0.3, -len / 2 + 0.3 + i * 2.2); });
@@ -799,6 +800,77 @@ function makeHay(w) {
     g.scale.set(s, s * 0.85, s * 0.85);
     return g;
 }
+// ═══════════════════════ Grand port et île secrète ═══════════════════════
+var lighthouseBeams = [];
+function makeHarbor(kind, el) {
+    var g = new T.Group(), DARK = '#6e4b2a';
+    if (kind === 'lighthouse') {   // phare rayé rouge et blanc sur des rochers, lanterne et faisceau qui tourne la nuit
+        [[0, 0.5, 1.5], [0.7, 0.35, 1.2], [-0.6, 0.3, 1.1]].forEach(function(r) { ball(g, r[2] * 0.5, '#8d8f95', r[0], r[1], r[0] * 0.5, 1.4, 0.7, 1.2); });
+        for (var i = 0; i < 5; i++) put(g, new T.Mesh(new T.CylinderGeometry(0.75 - i * 0.07, 0.8 - i * 0.07, 1.1, 24), mat(i % 2 ? '#e53935' : '#fafafa')), 0, 0.9 + i * 1.1, 0);
+        put(g, new T.Mesh(new T.CylinderGeometry(0.75, 0.75, 0.12, 24), mat('#37474f')), 0, 6.3, 0);
+        var lamp = new T.MeshStandardMaterial({ color: lin('#fff8e1'), emissive: lin('#ffd54f'), emissiveIntensity: 0.3, transparent: true, opacity: 0.85 });
+        put(g, new T.Mesh(new T.CylinderGeometry(0.45, 0.45, 0.75, 16), lamp), 0, 6.75, 0);
+        put(g, new T.Mesh(new T.ConeGeometry(0.62, 0.6, 16), mat('#e53935')), 0, 7.45, 0);
+        var beam = new T.Group(); beam.position.y = 6.75; g.add(beam);
+        var bm = new T.Mesh(new T.ConeGeometry(1.4, 9, 20, 1, true), new T.MeshBasicMaterial({ color: 0xfff3b0, transparent: true, opacity: 0.18, side: T.DoubleSide, depthWrite: false }));
+        bm.rotation.z = Math.PI / 2; bm.position.x = 4.6; beam.add(bm);
+        g.userData.beam = beam; g.userData.lamp = lamp; lighthouseBeams.push(g);
+    } else if (kind === 'fish-boat') {   // petit bateau de pêche : coque, cabine, mât, bouée
+        rbox(g, 1.3, 0.55, 3.0, 0.25, '#1e88e5', 0, 0.05, 0);
+        rbox(g, 1.15, 0.12, 2.8, 0.05, '#f5f5f5', 0, 0.36, 0);
+        rbox(g, 0.9, 0.75, 0.9, 0.12, '#fafafa', 0, 0.8, -0.5);
+        rbox(g, 0.95, 0.1, 0.95, 0.05, '#e53935', 0, 1.2, -0.5);
+        put(g, new T.Mesh(new T.CylinderGeometry(0.04, 0.04, 1.8, 8), mat(DARK)), 0, 1.3, 0.6);
+        put(g, new T.Mesh(new T.TorusGeometry(0.16, 0.05, 8, 16), mat('#ff7043')), 0.62, 0.45, 0.4).rotation.y = Math.PI / 2;
+        g.userData.bob = true;
+    } else if (kind === 'sail-boat' || kind === 'old-boat') {   // voilier « Le Charlie » (ou l'épave couchée sur le sable)
+        var old = kind === 'old-boat', hull = new T.Group(); g.add(hull);
+        rbox(hull, 1.6, 0.7, 3.8, 0.35, old ? '#7a5a3a' : '#fafafa', 0, 0.2, 0);
+        rbox(hull, 1.45, 0.1, 3.6, 0.05, old ? '#5d4630' : '#c69c6d', 0, 0.56, 0);
+        rbox(hull, 1.62, 0.12, 3.82, 0.06, old ? '#4e3b28' : '#1e88e5', 0, 0.3, 0);
+        if (!old) {
+            put(hull, new T.Mesh(new T.CylinderGeometry(0.05, 0.06, 3.6, 8), mat(DARK)), 0, 2.4, 0.2);
+            var sail = new T.Mesh(geo('sail', function() { var sh = new T.Shape(); sh.moveTo(0, 0); sh.lineTo(0, 3.1); sh.lineTo(1.6, 0.15); sh.lineTo(0, 0); return new T.ShapeGeometry(sh); }), mat('#fffdf6', { side: T.DoubleSide }));
+            sail.position.set(0.04, 0.85, 0.25); sail.rotation.y = -Math.PI / 2; hull.add(sail);
+            g.userData.bob = true;
+        } else {
+            var mast = put(hull, new T.Mesh(new T.CylinderGeometry(0.05, 0.06, 1.6, 8), mat(DARK)), 0.1, 1.2, 0.3); mast.rotation.z = 0.5;   // mât cassé
+            [[0.4, -0.9], [-0.3, 1.0]].forEach(function(q) { rbox(hull, 0.36, 0.06, 0.12, 0.02, '#3b2b1e', q[0], 0.6, q[1]); });   // trous dans le pont
+            hull.rotation.z = 0.32; hull.position.y = 0.15;
+        }
+    } else if (kind === 'giant-shell') {
+        var n = +(el.dataset.n || 0), col = ['#ffccbc', '#f8bbd0', '#ffe0b2'][n % 3];
+        var shl = put(g, new T.Mesh(new T.ConeGeometry(0.55, 1.2, 16), mat(col, { roughness: 0.5 })), 0, 0.35, 0); shl.rotation.z = Math.PI / 2;
+        for (var k = 0; k < 4; k++) put(g, new T.Mesh(new T.TorusGeometry(0.42 - k * 0.09, 0.04, 6, 18), mat('#ffab91')), -0.45 + k * 0.25, 0.35, 0).rotation.y = Math.PI / 2;
+    } else if (kind === 'island-hut') {   // cabane en bois du vieux pêcheur, toit de paille
+        rbox(g, 2.6, 1.6, 2.0, 0.12, '#a0703f', 0, 0.8, 0);
+        var roof = put(g, new T.Mesh(new T.ConeGeometry(2.1, 1.3, 4), mat('#d9b44a', { roughness: 1 })), 0, 2.2, 0); roof.rotation.y = Math.PI / 4;
+        rbox(g, 0.6, 1.1, 0.06, 0.04, '#5d4037', 0, 0.55, 1.02);
+        [-0.9, 0.9].forEach(function(x) { rbox(g, 0.5, 0.4, 0.05, 0.03, '#90caf9', x, 1.1, 1.02); });
+    } else if (kind === 'island-chest') {   // coffre au trésor (ouvert une fois trouvé)
+        var open = el.classList.contains('open');
+        rbox(g, 0.9, 0.5, 0.6, 0.06, '#8d5a2b', 0, 0.25, 0);
+        [-0.3, 0.3].forEach(function(x) { rbox(g, 0.06, 0.52, 0.62, 0.02, '#f2c94c', x, 0.26, 0); });
+        var lid = new T.Group(); lid.position.set(0, 0.5, -0.3); g.add(lid);
+        rbox(lid, 0.92, 0.18, 0.62, 0.08, '#7a4a22', 0, 0.09, 0.3);
+        lid.rotation.x = open ? -1.9 : 0;
+        if (open) [[-0.15, 0.1], [0.12, -0.05], [0, 0.12]].forEach(function(q) { put(g, new T.Mesh(new T.CylinderGeometry(0.08, 0.08, 0.03, 12), mat('#f2c94c', { metalness: 0.6, roughness: 0.3 })), q[0], 0.5, q[1]); });
+    } else if (kind === 'island-dock') {   // petit ponton d'arrivée sur l'île
+        var dk = makeDock(1.2, 3.2); dk.position.z = -1.6; g.add(dk);
+    }
+    return g;
+}
+function buildIslandGround() {
+    if (!Game.harbor) return;
+    var I = Game.harbor.ISLAND, R = I.r * U;
+    var sand = new T.Mesh(new T.CylinderGeometry(R * 0.95, R * 1.15, 1.2, 40), mat('#ecd39a', { roughness: 1 }));
+    sand.position.set(I.x * U, -0.35, I.y * U); sand.receiveShadow = true; scene.add(sand);
+    var dune = new T.Mesh(new T.SphereGeometry(R * 0.95, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat('#ecd39a', { roughness: 1 }));
+    dune.scale.y = 0.6 / (R * 0.95); dune.position.set(I.x * U, 0.25, I.y * U); dune.receiveShadow = true; scene.add(dune);
+    var grass = new T.Mesh(new T.CircleGeometry(R * 0.55, 32), mat('#8fcf63', { roughness: 1 }));
+    grass.rotation.x = -Math.PI / 2; grass.position.set(I.x * U + 0.6, 0.62, I.y * U - 0.4); scene.add(grass);
+}
+
 // ═══════════════════════ Pont du torrent ═══════════════════════
 // 7,5 unités de long (berge à berge), 2,3 de large ; planches, poutres, piliers dans l'eau, rambardes.
 // Cassé : il manque les planches du milieu, une rambarde pend dans l'eau, un panneau prévient.
@@ -1507,6 +1579,7 @@ function buildTerrain() {
     });
 
     buildPlazaGround();
+    buildIslandGround();
 
     // Herbes des dunes
     var RG = rand(17);
@@ -1539,7 +1612,11 @@ function kindOf(el, e) {
     if (cl.contains('farm-pen')) return 'pen';   // enclos : sol de terre + barrières, il suit sa position
     if (cl.contains('plaza-deco')) return 'plazadeco';
     if (id === 'bridge') return 'bridge';   // pont du torrent (cassé ou réparé)
-    if (id === 'pet-refuge') return 'refuge';   // refuge des animaux (Prairie aux Lucioles)   // place du village : banc, lampadaire, mât de guirlande, fête
+    if (id === 'pet-refuge') return 'refuge';
+    if (cl.contains('harbor-item')) {   // grand port, vieux bateau, île secrète (js/harbor.js)
+        var HK = ['fish-boat', 'lighthouse', 'sail-boat', 'old-boat', 'giant-shell', 'island-hut', 'island-chest', 'island-dock'];
+        for (var hk = 0; hk < HK.length; hk++) if (cl.contains(HK[hk])) return 'h:' + HK[hk];
+    }   // refuge des animaux (Prairie aux Lucioles)   // place du village : banc, lampadaire, mât de guirlande, fête
     if (id === 'player' || cl.contains('mountain-snow') || e === '❄️') return 'skip';
     if (id === 'garden-area') return 'garden';
     if (id === 'fountain-anchor') return 'fountain';
@@ -1611,6 +1688,8 @@ function buildFor(el, kind, e, label) {
         case 'pen': obj = makePen(el); break;
         case 'plazadeco': obj = makePlazaDeco(el.dataset.kind); obj.rotation.y = +(el.dataset.rot || 0); break;
         case 'bridge': obj = makeBridge(el.classList.contains('fixed')); break;
+        case 'h:fish-boat': case 'h:lighthouse': case 'h:sail-boat': case 'h:old-boat': case 'h:giant-shell': case 'h:island-hut': case 'h:island-chest': case 'h:island-dock':
+            obj = makeHarbor(kind.slice(2), el); obj.rotation.y = +(el.dataset.rot || 0); break;
         case 'refuge': {   // maison vert sapin avec une grande patte sur la façade
             obj = makeHouse({ wall: '#e8f3e4', roof: '#4c9a6a' }, HOUSE_S);
             var paw = labelSprite('🐾', 0.9); paw.position.set(0, 3.0, 1.7); obj.add(paw);
@@ -1652,7 +1731,7 @@ function groundPoint(el, kind) {
     var wxy = worldXY(el), x = wxy.x, y = wxy.y;
     var first = el.firstElementChild && !el.firstElementChild.classList.contains('building-label') ? el.firstElementChild : null;
     var w = el.offsetWidth, h = first ? first.offsetHeight : el.offsetHeight;
-    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'pen' || kind === 'dock' || kind === 'path' || kind === 'plazadeco' || kind === 'bridge') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
+    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'pen' || kind === 'dock' || kind === 'path' || kind === 'plazadeco' || kind === 'bridge' || kind.indexOf('h:') === 0) return { x: x + w / 2, y: y + el.offsetHeight / 2 };
     if (kind === 'barn') return { x: x + w / 2, y: y + 140 };
     if (kind === 'refuge') { var RF = Game.CONFIG.LOCATIONS.petRefuge; return { x: RF.x, y: RF.y }; }
     if (el.classList.contains('house-exterior') || /-anchor$/.test(el.id)) return { x: x + w / 2, y: y + h * 0.75 };
@@ -1669,8 +1748,11 @@ function applySeasonGround() {
 }
 function rawHeightAt(px, py) { _rawHeight = true; var h = heightAt(px, py); _rawHeight = false; return h; }
 // Hauteur du sol en un point de la carte (interpolée dans la carte des hauteurs)
+var _docks = [];   // quais et pontons : on marche dessus (au-dessus de l'eau)
 function heightAt(px, py) {
     if (Game.state && Game.state.bridgeFixed && Game.bridge && Game.bridge.onDeck(px, py)) return 0.43;   // sur le pont réparé : au-dessus de l'eau
+    for (var di = 0; di < _docks.length; di++) { var D = _docks[di]; if (px > D.x1 && px < D.x2 && py > D.y1 && py < D.y2) return 0.36; }
+    if (Game.harbor && Game.harbor.onIsland(px, py)) { var ID = Math.hypot(px - Game.harbor.ISLAND.x, py - Game.harbor.ISLAND.y) / Game.harbor.ISLAND.r; return 0.25 + (1 - ID * ID) * 0.35; }   // l'île : une dune de sable
     if (!heightGrid) return 0;
     var n = heightGrid.n, gx = Math.max(0, Math.min(n - 1.001, px / heightGrid.cell)), gy = Math.max(0, Math.min(n - 1.001, py / heightGrid.cell));
     var ix = Math.floor(gx), iy = Math.floor(gy), fx = gx - ix, fy = gy - iy, H = heightGrid.h;
@@ -1787,6 +1869,11 @@ function colliderFor(el, kind, obj) {
         case 'decor':        return DECOR_COL[emojiOf(el)] ? { r: DECOR_COL[emojiOf(el)] / U } : null;   // parasol, château de sable, bûche...
         case 'pen':          return { hw: el.offsetWidth / 2, hd: el.offsetHeight / 2 };            // on ne passe pas à travers les barrières
         case 'refuge':       return { hw: 2.9 * HOUSE_S * 0.9 / U, hd: 3.8 * HOUSE_S / 2 / U };
+        case 'h:lighthouse': return { r: 1.3 / U };
+        case 'h:old-boat':   return { r: 1.7 / U };
+        case 'h:island-hut': return { hw: 1.4 / U, hd: 1.2 / U };
+        case 'h:island-chest': return { r: 0.55 / U };
+        case 'h:giant-shell': return { r: 0.7 / U };
         case 'plazadeco':    return { r: (PLAZA_COL[el.dataset.kind] || 0.3) / U };
         default:             return null;
     }
@@ -1852,9 +1939,10 @@ function walkToTarget(dt) {
     var c = s.charlie, dx = _walkTarget.x - c.x, dy = _walkTarget.y - c.y, d = Math.hypot(dx, dy);
     var step = Game.CONFIG.PLAYER_SPEED * Game.player.skinBonus().speed * dt * 60;
     var bx = c.x, by = c.y;
-    if (d <= step) { c.x = _walkTarget.x; c.y = _walkTarget.y; _walkTarget = null; if (Game.bridge) Game.bridge.guard(bx, by); return; }
+    if (d <= step) { c.x = _walkTarget.x; c.y = _walkTarget.y; _walkTarget = null; if (Game.bridge) Game.bridge.guard(bx, by); if (Game.harbor) Game.harbor.guard(bx, by); return; }
     c.x += dx / d * step; c.y += dy / d * step;
     if (Game.bridge) Game.bridge.guard(bx, by);
+    if (Game.harbor) Game.harbor.guard(bx, by);
     collide();
     // Bloqué contre un obstacle (aucun progrès) : on s'arrête
     if (Math.hypot(c.x - bx, c.y - by) < step * 0.15) { if (++_stuck > 12) { _walkTarget = null; _stuck = 0; } }
@@ -1870,6 +1958,8 @@ function scan() {
         syncElement(els[i]);
     }
     tracked.forEach(function(rec, el) { if (!rec.seen) { scene.remove(rec.obj); if (rec.bubbleEl) rec.bubbleEl.remove(); tracked.delete(el); } });
+    _docks = [];
+    tracked.forEach(function(rec, el) { if (rec.kind === 'dock' || rec.kind === 'h:island-dock') { var x = parseFloat(el.style.left), y = parseFloat(el.style.top), w = el.offsetWidth, h = el.offsetHeight; if (rec.kind === 'h:island-dock') { w = 48; h = 128; x -= 24; y -= 120; } _docks.push({ x1: x, y1: y, x2: x + w, y2: y + h }); } });
 }
 function syncMoving(time) {
     tracked.forEach(function(rec, el) {
@@ -3509,7 +3599,10 @@ function loop(now) {
     _scanT += dt;
     if (_scanT > 0.4) { _scanT = 0; scan(); updateGarlands(); }
     lightPlaza(Game.time.isNight(), time);
-    tracked.forEach(function(rec) {   // ballons de la fête qui se balancent doucement
+    var nightNow = Game.time.isNight();
+    lighthouseBeams.forEach(function(g) { g.userData.beam.visible = nightNow; g.userData.beam.rotation.y = time * 0.9; g.userData.lamp.emissiveIntensity = nightNow ? 2.2 : 0.3; });
+    tracked.forEach(function(rec) {   // ballons de la fête ; bateaux qui bougent sur l'eau
+        if (rec.obj.userData.bob) { rec.obj.position.y = -0.12 + Math.sin(time * 1.4 + rec.obj.id) * 0.06; rec.obj.rotation.z = Math.sin(time * 1.1 + rec.obj.id) * 0.03; }
         var bl = rec.obj.userData.balloons;
         if (bl) bl.forEach(function(b, i) { b.rotation.z = Math.sin(time * 1.3 + i * 2) * 0.08; b.rotation.x = Math.cos(time * 1.1 + i) * 0.06; });
     });

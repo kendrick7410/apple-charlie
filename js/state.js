@@ -26,6 +26,7 @@ Game.state = {
     dayNumber: 0,        // numéro du jour de jeu
     bridgeFixed: false,  // pont du torrent réparé (Prairie aux Lucioles)
     pet: null,           // compagnon adopté au refuge : { type: 'dog'|'cat'|'hamster', name }
+    portBig: false, boatFixed: false, islandChest: false, pearl: false,   // grand port, voilier, trésor de l'île
     friendship: {},      // amitié : points par habitant (100 = 1 cœur)
     friendDay: {},       // dernier jour où on a discuté / offert un cadeau
     friendKnown: {},     // goûts découverts en offrant des cadeaux
@@ -114,7 +115,7 @@ Game.saveGame = function() {
         season: s.season,
         seasonIndex: s.seasonIndex,
         seasonElapsed: s.seasonElapsed || 0,
-        dayNumber: s.dayNumber || 0, bdayAnnounced: s.bdayAnnounced, bridgeFixed: !!s.bridgeFixed, pet: s.pet || null,
+        dayNumber: s.dayNumber || 0, bdayAnnounced: s.bdayAnnounced, bridgeFixed: !!s.bridgeFixed, pet: s.pet || null, portBig: !!s.portBig, boatFixed: !!s.boatFixed, islandChest: !!s.islandChest, pearl: !!s.pearl,
         friendship: s.friendship || {}, friendDay: s.friendDay || {}, friendKnown: s.friendKnown || {}, friendReward: s.friendReward || {},
         gardenPlots: JSON.parse(JSON.stringify(s.gardenPlots)),
         questProgress: Object.assign({}, s.questProgress),
@@ -173,7 +174,7 @@ Game.loadGame = function() {
         if (data.season) s.season = data.season;
         if (data.seasonIndex !== undefined) s.seasonIndex = data.seasonIndex;
         s.seasonElapsed = typeof data.seasonElapsed === 'number' ? data.seasonElapsed : 0;
-        s.dayNumber = data.dayNumber || 0; s.bdayAnnounced = data.bdayAnnounced; s.bridgeFixed = !!data.bridgeFixed; s.pet = data.pet || null;
+        s.dayNumber = data.dayNumber || 0; s.bdayAnnounced = data.bdayAnnounced; s.bridgeFixed = !!data.bridgeFixed; s.pet = data.pet || null; s.portBig = !!data.portBig; s.boatFixed = !!data.boatFixed; s.islandChest = !!data.islandChest; s.pearl = !!data.pearl;
         s.friendship = data.friendship || {}; s.friendDay = data.friendDay || {}; s.friendKnown = data.friendKnown || {}; s.friendReward = data.friendReward || {};
         if (data.gardenPlots) s.gardenPlots = data.gardenPlots;
         if (data.questProgress) Object.assign(s.questProgress, data.questProgress);

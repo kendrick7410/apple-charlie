@@ -85,7 +85,7 @@ Game.beach.update = function(dt, now) {
     // pas active : propose la chasse quand on est sur la plage (après le cooldown)
     var p = document.getElementById('action-beach');
     if (!p) return;
-    var onBeach = s.charlie.y >= Game.CONFIG.BEACH_TOP - 50;
+    var onBeach = s.charlie.y >= Game.CONFIG.BEACH_TOP - 50 && !(Game.harbor && Game.harbor.onIsland(s.charlie.x, s.charlie.y));   // pas sur l'île secrète
     var enterEl = document.getElementById('action-enter');
     var enterShown = enterEl && getComputedStyle(enterEl).display !== 'none';
     p.style.display = (onBeach && now >= B.cooldownUntil) ? 'flex' : 'none';   // s'empile avec « Entrer » (ui.stackPanels)
