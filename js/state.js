@@ -22,6 +22,7 @@ Game.state = {
     gameMinute: 0,
     season: 'spring',
     seasonIndex: 0,
+    seasonElapsed: 0,    // temps déjà passé dans la saison (ms de jeu), sauvegardé
     weather: 'clear',    // 'clear', 'rain', 'snow', 'sunny'
     gardenPlots: [],     // [{crop,stage,waterLevel,plantedAt}]
     questProgress: {},   // { 'Lya 🐰': 0, ... }  index of current quest
@@ -105,6 +106,7 @@ Game.saveGame = function() {
         gameMinute: s.gameMinute,
         season: s.season,
         seasonIndex: s.seasonIndex,
+        seasonElapsed: s.seasonElapsed || 0,
         gardenPlots: JSON.parse(JSON.stringify(s.gardenPlots)),
         questProgress: Object.assign({}, s.questProgress),
         questCompleted: JSON.parse(JSON.stringify(s.questCompleted)),
@@ -161,6 +163,7 @@ Game.loadGame = function() {
         if (data.gameMinute !== undefined) s.gameMinute = data.gameMinute;
         if (data.season) s.season = data.season;
         if (data.seasonIndex !== undefined) s.seasonIndex = data.seasonIndex;
+        s.seasonElapsed = typeof data.seasonElapsed === 'number' ? data.seasonElapsed : 0;
         if (data.gardenPlots) s.gardenPlots = data.gardenPlots;
         if (data.questProgress) Object.assign(s.questProgress, data.questProgress);
         if (data.questCompleted) s.questCompleted = data.questCompleted;

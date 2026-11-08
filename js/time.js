@@ -3,13 +3,14 @@
 "use strict";
 
 var lastUpdate = 0;
-var seasonTimer = 0;
 
 Game.time = {};
 
 Game.time.init = function() {
     lastUpdate = performance.now();
-    seasonTimer = 0;
+    // Le temps passé dans la saison est sauvegardé avec la partie (Game.state.seasonElapsed) :
+    // avant, il repartait de zéro à chaque ouverture du jeu et on pouvait rester bloqué dans une saison
+    if (typeof Game.state.seasonElapsed !== 'number') Game.state.seasonElapsed = 0;
 };
 
 Game.time.update = function(now) {
@@ -36,9 +37,9 @@ Game.time.update = function(now) {
     }
 
     // Season
-    seasonTimer += dt;
-    if (seasonTimer >= Game.CONFIG.SEASON_DURATION_MS) {
-        seasonTimer -= Game.CONFIG.SEASON_DURATION_MS;
+    Game.state.seasonElapsed = (Game.state.seasonElapsed || 0) + dt;
+    if (Game.state.seasonElapsed >= Game.CONFIG.SEASON_DURATION_MS) {
+        Game.state.seasonElapsed -= Game.CONFIG.SEASON_DURATION_MS;
         Game.state.seasonIndex = (Game.state.seasonIndex + 1) % 4;
         Game.state.season = Game.SEASONS[Game.state.seasonIndex];
         Game.time.onSeasonChange(Game.state.season);

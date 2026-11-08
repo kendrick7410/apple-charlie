@@ -665,31 +665,36 @@ var USES = {
             return;
         }
         busy = 'sleep';
+        Game.furniture.sleepBed = f;            // la vue 3D couche Charlie dans le sens de CE lit
+        Game.furniture.sleepStart = performance.now();
         moveCharlieTo(f[1] + 4, f[2] + 4);
         setPose('sleep');
-        setFx('💤', 'fx-zzz');
+        // Il se glisse sous la couverture, cligne deux fois des yeux, s'endort ; ensuite seulement l'écran s'assombrit
+        var D = 3400;
+        setTimeout(function() { setFx('💤', 'fx-zzz'); }, D - 400);
         var fade = document.createElement('div');
         fade.id = 'sleep-fade';
         fade.innerHTML = '<div class="sleep-text">💤 Bonne nuit...</div>';
         document.body.appendChild(fade);
-        requestAnimationFrame(function() { fade.classList.add('dark'); });
+        setTimeout(function() { fade.classList.add('dark'); }, D);
         setTimeout(function() {
             s.gameHour = WAKE_AT;
             s.gameMinute = 0;
             Game.furniture.updateLight();
             fade.querySelector('.sleep-text').textContent = '☀️ Bonjour ! Il est ' + WAKE_AT + 'h';
             Game.audio.playChime();
-        }, 2200);
-        setTimeout(function() { fade.classList.remove('dark'); }, 3600);
+        }, D + 2200);
+        setTimeout(function() { fade.classList.remove('dark'); }, D + 3600);
         setTimeout(function() {
             fade.remove();
             busy = null;
+            Game.furniture.sleepBed = null;
             setPose(null);
             setFx('');
             moveCharlieTo(Math.min(522, f[1] + 70), f[2] + 30);
             Game.xp.add(10);
             Game.ui.notify("☀️ Bien dormi ! C'est le matin (+10 XP)");
-        }, 4400);
+        }, D + 4400);
     },
 
     // Lampe : allume / éteint (la lumière éclaire un cercle autour d'elle)

@@ -2654,6 +2654,47 @@ function updateShop3d(dt) {
         carryObj.position.copy(v); carryObj.position.y -= 0.25;
     }
 }
+// ── Dormir : couché dans le sens du lit, sous une couverture qui se déplie, deux clignements puis les yeux fermés ──
+function sleepInBed(c, time) {
+    var f = Game.furniture.sleepBed, bed = null;
+    if (f) room3d.items.children.forEach(function(o) { if (o.userData.f === f) bed = o; });
+    if (!bed) return;
+    var t = (performance.now() - (Game.furniture.sleepStart || 0)) / 1000;
+    var r = bed.rotation.y, cos = Math.cos(r), sin = Math.sin(r);
+    function at(lx, ly, lz) { return new T.Vector3(bed.position.x + lx * cos + lz * sin, bed.position.y + ly, bed.position.z - lx * sin + lz * cos); }
+    // Charlie : pieds vers le bout du lit, tête sur l'oreiller, allongé SUR le matelas (il ne le traverse pas)
+    c.scale.setScalar(0.9);
+    c.rotation.set(-Math.PI / 2, r, 0);
+    var feet = at(0, 1.02, 0.95);
+    c.position.copy(feet);
+    var ud = c.userData;
+    ud.armL.rotation.set(0, 0, -0.08); ud.armR.rotation.set(0, 0, 0.08); ud.legL.rotation.x = ud.legR.rotation.x = 0;
+    if (ud.body) ud.body.position.y = 0;
+    // Couverture : elle part du pied du lit et monte jusqu'au menton ; on voit la forme du corps dessous
+    if (!room3d.blanket) {
+        var g = new T.Group(), piv = new T.Group(); piv.position.z = 1.08; g.add(piv);
+        var BL = mat('#6fa8dc', { roughness: 0.95 });
+        ball(piv, 1, BL, 0, 1.0, -0.72, 0.56, 0.3, 0.74);              // la bosse du corps
+        rbox(piv, 1.42, 0.14, 1.5, 0.07, BL, 0, 0.78, -0.72);          // la couverture qui tombe sur les côtés
+        rbox(piv, 1.44, 0.16, 0.22, 0.06, '#ffffff', 0, 1.14, -1.42);  // le rabat blanc sous le menton
+        ball(piv, 0.2, BL, 0, 1.12, -0.2, 1.2, 0.6, 1);                // les pieds sous la couverture
+        room3d.scene.add(g); room3d.blanket = g; g.userData.piv = piv;
+    }
+    var bk = room3d.blanket;
+    bk.visible = true;
+    bk.position.copy(at(0, 0, 0)); bk.position.y = bed.position.y;
+    bk.rotation.set(0, r, 0);
+    var unfold = Math.min(1, Math.max(0.12, t / 0.7));                   // 0,7 s pour remonter la couverture
+    bk.userData.piv.scale.z = unfold * unfold * (3 - 2 * unfold);
+    // Paupières : deux clignements lents (vers 1 s et 1,9 s), puis il ferme les yeux pour de bon (2,7 s)
+    if (!ud.lids) {
+        var skin = (SKIN_LOOKS[Game.state.skin] || SKIN_LOOKS.aventurier).skin || '#f2c9a0';
+        ud.lids = [-0.16, 0.16].map(function(x) { var l = ball(ud.head, 0.095, mat(skin, { roughness: 0.6 }), x, 0.04, 0.42, 1, 1, 0.55); l.visible = false; return l; });
+    }
+    function blink(t0) { var k = (t - t0) / 0.55; return k > 0 && k < 1 ? Math.sin(k * Math.PI) : 0; }
+    var closed = t > 2.7 ? Math.min(1, (t - 2.7) / 0.5) : Math.max(blink(0.9), blink(1.8));
+    ud.lids.forEach(function(l) { l.visible = closed > 0.02; l.scale.y = Math.max(0.05, closed) * 1.25; l.position.y = 0.04 + (1 - closed) * 0.06; });
+}
 function updateRoomCharlie(dt, time) {
     var s = Game.state, c = room3d.charlie, ic = document.getElementById('interior-charlie');
     var p = roomPos(s.interiorCharlie.x, s.interiorCharlie.y);
@@ -2667,11 +2708,18 @@ function updateRoomCharlie(dt, time) {
     } else if (c.userData.armL.rotation.z > 0.2) { c.userData.armL.rotation.z = -0.12; c.userData.armR.rotation.z = 0.12; }
     updateShop3d(dt);
     var y = 0.06, lie = false;
-    if (ic && ic.classList.contains('pose-sleep')) { y = 0.75; lie = true; }
+    if (ic && ic.classList.contains('pose-sleep')) lie = true;
     else if (ic && ic.classList.contains('pose-bath')) y = -0.15;
     else if (ic && ic.classList.contains('pose-sit')) y = 0.2;
-    c.rotation.x = lie ? -Math.PI / 2 : 0;
-    c.position.set(p.x, y, p.z + (lie ? 0.5 : 0));
+    c.rotation.order = 'YXZ';
+    if (lie) sleepInBed(c, time);
+    else {
+        if (room3d.blanket) room3d.blanket.visible = false;
+        if (c.userData.lids) c.userData.lids.forEach(function(l) { l.visible = false; });
+        c.scale.setScalar(1.05);
+        c.rotation.x = 0; c.rotation.z = 0;
+        c.position.set(p.x, y, p.z);
+    }
     // Ce que Charlie tient ou ressent (📖, 💤, 🎵...) au-dessus de sa tête
     var fx = document.getElementById('charlie-fx'), t = fx && fx.style.display !== 'none' ? fx.textContent : '';
     if (t !== room3d.fxText) {
