@@ -21,6 +21,37 @@ function penDefs() {
     ];
 }
 
+// Tracteur (décor) : data-decor permet à la page admin de le déplacer, l'enlever ou en ajouter
+Game.farm.tractor = function(x, y) {
+    var t = document.createElement('div');
+    t.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y +
+        'px;font-size:3.2rem;z-index:8;filter:drop-shadow(0 3px 2px rgba(0,0,0,0.25));';
+    t.textContent = '🚜';
+    t.dataset.decor = 'tractor';
+    document.getElementById('game-world').appendChild(t);
+    return t;
+};
+// Botte de foin en rouleau (décor) : cylindre couché, brins de paille + bout enroulé visible
+Game.farm.hayBale = function(x, y, size) {
+    var w = Math.max(30, Math.min(120, size || 56)), h = Math.round(w * 0.7);
+    var b = document.createElement('div');
+    b.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h +
+        'px;z-index:7;border-radius:' + Math.round(h / 2) + 'px;border:3px solid #9c6f1c;' +
+        'background:' +
+            'repeating-linear-gradient(0deg, rgba(120,80,20,0.20) 0 2px, rgba(255,255,255,0) 2px 9px),' +   // brins
+            'linear-gradient(180deg,#f0cd6e,#d7a944 55%,#b9852c);' +                                        // volume
+        'box-shadow:0 4px 5px rgba(0,0,0,0.22), inset 0 -5px 9px rgba(0,0,0,0.13), inset 0 4px 6px rgba(255,255,255,0.25);';
+    var cap = document.createElement('div');   // bout enroulé : anneaux concentriques de paille
+    cap.style.cssText = 'position:absolute;right:-3px;top:-3px;width:' + Math.round(w * 0.42) + 'px;height:' + h +
+        'px;box-sizing:border-box;border-radius:50%;border:3px solid #9c6f1c;' +
+        'background:repeating-radial-gradient(circle at 52% 50%, #ecc86a 0 3px, #cb9d3a 3px 5px);';
+    b.appendChild(cap);
+    b.dataset.decor = 'hay';
+    b.dataset.w = w;
+    document.getElementById('game-world').appendChild(b);
+    return b;
+};
+
 Game.farm.init = function() {
     var F = Game.farm;
     var world = document.getElementById('game-world');
@@ -45,35 +76,12 @@ Game.farm.init = function() {
         '<div class="building-label" style="position:absolute;left:50%;top:158px;transform:translateX(-50%);">🚜 La Ferme</div>';
     world.appendChild(barn);
 
-    // Tracteur (décor) : garé à gauche de la grange, sans la toucher
-    var tractor = document.createElement('div');
-    tractor.style.cssText = 'position:absolute;left:' + (L.x - 282) + 'px;top:' + (L.y - 250) +
-        'px;font-size:3.2rem;z-index:8;filter:drop-shadow(0 3px 2px rgba(0,0,0,0.25));';
-    tractor.textContent = '🚜';
-    world.appendChild(tractor);
-
-    // Bottes de foin en rouleau (décor) : cylindre couché, brins de paille + bout enroulé visible
-    function hayBale(x, y, size) {
-        var w = size, h = Math.round(size * 0.7);
-        var b = document.createElement('div');
-        b.style.cssText = 'position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h +
-            'px;z-index:7;border-radius:' + Math.round(h / 2) + 'px;border:3px solid #9c6f1c;' +
-            'background:' +
-                'repeating-linear-gradient(0deg, rgba(120,80,20,0.20) 0 2px, rgba(255,255,255,0) 2px 9px),' +   // brins
-                'linear-gradient(180deg,#f0cd6e,#d7a944 55%,#b9852c);' +                                        // volume
-            'box-shadow:0 4px 5px rgba(0,0,0,0.22), inset 0 -5px 9px rgba(0,0,0,0.13), inset 0 4px 6px rgba(255,255,255,0.25);';
-        // Bout enroulé (côté droit du rouleau) : anneaux concentriques de paille
-        var cap = document.createElement('div');
-        cap.style.cssText = 'position:absolute;right:-3px;top:-3px;width:' + Math.round(w * 0.42) + 'px;height:' + h +
-            'px;box-sizing:border-box;border-radius:50%;border:3px solid #9c6f1c;' +
-            'background:repeating-radial-gradient(circle at 52% 50%, #ecc86a 0 3px, #cb9d3a 3px 5px);';
-        b.appendChild(cap);
-        world.appendChild(b);
-    }
+    // Tracteur et bottes de foin : objets de décor (déplaçables et ajoutables dans la page admin)
+    Game.farm.tractor(L.x - 282, L.y - 250);
     // Bottes de foin à droite de la grange, bien à l'écart du mur
-    hayBale(L.x + 160, L.y - 230, 66);
-    hayBale(L.x + 235, L.y - 205, 56);
-    hayBale(L.x + 190, L.y - 160, 50);
+    Game.farm.hayBale(L.x + 160, L.y - 230, 66);
+    Game.farm.hayBale(L.x + 235, L.y - 205, 56);
+    Game.farm.hayBale(L.x + 190, L.y - 160, 50);
 
     // Deux champs cultivés derrière la grange (au nord)
     function cropField(x, y, w, h, crop) {

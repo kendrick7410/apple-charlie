@@ -67,6 +67,12 @@ Game.CONFIG = {
         mountain2:    { x: 3980, y: 1080 },
         mountain3:    { x: 2980, y: 1120 },   // écartée du refuge du Cervin
         mountain4:    { x: 3500, y: 1420 },
+        // 5 sommets de plus dans le massif (déplaçables dans la page admin)
+        peakAiguille:   { x: 2700, y: 760  },
+        peakMontRoc:    { x: 4320, y: 800  },
+        peakRocheGrise: { x: 2720, y: 1380 },
+        peakSommetNoir: { x: 4300, y: 1380 },
+        peakGrandPic:   { x: 3500, y: 360  },
         lake:         { x: 3200, y: 600  },
         beach:        { x: 3000, y: 5200 },
         souvenirShop: { x: 1700, y: 5040 },

@@ -448,7 +448,7 @@ Game.startGame = function() {
 
     // Build world
     Game.world.init();
-    Game.farm.init();
+    Game.placeTag('loc:farm', Game.farm.init);   // toute la ferme est un groupe déplaçable (page admin)
     Game.player.init();
     Game.entities.init();
     Game.villagers.init();

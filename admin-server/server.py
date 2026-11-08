@@ -29,6 +29,8 @@ MAX_ITEMS = 4000
 WORLD = 6000
 CLASS_RE = re.compile(r"^[a-z0-9 _-]{0,80}$", re.I)
 SIZE_RE = re.compile(r"^[0-9]{1,3}(\.[0-9]{1,8})?(rem|px)$")
+PLACE_RE = re.compile(r"^(loc|house):[A-Za-z0-9_]{1,30}$")
+KINDS = {"hay", "tractor"}
 
 _fails = {}  # ip -> [horodatages des essais ratés]
 
@@ -54,6 +56,16 @@ def clean_layout(data):
         if not isinstance(x, (int, float)) or not isinstance(y, (int, float)) or not (0 <= x <= WORLD and 0 <= y <= WORLD):
             return None
         out = {"c": c, "x": int(x), "y": int(y)}
+        k = it.get("k")
+        if k is not None:  # objet spécial : botte de foin, tracteur
+            if k not in KINDS:
+                return None
+            out["k"] = k
+            w = it.get("w")
+            if w is not None:
+                if not isinstance(w, (int, float)) or not (20 <= w <= 200):
+                    return None
+                out["w"] = int(w)
         h = it.get("h")
         if h is not None:
             if not isinstance(h, str) or len(h) > 16 or "<" in h or ">" in h:
@@ -70,7 +82,19 @@ def clean_layout(data):
                 return None
             out["z"] = str(z)
         items.append(out)
-    return {"version": 1, "items": items}
+    # Positions des grands éléments (maisons, chantiers, boutiques, montagnes, ferme, jardin...)
+    places = {}
+    raw = data.get("places") or {}
+    if not isinstance(raw, dict) or len(raw) > 200:
+        return None
+    for tag, p in raw.items():
+        if not isinstance(tag, str) or not PLACE_RE.match(tag) or not isinstance(p, dict):
+            return None
+        x, y = p.get("x"), p.get("y")
+        if not isinstance(x, (int, float)) or not isinstance(y, (int, float)) or not (0 <= x <= WORLD and 0 <= y <= WORLD):
+            return None
+        places[tag] = {"x": int(x), "y": int(y)}
+    return {"version": 2, "items": items, "places": places}
 
 
 class Handler(BaseHTTPRequestHandler):

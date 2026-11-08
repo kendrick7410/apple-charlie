@@ -4,8 +4,20 @@
 
 Game.world = {};
 
+// Groupes déplaçables dans la page admin : tout ce qui est ajouté à la carte pendant fn() reçoit data-place=tag
+// (une maison, une boutique, une montagne, la ferme, le jardin...). Les positions viennent de Game.CONFIG.LOCATIONS
+// et Game.HOUSES, que le placement validé dans la page admin peut changer (Game.decorLayout.applyPlaces).
+Game.placeTag = function(tag, fn) {
+    var prev = Game._placeTag; Game._placeTag = tag;
+    try { return fn(); } finally { Game._placeTag = prev; }
+};
 Game.world.init = function() {
     var world = document.getElementById('game-world');
+    if (!world._tagging) {
+        world._tagging = true;
+        var append = world.appendChild;
+        world.appendChild = function(n) { if (Game._placeTag && n && n.dataset) n.dataset.place = Game._placeTag; return append.call(this, n); };
+    }
 
     // River (bras ouest + division vers le milieu de la carte jusqu'à la mer)
     Game.world.createRiver();
@@ -16,20 +28,20 @@ Game.world.init = function() {
     });
 
     // Central fountain
-    Game.world.createBuilding(Game.CONFIG.LOCATIONS.fountain.x, Game.CONFIG.LOCATIONS.fountain.y, "", "", "fountain-anchor", "fountain");
+    Game.placeTag('loc:fountain', function() { Game.world.createBuilding(Game.CONFIG.LOCATIONS.fountain.x, Game.CONFIG.LOCATIONS.fountain.y, "", "", "fountain-anchor", "fountain"); });
 
     // Bakery
-    Game.world.createBuilding(Game.CONFIG.LOCATIONS.bakery.x, Game.CONFIG.LOCATIONS.bakery.y, "🍞", "Boulangerie", "bakery-anchor");
+    Game.placeTag('loc:bakery', function() { Game.world.createBuilding(Game.CONFIG.LOCATIONS.bakery.x, Game.CONFIG.LOCATIONS.bakery.y, "🍞", "Boulangerie", "bakery-anchor"); });
 
     // Shop
-    Game.world.createBuilding(Game.CONFIG.LOCATIONS.shop.x, Game.CONFIG.LOCATIONS.shop.y, "🏪", "Magasin", "shop-anchor");
+    Game.placeTag('loc:shop', function() { Game.world.createBuilding(Game.CONFIG.LOCATIONS.shop.x, Game.CONFIG.LOCATIONS.shop.y, "🏪", "Magasin", "shop-anchor"); });
 
     // Fish Shop (Poissonnerie)
-    Game.world.createBuilding(Game.CONFIG.LOCATIONS.fishShop.x, Game.CONFIG.LOCATIONS.fishShop.y, "🐟", "Poissonnerie", "fishShop-anchor");
+    Game.placeTag('loc:fishShop', function() { Game.world.createBuilding(Game.CONFIG.LOCATIONS.fishShop.x, Game.CONFIG.LOCATIONS.fishShop.y, "🐟", "Poissonnerie", "fishShop-anchor"); });
 
     // NPC houses
     Game.HOUSES.forEach(function(h) {
-        if (h.id !== 'charlie') Game.world.renderVillagerHouse(h);
+        if (h.id !== 'charlie') Game.placeTag('house:' + h.id, function() { Game.world.renderVillagerHouse(h); });
     });
 
     // Charlie's house
@@ -41,16 +53,16 @@ Game.world.init = function() {
     site.style.top = Game.CONFIG.LOCATIONS.charlieHouse.y + 'px';
     site.style.fontSize = '5rem';
     site.innerHTML = houseEmoji + '<div class="building-label">Maison de Charlie</div>';
-    world.appendChild(site);
+    Game.placeTag('loc:charlieHouse', function() { world.appendChild(site); });
 
     // Museum
-    Game.world.createBuilding(Game.CONFIG.LOCATIONS.museum.x, Game.CONFIG.LOCATIONS.museum.y, "🏛️", "Musée", "museum-anchor");
+    Game.placeTag('loc:museum', function() { Game.world.createBuilding(Game.CONFIG.LOCATIONS.museum.x, Game.CONFIG.LOCATIONS.museum.y, "🏛️", "Musée", "museum-anchor"); });
 
     // Pizzeria David (le rhinocéros)
-    Game.world.createBuilding(Game.CONFIG.LOCATIONS.pizzeria.x, Game.CONFIG.LOCATIONS.pizzeria.y, "🍕", "Pizzeria David", "pizzeria-anchor");
+    Game.placeTag('loc:pizzeria', function() { Game.world.createBuilding(Game.CONFIG.LOCATIONS.pizzeria.x, Game.CONFIG.LOCATIONS.pizzeria.y, "🍕", "Pizzeria David", "pizzeria-anchor"); });
 
     // Boulangerie, poissonnerie, musée, pizzeria : chantiers tant qu'ils ne sont pas construits
-    Game.SHOPS.forEach(function(sh) { if (sh.level) Game.world.renderShopSite(sh); });
+    Game.SHOPS.forEach(function(sh) { if (sh.level) Game.placeTag('loc:' + sh.loc, function() { Game.world.renderShopSite(sh); }); });
 
     // Mini-forest
     Game.world.createForest();
@@ -59,7 +71,7 @@ Game.world.init = function() {
     Game.world.createMountainTerrain();
 
     // Mountain (Le Cervin)
-    Game.world.createMountain();
+    Game.placeTag('loc:mountain', Game.world.createMountain);
 
     // 3 sommets supplémentaires à côté du Cervin
     Game.world.createExtraPeaks();
@@ -71,7 +83,7 @@ Game.world.init = function() {
     Game.world.createPort();
 
     // Boutique souvenir (au bord de la plage)
-    Game.world.createBuilding(Game.CONFIG.LOCATIONS.souvenirShop.x, Game.CONFIG.LOCATIONS.souvenirShop.y, "🎁", "Boutique Souvenir", "souvenir-anchor");
+    Game.placeTag('loc:souvenirShop', function() { Game.world.createBuilding(Game.CONFIG.LOCATIONS.souvenirShop.x, Game.CONFIG.LOCATIONS.souvenirShop.y, "🎁", "Boutique Souvenir", "souvenir-anchor"); });
 
     // Lake (Lac du Cervin)
     Game.world.createLake();
@@ -80,7 +92,7 @@ Game.world.init = function() {
     Game.world.createHills();
 
     // Garden area
-    Game.world.createGardenArea();
+    Game.placeTag('loc:garden', Game.world.createGardenArea);
 
     // Render player-placed paths from save
     Game.tools.renderAllPaths();
@@ -413,18 +425,18 @@ Game.world.createExtraPeaks = function() {
     var L = Game.CONFIG.LOCATIONS;
     var peaks = [
         // les 3 sommets "nommés" (servent aussi de zone d'apparition des animaux)
-        { loc: L.mountain2, name: 'Le Glacier',   size: '6.5rem' },
-        { loc: L.mountain3, name: 'La Dent',      size: '6rem' },
-        { loc: L.mountain4, name: 'Le Pic Blanc', size: '7rem' },
+        { key: 'mountain2', name: 'Le Glacier',   size: '6.5rem' },
+        { key: 'mountain3', name: 'La Dent',      size: '6rem' },
+        { key: 'mountain4', name: 'Le Pic Blanc', size: '7rem' },
         // 5 sommets supplémentaires, espacés (>= 300px) pour ne pas se chevaucher
-        { loc: { x: 2700, y: 760 },  name: "L'Aiguille",     size: '5.5rem' },
-        { loc: { x: 4320, y: 800 },  name: 'Le Mont Roc',    size: '6.5rem' },
-        { loc: { x: 2720, y: 1380 }, name: 'La Roche Grise', size: '5.5rem' },
-        { loc: { x: 4300, y: 1380 }, name: 'Le Sommet Noir', size: '6rem' },
-        { loc: { x: 3500, y: 360 },  name: 'Le Grand Pic',   size: '7.5rem' }
+        { key: 'peakAiguille',   name: "L'Aiguille",     size: '5.5rem' },
+        { key: 'peakMontRoc',    name: 'Le Mont Roc',    size: '6.5rem' },
+        { key: 'peakRocheGrise', name: 'La Roche Grise', size: '5.5rem' },
+        { key: 'peakSommetNoir', name: 'Le Sommet Noir', size: '6rem' },
+        { key: 'peakGrandPic',   name: 'Le Grand Pic',   size: '7.5rem' }
     ];
-    peaks.forEach(function(pk) {
-        var loc = pk.loc;
+    peaks.forEach(function(pk) { Game.placeTag('loc:' + pk.key, function() {
+        var loc = L[pk.key];
         var base = document.createElement('div');
         base.style.cssText = 'position:absolute;z-index:0;pointer-events:none;';
         base.style.left = (loc.x - 230) + 'px';
@@ -462,7 +474,7 @@ Game.world.createExtraPeaks = function() {
             snow.style.opacity = '0.7';
             world.appendChild(snow);
         }
-    });
+    }); });
 };
 
 // Ligne de rivage (y du bord de l'eau à la position x) — partagée rendu + collision joueur
