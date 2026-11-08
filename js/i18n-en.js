@@ -1,5 +1,12 @@
 // Dictionnaire français → anglais (généré à partir des textes du jeu ; voir js/i18n.js)
 Game.I18N_EN = {
+"Comment on joue ?": "How do you play?",
+"Pas de panique, tout est expliqué ici. Prends ton temps 🍃": "Don't worry, everything is explained here. Take your time 🍃",
+"C'est bon, on joue ! 👍": "Got it, let's play! 👍",
+"Fauteuil": "Armchair",
+"Frigo": "Fridge",
+"Évier": "Sink",
+
 "button, .ui-card, #action-fountain, #action-bakery, #action-shop, #action-river, #action-fishShop, #action-museum, .building-label, .villager-sprite, .garden-cell, #mobile-toggle, #joystick": "button, .ui-card, #action-fountain, #action-bakery, #action-shop, #action-river, #action-fishShop, #action-museum, .building-label, .villager-sprite, .garden-cell, #mobile-toggle, #joystick",
 "🏡 Ton village est tout petit : seule Eloise 🐰 y habite. Gagne des niveaux ⭐ et achète des matériaux 🧱 pour construire d'autres maisons !": "🏡 Your village is super tiny: only Eloise 🐰 lives here. Level up ⭐ and buy materials 🧱 to build more houses!",
 "Achète des outils 🪓 et des graines 🌱. Pour les matériaux 🧱 : paie en clochettes ou échange tes pierres 🪨 !": "Buy tools 🪓 and seeds 🌱. For materials 🧱: pay with bells or trade your stones 🪨!",

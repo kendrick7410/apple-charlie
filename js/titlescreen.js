@@ -23,16 +23,16 @@ Game.titlescreen.showControls = function() {
         '<div class="lang-row"><span class="lang-title">🌐 Language / Langue</span>' +
         '<button type="button" class="lang-btn' + (Game.lang === 'fr' ? ' on' : '') + '" data-lang="fr" translate="no">🇫🇷 Français</button>' +
         '<button type="button" class="lang-btn' + (Game.lang === 'en' ? ' on' : '') + '" data-lang="en" translate="no">🇬🇧 English</button></div>' +
-        '<h2>⚙️ Commandes</h2>';
+        '<h2>Comment on joue ?</h2><p class="controls-intro">Pas de panique, tout est expliqué ici. Prends ton temps 🍃</p>';
     CONTROLS.forEach(function(sec) {
-        html += '<h3>' + sec[0] + '</h3><dl>';
+        html += '<section class="ctrl-sec"><h3>' + sec[0] + '</h3><dl>';
         sec[1].forEach(function(r) { html += '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; });
-        html += '</dl>';
+        html += '</dl></section>';
     });
-    html += '</div>';
+    html += '<button type="button" class="controls-done">C\'est bon, on joue ! 👍</button></div>';
     p.innerHTML = html;
     p.onclick = function(e) {
-        if (e.target === p || e.target.classList.contains('controls-close')) { p.remove(); return; }
+        if (e.target === p || e.target.classList.contains('controls-close') || e.target.classList.contains('controls-done')) { p.remove(); return; }
         var lb = e.target.closest && e.target.closest('.lang-btn');
         if (lb && lb.dataset.lang !== Game.lang && Game.setLang) Game.setLang(lb.dataset.lang);
     };
