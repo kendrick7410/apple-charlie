@@ -139,6 +139,30 @@ function placeFree(arr, f) {
 }
 Game.furniture.placeFree = placeFree;
 
+// ── Collisions de Charlie dans une pièce ──
+// Rectangles au sol (centre + demi-tailles, en px de la pièce) : les meubles de la maison,
+// plus ce que la vue 3D ajoute (comptoir et étagères des boutiques).
+var CHARLIE_R = 16;
+Game.furniture.colliders = function() {
+    var out = [];
+    list().forEach(function(f) {
+        var fp = Game.furniture.footprint(f);
+        out.push({ cx: f[1] + 24, cy: f[2] + 24, hw: fp.hw, hd: fp.hd });
+    });
+    if (Game.r3d && Game.r3d.roomColliders) out = out.concat(Game.r3d.roomColliders());
+    return out;
+};
+function inside(c, x, y) { return Math.abs(x - c.cx) < c.hw + CHARLIE_R && Math.abs(y - c.cy) < c.hd + CHARLIE_R; }
+// Vrai si aller de (ox,oy) à (nx,ny) fait entrer Charlie dans un meuble
+// (s'il est déjà dessus, assis ou couché, il peut toujours en sortir)
+Game.furniture.blocks = function(ox, oy, nx, ny) {
+    var cs = Game.furniture.colliders();
+    for (var i = 0; i < cs.length; i++) {
+        if (inside(cs[i], nx + 24, ny + 24) && !inside(cs[i], ox + 24, oy + 24)) return true;
+    }
+    return false;
+};
+
 // Chaque maison a un petit coin cuisine (frigo, évier, cuisinière) et un coin télé (télé + fauteuil).
 // Ajoutés une seule fois par maison (Game.state.homeKit), y compris dans les anciennes sauvegardes.
 var HOME_KIT = [

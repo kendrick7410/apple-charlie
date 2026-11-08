@@ -9,7 +9,7 @@ Game.CONFIG = {
     WORLD_H: 6000,
     TILE: 60,
     LERP_SPEED: 0.22,
-    PLAYER_SPEED: 6,
+    PLAYER_SPEED: 4,   // plus calme (avant 6 : Charlie allait beaucoup trop vite)
 
     // Time
     REAL_MS_PER_GAME_HOUR: 30000,   // 30 s réelles = 1h jeu (donc 2h jeu = 1 min réelle)

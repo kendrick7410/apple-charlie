@@ -1664,6 +1664,23 @@ function placeBubble(rec) {
 
 // ── Alpinisme : avec piolet + crampons, Charlie grimpe sur les montagnes ──
 var _mtnRay = null, _mtnFrom = null, _mtnDown = null;
+// Récolte de pierre en montagne : 1 pierre 🪨 toutes les 10 s tant que Charlie reste sur une montagne.
+// S'il redescend, le compteur repart de zéro.
+var _stoneT = 0, _stoneHint = false;
+function mountainStones(onMountain, dt) {
+    var s = Game.state;
+    if (!onMountain || s.paused || s.currentView !== 'world') { if (!onMountain) _stoneT = 0; return; }
+    if (!_stoneHint) { _stoneHint = true; Game.ui.notify('⛰️ Reste sur la montagne : tu gagnes 1 pierre 🪨 toutes les 10 secondes !'); }
+    _stoneT += dt;
+    if (_stoneT >= 10) {
+        _stoneT -= 10;
+        s.inventory.stone++;
+        Game.audio.playChime();
+        Game.particles.spawn('🪨', window.innerWidth / 2, window.innerHeight / 2 - 40, { count: 2, spread: 30 });
+        Game.ui.update();
+        Game.ui.notify('+1 pierre 🪨 (montagne)');
+    }
+}
 function mountainHeight(px, py) {
     if (!_mtnRay) { _mtnRay = new T.Raycaster(); _mtnFrom = new T.Vector3(); _mtnDown = new T.Vector3(0, -1, 0); }
     var best = null;
@@ -1828,6 +1845,9 @@ Game.r3d.shopSlotScreen = function(i) {   // tests automatiques
     var sl = shopSlots[i]; if (!sl || !room3d) return null;
     var v = new T.Vector3(); sl.group.getWorldPosition(v); v.project(room3d.camera);
     return { x: (v.x + 1) / 2 * window.innerWidth, y: (1 - v.y) / 2 * window.innerHeight, label: sl.info.label, checkout: shopSlots.checkout, carrying: carrying && carrying.info.label };
+};
+Game.r3d.roomColliders = function() {   // pour furniture.blocks : obstacles fixes de la pièce
+    return room3d && room3d.colliders && Game.state.activeShop ? room3d.colliders : [];
 };
 Game.r3d.bellScreen = function() {   // tests automatiques : la cloche du Magasin à l'écran
     if (!shopOwner || !room3d) return null;
@@ -2251,6 +2271,7 @@ function syncRoom() {
     var items = room3d.items;
     while (items.children.length) items.remove(items.children[0]);
     var R = roomPx();
+    room3d.colliders = [];   // comptoir, étagères... (Charlie ne passe pas à travers, voir furniture.blocks)
     // Meubles (maisons)
     if (s.activeHouse) {
         (s.houseFurniture[s.activeHouse.id] || []).forEach(function(f) {
@@ -2270,6 +2291,11 @@ function syncRoom() {
     });
     var npc = document.getElementById('shop-npc');
     shopOwner = null;
+    if (s.activeShop && npc && npc.style.display !== 'none') {
+        // Tout l'espace derrière le comptoir est réservé au vendeur
+        var backZ = -R.h / 2 * RU, frontZ = backZ + 2.3 + 0.55;
+        room3d.colliders.push({ cx: R.w / 2, cy: (backZ + frontZ) / 2 / RU + R.h / 2, hw: R.w / 2, hd: (frontZ - backZ) / 2 / RU });
+    }
     if (s.activeShop && s.activeShop.id === 'shop') buildShopCounter(items, R);   // caisse, cloche, rideau, propriétaire
     else if (npc && npc.style.display !== 'none') {
         rbox(items, 3.2, 1.0, 0.8, 0.12, '#a0703f', 0, 0.5, -R.h / 2 * RU + 2.3);
@@ -2326,6 +2352,7 @@ function buildShopShelves(items, R) {
         var z0 = -D / 2 + 3.4, z1 = D / 2 - 1.6, len = z1 - z0;
         // Meuble d'étagère : montants, trois planches, fond
         var shelf = new T.Group(); shelf.position.set(x, 0, (z0 + z1) / 2); items.add(shelf);
+        room3d.colliders.push({ cx: x / RU + R.w / 2, cy: (z0 + z1) / 2 / RU + R.h / 2, hw: 0.42 / RU, hd: (len + 0.3) / 2 / RU });
         rbox(shelf, 0.7, 2.2, len + 0.3, 0.05, '#c99a63', side * 0.3, 1.1, 0).scale.x = 0.15;
         [0.15, 0.95, 1.75].forEach(function(y) { rbox(shelf, 0.75, 0.08, len + 0.3, 0.03, '#a0703f', 0, y, 0); });
         [-1, 1].forEach(function(e) { rbox(shelf, 0.75, 2.2, 0.1, 0.03, '#8a5a3c', 0, 1.1, e * (len + 0.3) / 2); });
@@ -2356,11 +2383,13 @@ function buildShopCounter(items, R) {
     rbox(items, 3.6, 0.1, 1.0, 0.05, '#c99a63', 0, 1.09, cz);
     // Caisse enregistreuse : corps rouge, écran vert, touches, tiroir
     var reg = new T.Group(); reg.position.set(0.95, 1.14, cz); items.add(reg);
-    rbox(reg, 0.72, 0.3, 0.52, 0.06, '#d64541', 0, 0.15, 0);
-    rbox(reg, 0.74, 0.1, 0.54, 0.03, '#b23a36', 0, 0.02, 0);
-    for (var kx = 0; kx < 4; kx++) for (var kz = 0; kz < 2; kz++) rbox(reg, 0.1, 0.04, 0.08, 0.015, '#f2f2f2', -0.22 + kx * 0.15, 0.32, 0.06 + kz * 0.12);
-    rbox(reg, 0.42, 0.26, 0.08, 0.03, '#37474f', 0, 0.5, -0.14);
-    put(reg, new T.Mesh(new T.PlaneGeometry(0.34, 0.17), mat('#7CFC9A', { emissive: '#3ddc84', emissiveIntensity: 0.6 })), 0, 0.5, -0.095);
+    rbox(reg, 0.72, 0.3, 0.52, 0.06, '#d64541', 0, 0.2, 0);
+    var drawer = new T.Group(); reg.add(drawer);   // tiroir-caisse qui s'ouvre vers le vendeur
+    rbox(drawer, 0.66, 0.1, 0.5, 0.03, '#b23a36', 0, 0.05, 0);
+    [['#7cb342', -0.18], ['#7cb342', -0.02], ['#fbc02d', 0.15]].forEach(function(b) { rbox(drawer, 0.13, 0.03, 0.2, 0.01, b[0], b[1], 0.11, -0.05); });
+    for (var kx = 0; kx < 4; kx++) for (var kz = 0; kz < 2; kz++) rbox(reg, 0.1, 0.04, 0.08, 0.015, '#f2f2f2', -0.22 + kx * 0.15, 0.37, 0.06 + kz * 0.12);
+    rbox(reg, 0.42, 0.26, 0.08, 0.03, '#37474f', 0, 0.55, -0.14);
+    var screen = put(reg, new T.Mesh(new T.PlaneGeometry(0.34, 0.17), new T.MeshStandardMaterial({ color: lin('#7CFC9A'), emissive: lin('#3ddc84'), emissiveIntensity: 0.6 })), 0, 0.55, -0.095);
     // Cloche de comptoir dorée (cliquable)
     var bell = new T.Group(); bell.position.set(-0.9, 1.14, cz + 0.12); items.add(bell);
     put(bell, new T.Mesh(new T.CylinderGeometry(0.2, 0.22, 0.05, 24), mat('#3b2b1e')), 0, 0.025, 0);
@@ -2374,23 +2403,33 @@ function buildShopCounter(items, R) {
     var hole = new T.Mesh(new T.PlaneGeometry(1.3, 2.2), mat('#140d08')); hole.position.set(0, 1.1, back + 0.012); items.add(hole);
     rbox(items, 1.6, 0.16, 0.14, 0.04, '#8a5a3c', 0, 2.26, back + 0.05);
     [-0.73, 0.73].forEach(function(x) { rbox(items, 0.14, 2.3, 0.14, 0.04, '#8a5a3c', x, 1.12, back + 0.05); });
-    var strings = [], BEADS = ['#e53935', '#fdd835', '#43a047', '#1e88e5', '#8e24aa'];
-    for (var i = 0; i < 13; i++) {
-        var x = -0.6 + i * 0.1, piv = new T.Group(); piv.position.set(x, 2.18, back + 0.07); items.add(piv);
-        put(piv, new T.Mesh(geo('string', function() { return new T.CylinderGeometry(0.01, 0.01, 2.1, 5); }), mat('#d7c49e')), 0, -1.05, 0);
-        for (var b = 0; b < 8; b++) ball(piv, 0.035, BEADS[(i + b) % BEADS.length], 0, -0.15 - b * 0.25, 0);
-        piv.userData.side = x < 0 ? -1 : 1; piv.userData.x0 = x;
+    // Rideau : fines ficelles à perles en bois et en couleur, en deux morceaux pour qu'elles se plient
+    var strings = [], BEADS = ['#b5651d', '#e53935', '#d9a066', '#fdd835', '#b5651d', '#43a047', '#d9a066', '#1e88e5'];
+    var STR = mat('#e8dcc0', { roughness: 0.9 });
+    function segment(parent, n0) {
+        put(parent, new T.Mesh(geo('string2', function() { return new T.CylinderGeometry(0.006, 0.006, 1.05, 4); }), STR), 0, -0.525, 0);
+        for (var b = 0; b < 8; b++) {
+            var bead = put(parent, new T.Mesh(geo('bead', function() { return new T.SphereGeometry(1, 8, 6); }), mat(BEADS[(n0 + b) % BEADS.length], { roughness: 0.5 })), 0, -0.07 - b * 0.13, 0);
+            bead.scale.set(0.024, 0.032, 0.024); bead.castShadow = false;
+        }
+    }
+    for (var i = 0; i < 21; i++) {
+        var x = -0.62 + i * 0.062, piv = new T.Group(); piv.position.set(x, 2.18, back + 0.07); items.add(piv);
+        segment(piv, i);
+        var low = new T.Group(); low.position.y = -1.05; piv.add(low);
+        segment(low, i + 3);
+        piv.userData = { x0: x, side: x < 0 ? -1 : 1, low: low, a: 0, v: 0, b: 0, vb: 0, sway: Math.random() * 6.28 };
         strings.push(piv);
     }
     // Le propriétaire (caché derrière le rideau tant qu'on n'a pas sonné)
     var owner = makeShopkeeper(KEEPER_LOOKS.shop);
     items.add(owner);
     var bubbles = {};
-    [['hello', "Bonjour ! Qu'avez-vous acheté ?"], ['nothing', "Prends un objet sur les étagères, je t'attends 😊"], ['thanks', 'Merci et à bientôt ! 👋']].forEach(function(b) {
+    [['hello', "Bonjour ! Qu'avez-vous acheté ?"], ['nothing', "Prends un objet sur les étagères, je t'attends 😊"], ['thanks', 'Merci et à bientôt ! 👋'], ['poor', "Oh, il te manque des clochettes 😕"]].forEach(function(b) {
         var sp = labelSprite(b[1], 0.42); sp.position.set(0, 2.75, 0); sp.visible = false; owner.add(sp); bubbles[b[0]] = sp;
     });
     var sign = labelSprite('🛒 Caisse', 0.6); sign.position.set(0, 3.0, cz - 0.4); items.add(sign);
-    shopOwner = { obj: owner, bell: bell, strings: strings, back: back, cz: cz, bubbles: bubbles };
+    shopOwner = { obj: owner, bell: bell, strings: strings, back: back, cz: cz, bubbles: bubbles, drawer: drawer, screen: screen };
     applyOwner(0);
 }
 function ringBell() {
@@ -2405,56 +2444,100 @@ function say(key) {
     for (var k in shopOwner.bubbles) shopOwner.bubbles[k].visible = k === key;
     if (key && ownerState.said !== key) {
         ownerState.said = key;
-        var txt = { hello: "🧓 Bonjour ! Qu'avez-vous acheté ?", nothing: "🧓 Prends un objet sur les étagères, je t'attends 😊", thanks: '🧓 Merci et à bientôt ! 👋' }[key];
+        var txt = { hello: "🧓 Bonjour ! Qu'avez-vous acheté ?", nothing: "🧓 Prends un objet sur les étagères, je t'attends 😊", thanks: '🧓 Merci et à bientôt ! 👋', poor: "🧓 Oh, il te manque des clochettes 😕" }[key];
         if (txt) Game.ui.notify(txt);
     }
 }
 function ease(t) { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); }
-// Place le propriétaire et le rideau selon l'étape de l'animation
+// Charlie est-il devant la caisse ?
+function charlieAtCounter() {
+    var ic = Game.state.interiorCharlie, co = shopSlots.checkout;
+    return !!co && Math.hypot(ic.x - co.x, ic.y - co.y) < 90;
+}
+// Place le propriétaire, la caisse et le rideau selon l'étape de l'animation
 function applyOwner(dt) {
     var o = shopOwner, st = ownerState;
     if (!o) return;
     var ud = o.obj.userData, behind = o.back - 0.45, front = o.cz - 0.8;
-    var open = 0, z = behind, lean = 0, look = 0, vis = true, face = 0;
+    var z = behind, x = 0, lean = 0, look = 0, vis = true, face = 0, hands = 0, drawerOpen = 0, armR = null, armL = null;
     st.t += dt;
     switch (st.phase) {
         case 'hidden': vis = false; break;
-        case 'part':   open = ease(st.t / 0.5); lean = 0; vis = st.t > 0.3; if (st.t > 0.5) { st.phase = 'peek'; st.t = 0; } break;
+        case 'part':   // ses mains écartent les ficelles
+            hands = ease(st.t / 0.5); z = behind - 0.1; vis = st.t > 0.15;
+            if (st.t > 0.5) { st.phase = 'peek'; st.t = 0; } break;
         case 'peek':   // il passe d'abord la tête et regarde à gauche et à droite
-            open = 1; lean = 0.55 * ease(st.t / 0.35); look = Math.sin(st.t * 5) * 0.5 * ease(st.t / 0.3);
+            hands = 1; lean = 0.55 * ease(st.t / 0.35); look = Math.sin(st.t * 5) * 0.5 * ease(st.t / 0.3);
             if (st.t > 1.3) { st.phase = 'come'; st.t = 0; } break;
         case 'come':
-            var k = ease(st.t / 1.1); open = st.t < 0.7 ? 1 : 1 - ease((st.t - 0.7) / 0.5); lean = 0.55 * (1 - k); z = behind + (front - behind) * k; walkLegs(ud);
+            var k = ease(st.t / 1.1); lean = 0.55 * (1 - k); z = behind + (front - behind) * k; walkLegs(ud);
             if (st.t > 1.1) { st.phase = 'talk'; st.t = 0; } break;
         case 'talk':
             z = front;
-            if (carrying) {
+            if (carrying && charlieAtCounter()) {
                 say('hello');
-                if (st.t > 1.4) { checkout(); st.phase = 'thanks'; st.t = 0; }
+                if (st.t > 1.4) { st.phase = 'register'; st.t = 0; st.beep = 0; }
             } else {
                 say(st.t < 1.8 ? 'hello' : 'nothing');
                 if (st.t > 9) { st.phase = 'leave'; st.t = 0; }
             }
             break;
+        case 'register':   // il tape le prix sur la caisse, le tiroir s'ouvre, il range l'argent
+            z = front; x = 0.45 * ease(st.t / 0.3); face = 0.5 * ease(st.t / 0.3);
+            say(null);
+            if (st.t < 1.0) {
+                armR = -1.15 + Math.sin(st.t * 22) * 0.18;
+                if (st.t - st.beep > 0.17) { st.beep = st.t; Game.audio.playNote(880 + Math.random() * 300, 0.07); }
+                o.screen.material.emissiveIntensity = 0.6 + Math.sin(st.t * 30) * 0.4;
+            } else if (st.t < 1.9) {
+                if (!st.dinged) { st.dinged = true; Game.audio.playCoin(); }
+                drawerOpen = ease((st.t - 1.0) / 0.15); armR = -0.9; armL = -0.9 + Math.sin(st.t * 8) * 0.1;
+            } else {
+                drawerOpen = 1 - ease((st.t - 1.9) / 0.2); armR = -0.5 * (1 - ease((st.t - 1.9) / 0.3));
+            }
+            if (st.t > 2.3) {
+                st.dinged = false; o.screen.material.emissiveIntensity = 0.6;
+                var before = Game.state.inventory.money;
+                checkout();
+                st.phase = Game.state.inventory.money < before ? 'thanks' : 'poor'; st.t = 0;
+            }
+            break;
         case 'thanks': z = front; say('thanks'); if (st.t > 2.4) { st.phase = 'leave'; st.t = 0; } break;
+        case 'poor':   z = front; say('poor');   if (st.t > 2.6) { st.phase = 'talk'; st.t = 2; } break;
         case 'leave':
             var k2 = ease(st.t / 1.2); z = front + (behind - front) * k2; face = Math.PI; walkLegs(ud);
-            open = st.t > 0.6 ? Math.min(1, (st.t - 0.6) / 0.3) : 0;
-            if (st.t > 1.2) { open = 1 - ease((st.t - 1.2) / 0.4); vis = st.t < 1.3; }
-            if (st.t > 1.6) { st.phase = 'hidden'; st.t = 0; st.said = ''; }
+            if (st.t > 1.35) vis = false;
+            if (st.t > 1.8) { st.phase = 'hidden'; st.t = 0; st.said = ''; }
             break;
     }
-    if (st.phase !== 'talk' && st.phase !== 'thanks') say(null);
+    if (['talk', 'thanks', 'poor'].indexOf(st.phase) === -1) say(null);
     o.obj.visible = vis;
-    o.obj.position.set(0, 0.06, z);
+    o.obj.position.set(x, 0.06, z);
     o.obj.rotation.set(lean, face, 0);
     if (ud.head) ud.head.rotation.y = look;
-    if (st.phase === 'talk' || st.phase === 'thanks' || st.phase === 'hidden') { ud.legL.rotation.x = ud.legR.rotation.x = 0; }
-    // Ficelles : celles du milieu s'écartent vers les côtés
+    // Bras : écartent le rideau, tapent sur la caisse, ou le long du corps
+    ud.armL.rotation.x = armL !== null ? armL : -1.3 * hands;
+    ud.armR.rotation.x = armR !== null ? armR : -1.3 * hands;
+    ud.armL.rotation.z = -0.12 - 0.7 * hands; ud.armR.rotation.z = 0.12 + 0.7 * hands;
+    if (['talk', 'thanks', 'poor', 'register', 'hidden'].indexOf(st.phase) > -1) { ud.legL.rotation.x = ud.legR.rotation.x = 0; }
+    o.drawer.position.z = -0.32 * drawerOpen;
+    // Ficelles : petits pendules. Le corps et les mains du vendeur les poussent, puis elles se balancent
+    var tnow = performance.now() / 1000, near = vis ? Math.max(0, 1 - Math.abs(z - o.back) / 0.95) : 0;
     o.strings.forEach(function(p) {
-        var w = 1 - Math.abs(p.userData.x0) / 0.65;
-        p.rotation.z = -p.userData.side * open * (0.35 + 0.5 * w);
-        p.position.x = p.userData.x0 + p.userData.side * open * 0.12;
+        var u = p.userData;
+        var touch = Math.max(0, 1 - Math.abs(u.x0 - x) / 0.5) * near;            // le corps passe au milieu
+        var target = u.side * (touch * 0.45 + hands * (0.12 + 0.3 * (1 - Math.abs(u.x0) / 0.65)));
+        target += Math.sin(tnow * 0.9 + u.sway) * 0.012;                          // léger courant d'air
+        // Petits pas de calcul : stable même si l'ordinateur affiche peu d'images par seconde
+        for (var left = Math.min(dt, 0.1); left > 0; left -= 1 / 120) {
+            var h = Math.min(left, 1 / 120);
+            u.v += (-22 * (u.a - target) - 4.5 * u.v) * h; u.a += u.v * h;
+            u.vb += (-30 * (u.b + u.a * 0.4 - target * 0.25) - 5 * u.vb) * h; u.b += u.vb * h;   // le bas suit en retard
+        }
+        u.a = Math.max(-0.6, Math.min(0.6, u.a)); u.b = Math.max(-0.5, Math.min(0.5, u.b));
+        p.rotation.z = u.a; u.low.rotation.z = u.b;
+        p.rotation.x = -touch * 0.3;
+        p.position.x = u.x0 + u.side * hands * 0.08;
     });
     // La cloche tremble quand on tape dessus
     if (bellWobble > 0) { bellWobble = Math.max(0, bellWobble - dt); o.bell.rotation.z = Math.sin(bellWobble * 40) * 0.12 * bellWobble; }
@@ -2938,6 +3021,7 @@ function loop(now) {
         climbPose(onMtn && canClimb() && onMtn.y - heightAt(cx, cy) > 0.5 ? onMtn : null, moved, dt, time);
         if (onMtn && canClimb()) checkSummit(onMtn);
     }
+    mountainStones(onMtn && onMtn.y - heightAt(cx, cy) > 0.3, dt);
     _prev = { x: cx, y: cy };
 
     // Caméra de biais qui suit Charlie ; le soleil (et ses ombres) suit aussi

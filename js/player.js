@@ -191,10 +191,14 @@ Game.player.updateInterior = function(dt) {
     if (dx !== 0 && dy !== 0 && !s.interiorTarget) { dx *= 0.7071; dy *= 0.7071; }
     if (s.joy && (s.joy.x || s.joy.y)) { dx = s.joy.x; dy = s.joy.y; s.interiorTarget = null; }
 
-    s.interiorCharlie.x += dx * speed;
-    s.interiorCharlie.y += dy * speed;
-    s.interiorCharlie.x = Math.max(20, Math.min(522, s.interiorCharlie.x));
-    s.interiorCharlie.y = Math.max(20, Math.min(540, s.interiorCharlie.y));
+    // Charlie ne traverse ni les meubles ni le comptoir : on avance axe par axe (il glisse le long)
+    var ox = s.interiorCharlie.x, oy = s.interiorCharlie.y;
+    var nx = Math.max(20, Math.min(522, ox + dx * speed));
+    if (!Game.furniture.blocks(ox, oy, nx, oy)) s.interiorCharlie.x = nx;
+    var ny = Math.max(20, Math.min(540, oy + dy * speed));
+    if (!Game.furniture.blocks(s.interiorCharlie.x, oy, s.interiorCharlie.x, ny)) s.interiorCharlie.y = ny;
+    // Bloqué contre un meuble en marchant vers un point : on s'arrête là
+    if (s.interiorTarget && Math.hypot(s.interiorCharlie.x - ox, s.interiorCharlie.y - oy) < speed * 0.1) s.interiorTarget = null;
 
     var ic = document.getElementById('interior-charlie');
     if (ic) {

@@ -131,6 +131,7 @@ Game.saveGame = function() {
         homeKit: Object.assign({}, s.homeKit || {}),
         builtHouses: s.builtHouses.slice(),
         builtShops: s.builtShops.slice(),
+        villageReset1: true,
         totalTimePlayed: s.totalTimePlayed
     };
     try {
@@ -185,10 +186,20 @@ Game.loadGame = function() {
         if (data.houseFurniture) s.houseFurniture = data.houseFurniture;
         s.homeKit = data.homeKit || {};
         // Ancienne sauvegarde (avant les terrains à bâtir) : on garde tout le village déjà là
-        s.builtHouses = data.builtHouses || Game.HOUSES.map(function(h){ return h.id; });
+        // Ancienne sauvegarde sans terrains à bâtir : on ne donne plus tout le village d'un coup,
+        // seulement les maisons du début (les autres se construisent comme dans une nouvelle partie)
+        s.builtHouses = data.builtHouses || Game.HOUSES.filter(function(h){ return h.start; }).map(function(h){ return h.id; });
         // Maisons présentes dès le début (refuge du Cervin) : aussi dans les anciennes parties
         Game.HOUSES.forEach(function(h) { if (h.start && s.builtHouses.indexOf(h.id) === -1) s.builtHouses.push(h.id); });
-        s.builtShops = data.builtShops || Game.SHOPS.map(function(sh){ return sh.id; });
+        s.builtShops = data.builtShops || Game.SHOPS.filter(function(sh){ return !sh.level; }).map(function(sh){ return sh.id; });
+        // Correction unique (demandée par Charlie) : un monde qui a TOUTES les maisons et TOUS les bâtiments
+        // vient d'une ancienne sauvegarde ; il repart avec le village du début, à reconstruire.
+        if (!data.villageReset1) {
+            var allH = Game.HOUSES.every(function(h){ return h.id === 'charlie' || s.builtHouses.indexOf(h.id) > -1; });
+            var allS = Game.SHOPS.every(function(sh){ return s.builtShops.indexOf(sh.id) > -1; });
+            if (allH) s.builtHouses = Game.HOUSES.filter(function(h){ return h.start; }).map(function(h){ return h.id; });
+            if (allS) s.builtShops = Game.SHOPS.filter(function(sh){ return !sh.level; }).map(function(sh){ return sh.id; });
+        }
         Game.HOUSES.forEach(function(h) {
             if (!s.houseFurniture[h.id]) s.houseFurniture[h.id] = h.furniture.map(function(f){ return f.slice(); });
         });

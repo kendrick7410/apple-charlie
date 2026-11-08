@@ -132,7 +132,8 @@ Game.farm.init = function() {
         world.appendChild(box);
     });
 
-    // Le fermier qui s'occupe de la ferme
+    // Le fermier qui s'occupe de la ferme (un seul, jamais deux)
+    document.querySelectorAll('#game-world .farmer-sprite').forEach(function(old) { old.remove(); });
     var fel = document.createElement('div');
     fel.className = 'entity farmer-sprite';
     fel.style.cssText = 'position:absolute;font-size:2.6rem;z-index:12;pointer-events:none;';
