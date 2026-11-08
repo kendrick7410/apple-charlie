@@ -816,14 +816,22 @@ function quad(o) {
     ball(body, br, FUR, 0, H, 0, 1.0, 0.82, bl);
     if (o.belly) ball(body, br * 0.86, o.belly, 0, H - 0.08, 0.04, 0.92, 0.72, bl * 0.9);
     if (o.spots) o.spots.forEach(function(p) { ball(body, 0.17, o.spotColor || '#2b2b2b', p[0] * 1.1, H + 0.12 + p[1], p[2], 1, 0.55, 1); });
-    // Pattes : la hanche est DANS le corps, le pied touche le sol
+    // Pattes en deux parties comme un vrai animal : cuisse épaisse qui part du corps, genou (devant)
+    // ou jarret (derrière) qui plie, canon plus fin, sabot / patte. La hanche est DANS le corps, le pied touche le sol.
     var legs = [];
     [[-1, 1], [1, 1], [-1, -1], [1, -1]].forEach(function(q) {
-        var hipY = H - 0.12;
-        var piv = new T.Group(); piv.position.set(q[0] * br * 0.52, hipY, q[1] * br * bl * 0.58); body.add(piv);
-        var len = Math.max(0.05, hipY - 2 * lr);
-        put(piv, new T.Mesh(capsuleGeo(lr, len), LEGM), 0, -hipY / 2, 0);
-        ball(piv, lr * 1.25, o.hoof || o.legs || o.fur, 0, -hipY + lr * 0.9, 0.04, 1, 0.75, 1.2);   // sabot / patte
+        var hipY = H - 0.12, rear = q[1] < 0;
+        var piv = new T.Group(); piv.position.set(q[0] * br * 0.5, hipY, q[1] * br * bl * 0.58); body.add(piv);
+        var reach = Math.max(0.1, hipY - lr * 0.9);          // de la hanche au sol
+        var L1 = reach * 0.5, L2 = reach - L1;
+        // Cuisse : large en haut (se fond dans le corps), plus fine vers le genou
+        ball(piv, lr * 1.55, LEGM, 0, -0.02, rear ? -0.03 : 0.02, 1, 1.25, 1.1);
+        put(piv, new T.Mesh(capsuleGeo(lr * 1.1, Math.max(0.02, L1 - lr)), LEGM), 0, -L1 / 2, rear ? -0.02 : 0);
+        var knee = new T.Group(); knee.position.set(0, -L1, rear ? -0.04 : 0.02); piv.add(knee);
+        ball(knee, lr * 0.95, LEGM, 0, 0, 0);                 // articulation
+        put(knee, new T.Mesh(capsuleGeo(lr * 0.72, Math.max(0.02, L2 - lr)), LEGM), 0, -L2 / 2, 0);
+        var hoof = ball(knee, lr * 1.05, o.hoof || o.legs || o.fur, 0, -L2 + lr * 0.55, 0.05, 1, 0.7, 1.3);   // sabot / patte
+        piv.userData.knee = knee; piv.userData.rear = rear;
         legs.push(piv);
     });
     // Cou : trois boules du haut de l'avant du corps jusqu'à la tête (sans trou)
@@ -876,7 +884,14 @@ function bird(o) {
     [-1, 1].forEach(function(sx) {
         var piv = new T.Group(); piv.position.set(sx * 0.25, legY + 0.38, -0.02); body.add(piv);
         var w = new T.Group(); piv.add(w);
-        if (o.flies) { ball(w, 0.22, o.wing || o.color, sx * 0.2 * (o.span || 1), 0, -0.02, 1.25 * (o.span || 1), 0.18, 0.75); ball(w, 0.12, o.wing || o.color, sx * 0.42 * (o.span || 1), -0.01, -0.08, 1.2, 0.15, 0.8); }
+        if (o.flies) {
+            ball(w, 0.22, o.wing || o.color, sx * 0.2 * (o.span || 1), 0, -0.02, 1.25 * (o.span || 1), 0.18, 0.75);
+            ball(w, 0.12, o.wing || o.color, sx * 0.42 * (o.span || 1), -0.01, -0.08, 1.2, 0.15, 0.8);
+            if (o.glide) for (var fk = 0; fk < 4; fk++) {   // grandes plumes écartées au bout des ailes (aigle)
+                var fe = ball(w, 0.07, o.tip || '#3a2412', sx * (0.62 + fk * 0.035) * (o.span || 1), -0.01, -0.04 - fk * 0.07, 2.2, 0.25, 0.7);
+                fe.rotation.y = -sx * (0.15 + fk * 0.18);
+            }
+        }
         else { var fw = ball(w, 0.22, o.wing || o.color, sx * 0.03, 0, -0.04, 0.35, 0.72, 1.15); fw.rotation.x = 0.25; }
         wings.push(piv);
     });
@@ -892,6 +907,14 @@ function bird(o) {
         legs.push(lp);
     });
     g.scale.setScalar((o.size || 1) * 0.7);
+    if (o.flies) {
+        // Ombre au sol sous l'oiseau qui vole : on voit tout de suite qu'il est dans les airs
+        var sh = new T.Mesh(geo('flyshadow', function() { return new T.CircleGeometry(0.5, 20); }),
+            new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28, depthWrite: false }));
+        sh.rotation.x = -Math.PI / 2; sh.position.y = 0.04; sh.renderOrder = 2; g.add(sh);
+        g.userData.flyShadow = sh;
+        body.traverse(function(m) { if (m.isMesh) m.castShadow = false; });   // une seule ombre : celle juste en dessous
+    }
     g.userData.wings = wings; g.userData.flies = !!o.flies; g.userData.glide = !!o.glide; g.userData.body = body;
     g.userData.head = head; g.userData.birdLegs = legs; g.userData.tail = tail; g.userData.pecks = !o.flies;
     return g;
@@ -960,7 +983,7 @@ var ANIMALS = {
     '🐤': function() { return bird({ color: '#ffd84a', size: 0.5 }); },
     '🐣': function() { var g = bird({ color: '#ffd84a', size: 0.5 }); ball(g, 0.42, '#fffaf0', 0, 0.12, 0, 1, 0.6, 1); return g; },
     '🐦': function() { return bird({ color: '#5aa7e3', breast: '#ffe08a', wing: '#2f6ea8', beak: '#f2c94c', size: 0.5, flies: true }); },
-    '🦅': function() { return bird({ color: '#6b4426', head: '#ffffff', beak: '#f2c94c', wing: '#4f3019', tail: '#ffffff', span: 2.2, size: 1.0, flies: true, glide: true }); },
+    '🦅': function() { return bird({ color: '#6b4426', head: '#ffffff', beak: '#f2c94c', wing: '#4f3019', tip: '#2e1c0e', tail: '#ffffff', span: 2.6, size: 1.25, flies: true, glide: true }); },
     '🦇': function() { return bird({ color: '#3d3550', wing: '#2a2438', beak: '#3d3550', span: 1.8, size: 0.6, flies: true }); }
 };
 ANIMALS['🐮'] = ANIMALS['🐄']; ANIMALS['🐖'] = ANIMALS['🐷'];
@@ -1092,7 +1115,17 @@ function animateAnimal(obj, dx, dy, dt, time) {
     if (ud.crabLegs) ud.crabLegs.forEach(function(l, i) { l.rotation.x = Math.sin(time * (moving ? 18 : 2) + i) * (moving ? 0.5 : 0.08); if (i === 0 || i === 4) l.rotation.y = Math.sin(time * 1.5 + i) * 0.25; });
     if (ud.ears) ud.ears.forEach(function(e, i) { e.rotation.z = Math.max(0, Math.sin(time * 2.3 + ph + i * 2)) ** 8 * 0.5 * (i ? -1 : 1); });
     if (ud.body && !ud.flies) ud.body.scale.y = 1 + Math.sin(time * 2 + ph) * 0.015;
-    if (ud.legs) { var sw = Math.sin(ud.step) * 0.6 * ud.moveAmt; ud.legs[0].rotation.x = sw; ud.legs[3].rotation.x = sw; ud.legs[1].rotation.x = -sw; ud.legs[2].rotation.x = -sw; }
+    if (ud.legs) {
+        // Marche en diagonale (avant-gauche avec arrière-droite) ; la patte qui avance se plie au genou / jarret
+        var mv = ud.moveAmt || 0;
+        ud.legs.forEach(function(l, i) {
+            var phase = ud.step + (i === 0 || i === 3 ? 0 : Math.PI);
+            var swing = Math.sin(phase) * 0.55 * mv;
+            var lift = Math.max(0, Math.cos(phase)) * mv;     // patte en l'air pendant qu'elle avance
+            l.rotation.x = swing + (l.userData.rear ? 0.12 : -0.05) * mv;
+            if (l.userData.knee) l.userData.knee.rotation.x = l.userData.rear ? -lift * 0.9 : lift * 1.1;   // jarret plie vers l'arrière, genou vers l'avant
+        });
+    }
     if (ud.wings) {
         // Vol : battements, ou plané (aigle) avec un battement de temps en temps ; au sol : petits battements en sautillant
         var flap = ud.glide ? (Math.sin(time * 0.7 + ph) > 0.6 ? Math.sin(time * 9) * 0.6 : 0.12) : Math.sin(time * 10 + obj.id) * 0.7;
@@ -1101,9 +1134,17 @@ function animateAnimal(obj, dx, dy, dt, time) {
     }
     if (ud.flies && ud.body) {
         // Les oiseaux qui volent tournent en rond au-dessus de l'endroit où ils sont
-        var ca = time * (ud.glide ? 0.35 : 0.8) + ph, cr = ud.glide ? 2.6 : 1.4;
-        ud.body.position.set(Math.cos(ca) * cr, (ud.glide ? 4.5 : 2.6) + Math.sin(time * 1.3 + ph) * 0.25, Math.sin(ca) * cr);
-        ud.body.rotation.set(0, -ca - obj.rotation.y, (ud.glide ? 0.35 : 0.2));
+        var ca = time * (ud.glide ? 0.3 : 0.8) + ph, cr = ud.glide ? 3.6 : 1.4;
+        var alt = (ud.glide ? 6 : 3.2) + Math.sin(time * 1.3 + ph) * (ud.glide ? 0.5 : 0.25);   // l'aigle plane haut dans le ciel
+        ud.body.position.set(Math.cos(ca) * cr, alt, Math.sin(ca) * cr);
+        ud.body.rotation.set(0, -ca - obj.rotation.y, (ud.glide ? 0.45 : 0.2));   // il penche dans le virage
+        if (ud.flyShadow) {
+            ud.flyShadow.position.x = ud.body.position.x; ud.flyShadow.position.z = ud.body.position.z;
+            var ss = (ud.glide ? 2.4 : 0.9) * (1 + alt * 0.04);
+            ud.flyShadow.scale.set(ss, ss * 0.55, 1);
+            ud.flyShadow.rotation.z = -ca;
+            ud.flyShadow.material.opacity = Math.max(0.24, 0.4 - alt * 0.02);
+        }
     } else if (ud.body) ud.body.position.y = Math.abs(Math.sin(ud.step)) * 0.06 * ud.moveAmt + (petted ? Math.abs(Math.sin(time * 9)) * 0.25 : 0);
     var gy = ud.groundY || 0;
     if (ud.butterfly) obj.position.y = gy + 0.3 + Math.sin(time * 3 + obj.id) * 0.15;
