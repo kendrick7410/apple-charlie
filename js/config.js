@@ -14,6 +14,7 @@ Game.CONFIG = {
     // Time
     REAL_MS_PER_GAME_HOUR: 30000,   // 30 s réelles = 1h jeu (donc 2h jeu = 1 min réelle)
     SEASON_DURATION_MS: 7 * 60000,  // 7 min par saison
+    WINTER_DURATION_MS: 4 * 60000,  // sauf l'hiver : 4 min (demandé par Charlie)
 
     // Spawn counts (carte plus grande → plus de nature)
     TREE_COUNT: 60,

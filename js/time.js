@@ -38,8 +38,9 @@ Game.time.update = function(now) {
 
     // Season
     Game.state.seasonElapsed = (Game.state.seasonElapsed || 0) + dt;
-    if (Game.state.seasonElapsed >= Game.CONFIG.SEASON_DURATION_MS) {
-        Game.state.seasonElapsed -= Game.CONFIG.SEASON_DURATION_MS;
+    var seasonLen = Game.state.season === 'winter' ? Game.CONFIG.WINTER_DURATION_MS : Game.CONFIG.SEASON_DURATION_MS;
+    if (Game.state.seasonElapsed >= seasonLen) {
+        Game.state.seasonElapsed = Math.min(Game.state.seasonElapsed - seasonLen, Game.CONFIG.SEASON_DURATION_MS - 1000);
         Game.state.seasonIndex = (Game.state.seasonIndex + 1) % 4;
         Game.state.season = Game.SEASONS[Game.state.seasonIndex];
         Game.time.onSeasonChange(Game.state.season);
