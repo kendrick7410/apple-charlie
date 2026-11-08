@@ -2791,14 +2791,38 @@ function sleepInBed(c, time) {
     bk.rotation.set(0, r, 0);
     var unfold = Math.min(1, Math.max(0.12, t / 0.7));                   // 0,7 s pour remonter la couverture
     bk.userData.piv.scale.z = unfold * unfold * (3 - 2 * unfold);
-    // Paupières : deux clignements lents (vers 1 s et 1,9 s), puis il ferme les yeux pour de bon (2,7 s)
-    if (!ud.lids) {
-        var skin = (SKIN_LOOKS[Game.state.skin] || SKIN_LOOKS.aventurier).skin || '#f2c9a0';
-        ud.lids = [-0.16, 0.16].map(function(x) { var l = ball(ud.head, 0.095, mat(skin, { roughness: 0.6 }), x, 0.04, 0.42, 1, 1, 0.55); l.visible = false; return l; });
+    // Vue à la première personne : on est dans les yeux de Charlie, la tête sur l'oreiller, on regarde vers ses pieds
+    c.visible = false;   // on ne voit jamais son propre corps (il est sous la couverture)
+    var cam = room3d.camera, eye = at(0, 1.45, -0.62), look = at(0, 0.75, 1.9);
+    var k = Math.min(1, t / 0.6);                                        // la caméra glisse doucement jusqu'aux yeux
+    if (!room3d.camFrom) room3d.camFrom = cam.position.clone();
+    cam.position.lerpVectors(room3d.camFrom, eye, k * k * (3 - 2 * k));
+    cam.lookAt(look);
+    if (cam.fov !== 70) { cam.fov = 70; cam.updateProjectionMatrix(); }
+    room3d.firstPerson = true;
+    // Paupières sur l'écran : deux clignements lents, les yeux se ferment (2,7 s) ; le matin ils se rouvrent
+    function blink(t0) { var q = (t - t0) / 0.6; return q > 0 && q < 1 ? Math.sin(q * Math.PI) : 0; }
+    var closed;
+    if (t < 2.7) closed = Math.max(blink(1.0), blink(1.9));
+    else if (t < 6.4) closed = Math.min(1, (t - 2.7) / 0.6);
+    else closed = Math.max(0, 1 - (t - 6.4) / 0.7) + blink(7.2) * 0.8;  // réveil : les yeux s'ouvrent, encore un petit clignement
+    screenLids(Math.min(1, closed));
+}
+// Deux paupières noires (haut et bas) qui se ferment sur l'écran
+var _lids = null;
+function screenLids(closed) {
+    if (!_lids) {
+        _lids = [0, 1].map(function(i) {
+            var d = document.createElement('div');
+            d.style.cssText = 'position:fixed;left:-5%;width:110%;height:0;z-index:9500;pointer-events:none;background:#08060a;' +
+                (i ? 'bottom:0;border-radius:50% 50% 0 0 / 30px 30px 0 0;' : 'top:0;border-radius:0 0 50% 50% / 0 0 30px 30px;') +
+                'box-shadow:0 0 40px 20px rgba(8,6,10,.6);';
+            document.body.appendChild(d);
+            return d;
+        });
     }
-    function blink(t0) { var k = (t - t0) / 0.55; return k > 0 && k < 1 ? Math.sin(k * Math.PI) : 0; }
-    var closed = t > 2.7 ? Math.min(1, (t - 2.7) / 0.5) : Math.max(blink(0.9), blink(1.8));
-    ud.lids.forEach(function(l) { l.visible = closed > 0.02; l.scale.y = Math.max(0.05, closed) * 1.25; l.position.y = 0.04 + (1 - closed) * 0.06; });
+    var h = closed <= 0.01 ? 0 : closed * 51;
+    _lids.forEach(function(d) { d.style.height = h + '%'; d.style.display = h ? 'block' : 'none'; });
 }
 function updateRoomCharlie(dt, time) {
     var s = Game.state, c = room3d.charlie, ic = document.getElementById('interior-charlie');
@@ -2820,7 +2844,14 @@ function updateRoomCharlie(dt, time) {
     if (lie) sleepInBed(c, time);
     else {
         if (room3d.blanket) room3d.blanket.visible = false;
-        if (c.userData.lids) c.userData.lids.forEach(function(l) { l.visible = false; });
+        if (room3d.firstPerson) {   // fin du sommeil : on revient à la vue normale de la pièce
+            room3d.firstPerson = false; room3d.camFrom = null;
+            room3d.camera.position.set(0, 9.2, room3d.D / 2 + 7.6);
+            room3d.camera.lookAt(0, 0.6, 0.4);
+            resizeRoom();
+            screenLids(0);
+        }
+        c.visible = true;
         c.scale.setScalar(1.05);
         c.rotation.x = 0; c.rotation.z = 0;
         c.position.set(p.x, y, p.z);
@@ -2833,6 +2864,7 @@ function updateRoomCharlie(dt, time) {
         if (t) { room3d.fx = emojiSprite(t, 0.7); room3d.scene.add(room3d.fx); }
     }
     if (room3d.fx) room3d.fx.position.set(p.x + 0.5, 2.2 + Math.sin(time * 4) * 0.08, p.z);
+    if (room3d.fx) room3d.fx.visible = !room3d.firstPerson;   // en vue première personne, pas de 💤 qui flotte devant les yeux
 }
 
 // ── Clics et glisser dans la pièce 3D ──
@@ -3005,15 +3037,16 @@ function exitAnimation(elId) {
     charlie.position.set(front.x + 0.45, charlie.position.y, front.z - 0.5);
     charlie.rotation.y = 0; ud.facing = 0;
     var p = screenOf(new T.Vector3(front.x + 0.45, 1.2, front.z));
+    // Un seul pas dehors (juste devant la porte), il se retourne et la ferme tout près, puis il s'éloigne
+    var sx = front.x + 0.45, sz = front.z + 0.75;
     return iris(false, window.innerWidth / 2, window.innerHeight / 2, 700).then(function() {
-        return tween(900, function(k) {                   // sort
-            charlie.position.x = front.x + 0.45 + (ex - front.x - 0.45) * k;
-            charlie.position.z = front.z - 0.5 + (ez - front.z + 0.5) * k;
+        return tween(450, function(k) {                   // sort d'un pas
+            charlie.position.z = front.z - 0.5 + (sz - front.z + 0.5) * k;
             walkLegs(ud);
         });
     }).then(function() {
         ud.legL.rotation.x = ud.legR.rotation.x = 0;
-        charlie.rotation.y = Math.PI; ud.facing = Math.PI;   // se retourne pour refermer
+        charlie.rotation.y = Math.PI; ud.facing = Math.PI;   // se retourne vers la porte, tout près
         return tween(250, function(k) { ud.armR.rotation.x = -1.3 * k; });
     }).then(function() {
         Game.audio.play('craft');
@@ -3021,6 +3054,13 @@ function exitAnimation(elId) {
     }).then(function() {
         ud.armR.rotation.x = 0;
         charlie.rotation.y = 0; ud.facing = 0;
+        return tween(450, function(k) {                   // puis il s'éloigne jusqu'à sa place
+            charlie.position.x = sx + (ex - sx) * k;
+            charlie.position.z = sz + (ez - sz) * k;
+            walkLegs(ud);
+        });
+    }).then(function() {
+        ud.legL.rotation.x = ud.legR.rotation.x = 0;
         _camFocus = null;                                 // la caméra reprend sa place
         _exitHold = false; s.paused = false; setGhosts(true); _cutscene = false;
     });
