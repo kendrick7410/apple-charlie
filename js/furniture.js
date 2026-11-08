@@ -68,7 +68,8 @@ var HELP = {
     bath:      "Prends un bain 🛁 (+15 XP par jour).",
     armchair:  "Installe-toi dans le fauteuil 🛋️ : avec la télé allumée, c'est encore mieux !",
     fridge:    "Prends un goûter dans le frigo 🧊 (+30 de faim).",
-    counter:   "L'évier du coin cuisine : fais la vaisselle 🧽 (+5 XP par jour)."
+    counter:   "L'évier du coin cuisine : fais la vaisselle 🧽 (+5 XP par jour).",
+    portrait:  "Le portrait d'un ami, offert à 5 cœurs 💝"
 };
 
 Game.furniture.help = function(type) { return HELP[type]; };
@@ -100,7 +101,7 @@ function elOf(f) {
 var FOOT = {
     bed: [43, 63], table: [43, 43], chair: [17, 17], bookshelf: [40, 14], lamp: [14, 14], plant: [17, 17],
     mirror: [26, 8], stove: [31, 22], tv: [37, 14], piano: [49, 20], bath: [54, 30],
-    armchair: [36, 30], fridge: [27, 24], counter: [48, 22]
+    armchair: [36, 30], fridge: [27, 24], counter: [48, 22], portrait: [26, 18]
 };
 function roomSize() { var r = room(); return { w: (r && r.clientWidth) || 570, h: (r && r.clientHeight) || 570 }; }
 Game.furniture.footprint = function(f) {
@@ -678,6 +679,7 @@ var USES = {
         document.body.appendChild(fade);
         setTimeout(function() { fade.classList.add('dark'); }, D);
         setTimeout(function() {
+            if (s.gameHour >= SLEEP_FROM) s.dayNumber = (s.dayNumber || 0) + 1;   // on a dormi jusqu'au lendemain
             s.gameHour = WAKE_AT;
             s.gameMinute = 0;
             Game.furniture.updateLight();
@@ -797,6 +799,14 @@ var USES = {
         sparkle(f, snack, 3);
         Game.audio.playChime();
         Game.ui.notify(snack + " Miam, un goûter du frigo ! (+30 de faim)");
+    },
+
+    // Portrait d'un ami : un joli souvenir
+    portrait: function(f) {
+        var who = '';
+        for (var n in Game.VILLAGER_DATA) if (Game.VILLAGER_DATA[n].emoji === f[6]) who = n.split(' ')[0];
+        sparkle(f, '💛', 3);
+        Game.ui.notify('🖼️ Le portrait de ' + (who || 'ton ami') + '. Vous êtes les meilleurs amis du monde 💛');
     },
 
     // Évier : faire la vaisselle

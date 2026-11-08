@@ -78,6 +78,7 @@ Game.villagers.update = function(dt) {
         }
 
         if (v.el.style.display === 'none') v.el.style.display = '';
+        if (v.talkUntil && performance.now() < v.talkUntil) return;   // il discute avec Charlie : il ne bouge pas
 
         // Cible de marche : au départ, ou renouvelée toutes les UPDATE_INTERVAL
         if (v.tx === undefined || pickNew) {
@@ -133,6 +134,8 @@ Game.villagers.interact = function(name) {
     var v = s.villagers.find(function(vl) { return vl.name === name; });
     if (!v) return;
     if (Math.hypot(s.charlie.x - v.x, s.charlie.y - v.y) > 120) return;
+    // Panneau d'amitié : discuter, offrir un cadeau, rendre sa quête (js/friends.js)
+    if (Game.friends) { Game.friends.open(name); return; }
 
     var qi = s.questProgress[name] || 0;
 

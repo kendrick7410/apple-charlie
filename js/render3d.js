@@ -2349,6 +2349,21 @@ function makeFurniture(type, f) {
             rbox(g, 1.9, 0.6, 1.05, 0.3, '#ffffff', 0, 0.3, 0);
             put(g, new T.Mesh(new T.PlaneGeometry(1.6, 0.75), new T.MeshStandardMaterial({ color: lin('#8fd3f4'), roughness: 0.1, transparent: true, opacity: 0.85 })), 0, 0.56, 0).rotation.x = -Math.PI / 2;
             break;
+        case 'portrait': {   // chevalet en bois, cadre doré, fond peint et le portrait (tête + épaules) de l'ami
+            var WOODC = mat('#8a5a3c');
+            [-0.38, 0.38].forEach(function(x) { var leg = rbox(g, 0.07, 1.7, 0.07, 0.02, WOODC, x, 0.85, 0.08); leg.rotation.z = x > 0 ? -0.08 : 0.08; });
+            var back = rbox(g, 0.07, 1.6, 0.07, 0.02, WOODC, 0, 0.78, -0.32); back.rotation.x = -0.32;
+            rbox(g, 0.9, 0.06, 0.12, 0.02, WOODC, 0, 0.62, 0.14);                     // tablette
+            var fr = new T.Group(); fr.position.set(0, 1.2, 0.12); fr.rotation.x = -0.12; g.add(fr);
+            rbox(fr, 0.98, 1.08, 0.08, 0.04, mat('#d4a73c', { metalness: 0.4, roughness: 0.35 }), 0, 0, 0);
+            put(fr, new T.Mesh(new T.PlaneGeometry(0.84, 0.94), mat('#bfe0f2')), 0, 0, 0.045);   // fond peint (ciel)
+            put(fr, new T.Mesh(new T.PlaneGeometry(0.84, 0.3), mat('#9ccc65')), 0, -0.32, 0.046); // colline
+            var who = makeCritter(f[6] || '🐰'), hd = who.userData.head;
+            hd.parent.remove(hd); fr.add(hd); hd.position.set(0, 0.08, 0.1); hd.scale.setScalar(0.42); hd.rotation.set(0, 0, 0);
+            var sc = (CRITTERS[f[6]] || {}).shirt || '#7fb7e8';
+            ball(fr, 0.26, mat(sc), 0, -0.32, 0.06, 1.15, 0.55, 0.35);                   // épaules
+            break;
+        }
         case 'armchair':   // fauteuil moelleux : dossier vers l'arrière (-z), on s'assoit face à +z
             rbox(g, 1.2, 0.45, 1.0, 0.18, '#c0504d', 0, 0.3, 0.05);
             rbox(g, 1.2, 1.0, 0.32, 0.16, '#c0504d', 0, 0.75, -0.36);

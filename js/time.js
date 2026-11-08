@@ -33,6 +33,7 @@ Game.time.update = function(now) {
         Game.state.gameHour++;
         if (Game.state.gameHour >= 24) {
             Game.state.gameHour = 0;
+            Game.state.dayNumber = (Game.state.dayNumber || 0) + 1;   // un jour de plus (amitié : 1 discussion et 1 cadeau par jour)
         }
     }
 

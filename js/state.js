@@ -23,6 +23,11 @@ Game.state = {
     season: 'spring',
     seasonIndex: 0,
     seasonElapsed: 0,    // temps déjà passé dans la saison (ms de jeu), sauvegardé
+    dayNumber: 0,        // numéro du jour de jeu
+    friendship: {},      // amitié : points par habitant (100 = 1 cœur)
+    friendDay: {},       // dernier jour où on a discuté / offert un cadeau
+    friendKnown: {},     // goûts découverts en offrant des cadeaux
+    friendReward: {},    // portrait déjà offert (5 cœurs)
     weather: 'clear',    // 'clear', 'rain', 'snow', 'sunny'
     gardenPlots: [],     // [{crop,stage,waterLevel,plantedAt}]
     questProgress: {},   // { 'Lya 🐰': 0, ... }  index of current quest
@@ -107,6 +112,8 @@ Game.saveGame = function() {
         season: s.season,
         seasonIndex: s.seasonIndex,
         seasonElapsed: s.seasonElapsed || 0,
+        dayNumber: s.dayNumber || 0,
+        friendship: s.friendship || {}, friendDay: s.friendDay || {}, friendKnown: s.friendKnown || {}, friendReward: s.friendReward || {},
         gardenPlots: JSON.parse(JSON.stringify(s.gardenPlots)),
         questProgress: Object.assign({}, s.questProgress),
         questCompleted: JSON.parse(JSON.stringify(s.questCompleted)),
@@ -164,6 +171,8 @@ Game.loadGame = function() {
         if (data.season) s.season = data.season;
         if (data.seasonIndex !== undefined) s.seasonIndex = data.seasonIndex;
         s.seasonElapsed = typeof data.seasonElapsed === 'number' ? data.seasonElapsed : 0;
+        s.dayNumber = data.dayNumber || 0;
+        s.friendship = data.friendship || {}; s.friendDay = data.friendDay || {}; s.friendKnown = data.friendKnown || {}; s.friendReward = data.friendReward || {};
         if (data.gardenPlots) s.gardenPlots = data.gardenPlots;
         if (data.questProgress) Object.assign(s.questProgress, data.questProgress);
         if (data.questCompleted) s.questCompleted = data.questCompleted;
