@@ -217,6 +217,8 @@ Game.buildings.enterShop = function(shopId) {
     purpose.textContent = shop.purpose || '';
     purpose.style.display = shop.purpose ? 'block' : 'none';
 
+    // Plus personne qui dort ici : on enlève le lit / le dormeur d'une maison visitée avant
+    room.querySelectorAll('.house-bed, .house-sleeper').forEach(function(el) { el.remove(); });
     // Clear any furniture / decor then place this shop's decor (non-draggable)
     var old = room.querySelectorAll('.furniture');
     for (var i = 0; i < old.length; i++) old[i].remove();

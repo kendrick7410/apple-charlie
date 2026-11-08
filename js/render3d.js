@@ -410,6 +410,30 @@ function addGhost(root) {
     });
 }
 // Le fermier : même corps, chapeau de paille et salopette
+// Commerçant en 3D : cheveux, moustache, lunettes, tablier (le propriétaire du Magasin et les autres vendeurs)
+var KEEPER_LOOKS = {
+    shop:     { shirt: '#5b8fc9', hair: '#dcdcdc', apron: '#f4efe1' },
+    bakery:   { shirt: '#f5f5f5', hair: '#6d4c41', apron: '#f3d9a8', glasses: false },
+    fishShop: { shirt: '#2a8bbf', hair: '#3e2723', apron: '#e3f3fb', glasses: false, moustache: false },
+    pizzeria: { shirt: '#c62828', hair: '#212121', apron: '#ffffff', glasses: false },
+    souvenir: { shirt: '#009688', hair: '#a1887f', apron: '#e2f6f2', moustache: false }
+};
+function makeShopkeeper(o) {
+    o = o || KEEPER_LOOKS.shop;
+    var skin = o.skin || '#f0c9a4';
+    var root = makeBody({ skin: skin, shirt: o.shirt, pants: o.pants || '#5d4a3a', boot: '#4a3a2a' });
+    var ud = root.userData, head = ud.head, body = ud.body;
+    ball(head, 0.47, mat(o.hair), 0, 0.12, -0.1, 1, 0.6, 0.95);
+    face(head, { nose: skin, noseSize: 0.07 });
+    if (o.moustache !== false) ball(head, 0.12, mat(o.hair), 0, -0.1, 0.43, 1.4, 0.45, 0.5);
+    if (o.glasses !== false) [-0.16, 0.16].forEach(function(x) {
+        put(head, new T.Mesh(geo('lens', function() { return new T.TorusGeometry(0.1, 0.018, 8, 20); }), mat('#3b2b1e')), x, 0.03, 0.45);
+    });
+    rbox(body, 0.5, 0.62, 0.06, 0.05, o.apron, 0, 0.86, 0.3);   // tablier
+    ball(body, 0.05, mat('#c0392b'), 0.12, 1.02, 0.34);          // badge
+    root.scale.setScalar(0.95);
+    return root;
+}
 function makeFarmer() {
     var root = makeBody({ skin: '#e8b48c', shirt: '#6aa84f', pants: '#3f6aa0', boot: '#4a3a2a' });
     var head = root.userData.head;
@@ -1805,6 +1829,11 @@ Game.r3d.shopSlotScreen = function(i) {   // tests automatiques
     var v = new T.Vector3(); sl.group.getWorldPosition(v); v.project(room3d.camera);
     return { x: (v.x + 1) / 2 * window.innerWidth, y: (1 - v.y) / 2 * window.innerHeight, label: sl.info.label, checkout: shopSlots.checkout, carrying: carrying && carrying.info.label };
 };
+Game.r3d.bellScreen = function() {   // tests automatiques : la cloche du Magasin à l'écran
+    if (!shopOwner || !room3d) return null;
+    var v = new T.Vector3(); shopOwner.bell.getWorldPosition(v); v.y += 0.12; v.project(room3d.camera);
+    return { x: (v.x + 1) / 2 * window.innerWidth, y: (1 - v.y) / 2 * window.innerHeight, phase: ownerState.phase };
+};
 Game.r3d.furnitureAt = function(e) {
     if (!room3d) return false;
     var hits = roomPoint(e).intersectObjects(room3d.items.children, true);
@@ -2240,10 +2269,16 @@ function syncRoom() {
         var sp = emojiSprite(el.textContent.trim(), 1.0); sp.position.set(p.x, 0.06, p.z); items.add(sp);
     });
     var npc = document.getElementById('shop-npc');
-    if (npc && npc.style.display !== 'none') {
+    shopOwner = null;
+    if (s.activeShop && s.activeShop.id === 'shop') buildShopCounter(items, R);   // caisse, cloche, rideau, propriétaire
+    else if (npc && npc.style.display !== 'none') {
         rbox(items, 3.2, 1.0, 0.8, 0.12, '#a0703f', 0, 0.5, -R.h / 2 * RU + 2.3);
-        var ns = emojiSprite(npc.textContent.trim(), 1.5); ns.position.set(0, 0.6, -R.h / 2 * RU + 1.6);
-        ns.userData.el = npc; items.add(ns);
+        var look = s.activeShop && KEEPER_LOOKS[s.activeShop.id];
+        var ns;
+        if (look) { ns = makeShopkeeper(look); ns.position.set(0, 0.06, -R.h / 2 * RU + 1.5); }   // vrai vendeur en 3D
+        else { ns = emojiSprite(npc.textContent.trim(), 1.5); ns.position.set(0, 0.6, -R.h / 2 * RU + 1.6); }   // le hibou du musée
+        ns.traverse(function(o) { o.userData.el = npc; });
+        items.add(ns);
     }
     // Le villageois dort dans son lit (un meuble déplaçable comme les autres)
     var sleeper = document.querySelector('#current-room .house-sleeper .sleeper-emoji');
@@ -2306,12 +2341,123 @@ function buildShopShelves(items, R) {
             shopSlots.push(slot);
         }
     });
-    // Caisse : tapis roulant et tiroir-caisse sur le comptoir, panneau « Caisse »
+    // Point devant la caisse (le comptoir, la cloche et le propriétaire : buildShopCounter)
     var cz = -R.h / 2 * RU + 2.3;
-    rbox(items, 0.6, 0.35, 0.45, 0.05, '#e8443c', 1.0, 1.15, cz);
-    var sign = labelSprite('🛒 Caisse', 0.6); sign.position.set(0, 2.8, cz - 0.4); items.add(sign);
-    shopSlots.checkout = pxOf(0, cz + 1.2);
+    shopSlots.checkout = pxOf(-1.1, cz + 1.2);   // devant la cloche : Charlie ne cache pas le propriétaire
     if (carrying) { carrying = null; }
+}
+// ── Comptoir du Magasin : on sonne la cloche, le propriétaire sort de derrière le rideau de ficelles ──
+var shopOwner = null;                                   // objets 3D (recréés quand la pièce se redessine)
+var ownerState = { phase: 'hidden', t: 0, hinted: false, said: '' };   // l'animation, elle, continue
+var pendingBell = false, bellWobble = 0;
+function buildShopCounter(items, R) {
+    var D = R.h * RU, back = -D / 2, cz = back + 2.3;
+    rbox(items, 3.4, 1.05, 0.85, 0.12, '#a0703f', 0, 0.52, cz);
+    rbox(items, 3.6, 0.1, 1.0, 0.05, '#c99a63', 0, 1.09, cz);
+    // Caisse enregistreuse : corps rouge, écran vert, touches, tiroir
+    var reg = new T.Group(); reg.position.set(0.95, 1.14, cz); items.add(reg);
+    rbox(reg, 0.72, 0.3, 0.52, 0.06, '#d64541', 0, 0.15, 0);
+    rbox(reg, 0.74, 0.1, 0.54, 0.03, '#b23a36', 0, 0.02, 0);
+    for (var kx = 0; kx < 4; kx++) for (var kz = 0; kz < 2; kz++) rbox(reg, 0.1, 0.04, 0.08, 0.015, '#f2f2f2', -0.22 + kx * 0.15, 0.32, 0.06 + kz * 0.12);
+    rbox(reg, 0.42, 0.26, 0.08, 0.03, '#37474f', 0, 0.5, -0.14);
+    put(reg, new T.Mesh(new T.PlaneGeometry(0.34, 0.17), mat('#7CFC9A', { emissive: '#3ddc84', emissiveIntensity: 0.6 })), 0, 0.5, -0.095);
+    // Cloche de comptoir dorée (cliquable)
+    var bell = new T.Group(); bell.position.set(-0.9, 1.14, cz + 0.12); items.add(bell);
+    put(bell, new T.Mesh(new T.CylinderGeometry(0.2, 0.22, 0.05, 24), mat('#3b2b1e')), 0, 0.025, 0);
+    var GOLD = mat('#f6c945', { metalness: 0.35, roughness: 0.3, emissive: '#5a4100', emissiveIntensity: 0.25 });
+    put(bell, new T.Mesh(geo('bell', function() { return new T.SphereGeometry(0.17, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2); }), GOLD), 0, 0.05, 0);
+    ball(bell, 0.04, GOLD, 0, 0.24, 0);
+    var hit = new T.Mesh(new T.BoxGeometry(0.6, 0.6, 0.6), new T.MeshBasicMaterial({ visible: false })); hit.position.y = 0.15; bell.add(hit);   // zone de clic plus grande
+    bell.traverse(function(o) { o.userData.bell = true; });
+    var tip = labelSprite('🛎️ Sonne !', 0.38); tip.position.set(0, 0.6, 0); bell.add(tip);
+    // Passage dans le mur du fond, caché par un rideau de ficelles à perles
+    var hole = new T.Mesh(new T.PlaneGeometry(1.3, 2.2), mat('#140d08')); hole.position.set(0, 1.1, back + 0.012); items.add(hole);
+    rbox(items, 1.6, 0.16, 0.14, 0.04, '#8a5a3c', 0, 2.26, back + 0.05);
+    [-0.73, 0.73].forEach(function(x) { rbox(items, 0.14, 2.3, 0.14, 0.04, '#8a5a3c', x, 1.12, back + 0.05); });
+    var strings = [], BEADS = ['#e53935', '#fdd835', '#43a047', '#1e88e5', '#8e24aa'];
+    for (var i = 0; i < 13; i++) {
+        var x = -0.6 + i * 0.1, piv = new T.Group(); piv.position.set(x, 2.18, back + 0.07); items.add(piv);
+        put(piv, new T.Mesh(geo('string', function() { return new T.CylinderGeometry(0.01, 0.01, 2.1, 5); }), mat('#d7c49e')), 0, -1.05, 0);
+        for (var b = 0; b < 8; b++) ball(piv, 0.035, BEADS[(i + b) % BEADS.length], 0, -0.15 - b * 0.25, 0);
+        piv.userData.side = x < 0 ? -1 : 1; piv.userData.x0 = x;
+        strings.push(piv);
+    }
+    // Le propriétaire (caché derrière le rideau tant qu'on n'a pas sonné)
+    var owner = makeShopkeeper(KEEPER_LOOKS.shop);
+    items.add(owner);
+    var bubbles = {};
+    [['hello', "Bonjour ! Qu'avez-vous acheté ?"], ['nothing', "Prends un objet sur les étagères, je t'attends 😊"], ['thanks', 'Merci et à bientôt ! 👋']].forEach(function(b) {
+        var sp = labelSprite(b[1], 0.42); sp.position.set(0, 2.75, 0); sp.visible = false; owner.add(sp); bubbles[b[0]] = sp;
+    });
+    var sign = labelSprite('🛒 Caisse', 0.6); sign.position.set(0, 3.0, cz - 0.4); items.add(sign);
+    shopOwner = { obj: owner, bell: bell, strings: strings, back: back, cz: cz, bubbles: bubbles };
+    applyOwner(0);
+}
+function ringBell() {
+    Game.audio.playNote(1568, 0.5);
+    setTimeout(function() { Game.audio.playNote(2093, 0.6); }, 90);
+    bellWobble = 0.6;
+    pendingBell = false;
+    if (ownerState.phase === 'hidden' || ownerState.phase === 'leave') { ownerState.phase = 'part'; ownerState.t = 0; }
+}
+function say(key) {
+    if (!shopOwner) return;
+    for (var k in shopOwner.bubbles) shopOwner.bubbles[k].visible = k === key;
+    if (key && ownerState.said !== key) {
+        ownerState.said = key;
+        var txt = { hello: "🧓 Bonjour ! Qu'avez-vous acheté ?", nothing: "🧓 Prends un objet sur les étagères, je t'attends 😊", thanks: '🧓 Merci et à bientôt ! 👋' }[key];
+        if (txt) Game.ui.notify(txt);
+    }
+}
+function ease(t) { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); }
+// Place le propriétaire et le rideau selon l'étape de l'animation
+function applyOwner(dt) {
+    var o = shopOwner, st = ownerState;
+    if (!o) return;
+    var ud = o.obj.userData, behind = o.back - 0.45, front = o.cz - 0.8;
+    var open = 0, z = behind, lean = 0, look = 0, vis = true, face = 0;
+    st.t += dt;
+    switch (st.phase) {
+        case 'hidden': vis = false; break;
+        case 'part':   open = ease(st.t / 0.5); lean = 0; vis = st.t > 0.3; if (st.t > 0.5) { st.phase = 'peek'; st.t = 0; } break;
+        case 'peek':   // il passe d'abord la tête et regarde à gauche et à droite
+            open = 1; lean = 0.55 * ease(st.t / 0.35); look = Math.sin(st.t * 5) * 0.5 * ease(st.t / 0.3);
+            if (st.t > 1.3) { st.phase = 'come'; st.t = 0; } break;
+        case 'come':
+            var k = ease(st.t / 1.1); open = st.t < 0.7 ? 1 : 1 - ease((st.t - 0.7) / 0.5); lean = 0.55 * (1 - k); z = behind + (front - behind) * k; walkLegs(ud);
+            if (st.t > 1.1) { st.phase = 'talk'; st.t = 0; } break;
+        case 'talk':
+            z = front;
+            if (carrying) {
+                say('hello');
+                if (st.t > 1.4) { checkout(); st.phase = 'thanks'; st.t = 0; }
+            } else {
+                say(st.t < 1.8 ? 'hello' : 'nothing');
+                if (st.t > 9) { st.phase = 'leave'; st.t = 0; }
+            }
+            break;
+        case 'thanks': z = front; say('thanks'); if (st.t > 2.4) { st.phase = 'leave'; st.t = 0; } break;
+        case 'leave':
+            var k2 = ease(st.t / 1.2); z = front + (behind - front) * k2; face = Math.PI; walkLegs(ud);
+            open = st.t > 0.6 ? Math.min(1, (st.t - 0.6) / 0.3) : 0;
+            if (st.t > 1.2) { open = 1 - ease((st.t - 1.2) / 0.4); vis = st.t < 1.3; }
+            if (st.t > 1.6) { st.phase = 'hidden'; st.t = 0; st.said = ''; }
+            break;
+    }
+    if (st.phase !== 'talk' && st.phase !== 'thanks') say(null);
+    o.obj.visible = vis;
+    o.obj.position.set(0, 0.06, z);
+    o.obj.rotation.set(lean, face, 0);
+    if (ud.head) ud.head.rotation.y = look;
+    if (st.phase === 'talk' || st.phase === 'thanks' || st.phase === 'hidden') { ud.legL.rotation.x = ud.legR.rotation.x = 0; }
+    // Ficelles : celles du milieu s'écartent vers les côtés
+    o.strings.forEach(function(p) {
+        var w = 1 - Math.abs(p.userData.x0) / 0.65;
+        p.rotation.z = -p.userData.side * open * (0.35 + 0.5 * w);
+        p.position.x = p.userData.x0 + p.userData.side * open * 0.12;
+    });
+    // La cloche tremble quand on tape dessus
+    if (bellWobble > 0) { bellWobble = Math.max(0, bellWobble - dt); o.bell.rotation.z = Math.sin(bellWobble * 40) * 0.12 * bellWobble; }
 }
 function pickItem(slot) {
     if (slot.info.owned) { Game.ui.notify(slot.info.emoji + ' Tu l\'as déjà !'); return; }
@@ -2341,12 +2487,25 @@ function checkout() {
         dropCarry(true);   // pas assez d'argent : l'objet retourne sur l'étagère
     }
 }
-function updateShop3d() {
+function updateShop3d(dt) {
     var s = Game.state;
-    if (!s.activeShop || s.activeShop.id !== 'shop') { if (carrying) dropCarry(true); pendingPick = null; return; }
+    if (!s.activeShop || s.activeShop.id !== 'shop') {
+        if (carrying) dropCarry(true);
+        pendingPick = null; pendingBell = false;
+        ownerState.phase = 'hidden'; ownerState.t = 0; ownerState.said = '';
+        return;
+    }
     var ic = s.interiorCharlie;
     if (pendingPick && Math.hypot(ic.x - pendingPick.stand.x, ic.y - pendingPick.stand.y) < 70) { pickItem(pendingPick); pendingPick = null; }
-    if (carrying && shopSlots.checkout && Math.hypot(ic.x - shopSlots.checkout.x, ic.y - shopSlots.checkout.y) < 80) checkout();
+    var atCounter = shopSlots.checkout && Math.hypot(ic.x - shopSlots.checkout.x, ic.y - shopSlots.checkout.y) < 90;
+    if (pendingBell && atCounter) ringBell();
+    // Au comptoir avec un objet : il faut appeler le propriétaire en sonnant la cloche
+    if (carrying && atCounter && ownerState.phase === 'hidden' && !ownerState.hinted) {
+        ownerState.hinted = true;
+        Game.ui.notify('🛎️ Sonne la cloche sur le comptoir pour appeler le vendeur !');
+    }
+    if (!carrying) ownerState.hinted = false;
+    applyOwner(dt || 1 / 60);
     // L'objet porté : tenu des deux mains devant Charlie
     if (carryObj) {
         var c = room3d.charlie, v = new T.Vector3(0, 0.95, 0.55);
@@ -2365,7 +2524,7 @@ function updateRoomCharlie(dt, time) {
         cu.armL.rotation.x = cu.armR.rotation.x = -0.75;
         cu.armL.rotation.z = 0.35; cu.armR.rotation.z = -0.35;
     } else if (c.userData.armL.rotation.z > 0.2) { c.userData.armL.rotation.z = -0.12; c.userData.armR.rotation.z = 0.12; }
-    updateShop3d();
+    updateShop3d(dt);
     var y = 0.06, lie = false;
     if (ic && ic.classList.contains('pose-sleep')) { y = 0.75; lie = true; }
     else if (ic && ic.classList.contains('pose-bath')) y = -0.15;
@@ -2409,6 +2568,12 @@ function onRoomDown(e) {
     }
     for (var i = 0; i < hits.length; i++) {
         var o = hits[i].object;
+        if (o.userData.bell) {   // cloche du comptoir : Charlie y va et sonne
+            var co = shopSlots.checkout, ic0 = s.interiorCharlie;
+            if (co && Math.hypot(ic0.x - co.x, ic0.y - co.y) < 90) ringBell();
+            else if (co) { pendingBell = true; pendingPick = null; Game.furniture.floorClick(co.x, co.y); }
+            return;
+        }
         if (o.userData.shopSlot) {   // objet sur une étagère : Charlie va le prendre
             var sl = o.userData.shopSlot;
             if (sl.info.owned) { Game.ui.notify(sl.info.emoji + ' Tu l\'as déjà !'); return; }
@@ -2418,7 +2583,7 @@ function onRoomDown(e) {
         if (o.userData.el) { o.userData.el.click(); return; }
     }
     var p = floorToRoom(rc);
-    pendingPick = null;
+    pendingPick = null; pendingBell = false;
     if (p) Game.furniture.floorClick(p.x, p.y);
 }
 function onRoomMove(e) {
