@@ -1687,6 +1687,16 @@ html.mode-3d #interior-view > #current-room {
 }
 
 /* Bouton de la balançoire (vue 3D) */
+#swing-move-btn {
+    position: fixed;
+    right: 10px;
+    bottom: 196px;
+    z-index: 1100;
+    display: none;
+    background: #8d6e63;
+    box-shadow: 0 4px 0 #6d4c41;
+    font-size: 0.95rem;
+}
 #swing-btn {
     position: fixed;
     right: 10px;

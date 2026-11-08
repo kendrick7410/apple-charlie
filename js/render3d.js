@@ -1855,6 +1855,43 @@ function plantFlag(rec) {
 }
 // ── Balançoire (achetée au Magasin, placée par Charlie) ──
 var swingObj = null, swingPivot = null, _swinging = false, _swingBtn = null, _swingT = 0;
+var _swingMoveBtn = null, _swingGhost = null, _swingGhostOk = false, _swingGhostP = null;
+// Un endroit est bon pour la balançoire : sur l'herbe ou le sable, pas dans l'eau, pas sur une montagne,
+// et rien autour (arbre, maison, rocher, décor...)
+function swingSpotOk(px, py) {
+    if (rawHeightAt(px, py) < -0.1 || mountainHeight(px, py)) return false;
+    return !(Game.placement && Game.placement.blocked && Game.placement.blocked(px, py, 60, { water: false }));
+}
+// Pendant qu'on place la balançoire : un fantôme suit la souris, vert si l'endroit est bon, rouge sinon
+window.addEventListener('pointermove', function(e) {
+    var s = Game.state;
+    if (!s || !s.swing || !s.swingPlacing || !scene || s.currentView !== 'world') return;
+    if (!_ray) return;
+    var r = renderer.domElement.getBoundingClientRect(), ndc = new T.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    _ray.setFromCamera(ndc, camera);
+    var g = _ray.intersectObject(groundMesh, false)[0];
+    if (!g) return;
+    _swingGhostP = { x: g.point.x / U, y: g.point.z / U };
+});
+window.addEventListener('keydown', function(e) {
+    var s = Game.state;
+    if (e.key === 'Escape' && s && s.swing && s.swingPlacing && s.swing.x !== null) { s.swingPlacing = false; Game.ui.notify('🎠 Balançoire laissée à sa place'); }
+});
+function updateSwingGhost() {
+    var s = Game.state, on = s.swing && s.swingPlacing && s.currentView === 'world';
+    if (!on) { if (_swingGhost) _swingGhost.visible = false; return; }
+    if (!_swingGhost) {
+        _swingGhost = makeSwing();
+        _swingGhost.userData.gm = new T.MeshBasicMaterial({ color: 0x43a047, transparent: true, opacity: 0.8, depthWrite: false });
+        _swingGhost.traverse(function(m) { if (m.isMesh) { m.material = _swingGhost.userData.gm; m.castShadow = false; } });
+        scene.add(_swingGhost);
+    }
+    var p = _swingGhostP || { x: s.charlie.x, y: s.charlie.y - 120 };
+    _swingGhostOk = swingSpotOk(p.x, p.y);
+    _swingGhost.userData.gm.color.set(_swingGhostOk ? 0x43a047 : 0xe53935);
+    _swingGhost.position.set(p.x * U, heightAt(p.x, p.y), p.y * U);
+    _swingGhost.visible = true;
+}
 function makeSwing() {
     var g = new T.Group(), WOOD = '#a0703f';
     [-1, 1].forEach(function(sx) {
@@ -1874,6 +1911,8 @@ function updateSwing(dt, time) {
     if (s.swing.x !== null && !swingObj) {
         swingObj = makeSwing(); scene.add(swingObj); swingPivot = swingObj.userData.pivot;
     }
+    updateSwingGhost();
+    if (swingObj) swingObj.visible = !s.swingPlacing;   // pendant le déplacement, seul le fantôme se voit
     if (swingObj) {
         swingObj.position.set(s.swing.x * U, heightAt(s.swing.x, s.swing.y), s.swing.y * U);
         _swingT += dt;
@@ -1886,8 +1925,17 @@ function updateSwing(dt, time) {
         _swingBtn.onclick = function() { _swinging ? stopSwing() : startSwing(); };
         document.body.appendChild(_swingBtn);
     }
-    var near = swingObj && s.currentView === 'world' && Math.hypot(s.charlie.x - s.swing.x, s.charlie.y - s.swing.y) < 110;
+    var near = swingObj && s.currentView === 'world' && !s.swingPlacing && Math.hypot(s.charlie.x - s.swing.x, s.charlie.y - s.swing.y) < 110;
     _swingBtn.style.display = near || _swinging ? 'block' : 'none';
+    // Bouton « Déplacer » à côté de « Se balancer »
+    if (!_swingMoveBtn) {
+        _swingMoveBtn = document.createElement('button');
+        _swingMoveBtn.id = 'swing-move-btn'; _swingMoveBtn.className = 'btn-animal';
+        _swingMoveBtn.textContent = '↔️ Déplacer la balançoire';
+        _swingMoveBtn.onclick = function() { Game.tools.moveSwing(); };
+        document.body.appendChild(_swingMoveBtn);
+    }
+    _swingMoveBtn.style.display = near && !_swinging ? 'block' : 'none';
     _swingBtn.textContent = _swinging ? '✋ Descendre' : '🎠 Se balancer';
     if (_swinging) {
         for (var k in s.keysDown) if (s.keysDown[k]) { stopSwing(); return; }
@@ -2207,7 +2255,7 @@ function handleClick3d(e) {
     var px = g.point.x / U, py = g.point.z / U;
     if (s.shovelMode && s.tools.shovel) { Game.tools.placePath(px, py); return; }
     if (s.swing && s.swingPlacing) {
-        if (rawHeightAt(px, py) < -0.1 || mountainHeight(px, py)) { Game.ui.notify("Pas ici ! Choisis un endroit sur l'herbe ou le sable 🎠"); return; }
+        if (!swingSpotOk(px, py)) { Game.ui.notify("Pas ici ! Choisis un endroit libre sur l'herbe ou le sable (le fantôme doit être vert) 🎠"); return; }
         s.swing.x = px; s.swing.y = py; s.swingPlacing = false;
         if (swingObj) { scene.remove(swingObj); swingObj = null; }
         Game.audio.play('craft');

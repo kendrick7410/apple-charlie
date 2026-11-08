@@ -215,7 +215,7 @@ function solidGrid() {
     var g = {};
     all(null).forEach(function(o) { if (!SOLID_SKIP[o.fp.kind]) gridAdd(g, o.fp); });
     var sw = Game.state && Game.state.swing;
-    if (sw && sw.x != null) gridAdd(g, { x: sw.x, y: sw.y, r: 75, kind: 'solid' });   // balançoire (dessinée en 3D seulement)
+    if (sw && sw.x != null && !Game.state.swingPlacing) gridAdd(g, { x: sw.x, y: sw.y, r: 75, kind: 'solid' });   // balançoire (dessinée en 3D seulement)
     _grid = g;
     return g;
 }

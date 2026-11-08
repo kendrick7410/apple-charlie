@@ -34,7 +34,8 @@ Game.tools.moveSwing = function() {
     var s = Game.state;
     if (!s.swing) return;
     s.swingPlacing = true;
-    Game.ui.notify("🎠 Clique sur l'herbe (dehors) pour placer ta balançoire");
+    if (Game.placement && Game.placement.refreshObstacles) Game.placement.refreshObstacles();
+    Game.ui.notify("🎠 Bouge la souris : le fantôme vert montre où elle ira. Clique pour la poser (Échap pour annuler)");
 };
 Game.tools.updateCramponsBtn = function() {
     var s = Game.state, sw = document.getElementById('swing-move');
