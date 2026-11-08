@@ -201,7 +201,8 @@ function drawBase() {
     c.fillStyle = '#dfe7ea'; c.beginPath(); c.arc(L.fountain.x * K, L.fountain.y * K, 6, 0, Math.PI * 2); c.fill();
     c.fillStyle = '#5ab4e0'; c.beginPath(); c.arc(L.fountain.x * K, L.fountain.y * K, 3.5, 0, Math.PI * 2); c.fill();
     c.fillStyle = '#7a5230'; c.fillRect(L.garden.x * K - 6, L.garden.y * K - 6, 12, 12);
-    building(L.farm.x, L.farm.y - 270, 12, '#b83227');
+    var LB = L.farmBarn || { x: L.farm.x, y: L.farm.y - 340 };
+    building(LB.x, LB.y + 70, 12, '#b83227');   // grange rouge
 }
 
 function roundRect(c, x, y, w, h, r) {

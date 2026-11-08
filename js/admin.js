@@ -145,7 +145,16 @@ function openWorld() {
     buildPanel();
     // La 3D se charge un peu après : dès qu'elle est prête, zoom et zones au sol
     var tries = 0, wait = setInterval(function() {
-        if (is3d() || ++tries > 60) { clearInterval(wait); setZoom(A.zoom); refresh(); }
+        if (is3d() || ++tries > 60) {
+            clearInterval(wait);
+            if (is3d() && Game.r3d.lowQuality) Game.r3d.lowQuality();   // moins lourd pour l'ordinateur (pas d'ombres)
+            setZoom(A.zoom); refresh();
+            var last = '';
+            setInterval(function() {   // on s'est promené (flèches) : les zones suivent
+                var c = Game.state.charlie, k = Math.round(c.x / 300) + ',' + Math.round(c.y / 300);
+                if (k !== last && !A.drag) { last = k; updateMarks(); }
+            }, 700);
+        }
     }, 500);
     // Brouillon déjà validé sur le serveur ? On le reprend
     api('GET', 'layout').then(function(r) { return r.status === 200 ? r.json() : null; }).then(function(d) {
@@ -197,7 +206,7 @@ function buildPanel() {
     document.body.appendChild(p);
     p.addEventListener('click', function(e) {
         var b = e.target.closest('button'); if (!b) return;
-        if (b.dataset.go !== undefined) { var pl = places[+b.dataset.go]; Game.player.teleport(pl[1], pl[2]); }
+        if (b.dataset.go !== undefined) { var pl = places[+b.dataset.go]; Game.player.teleport(pl[1], pl[2]); setTimeout(updateMarks, 50); }
         if (b.dataset.z) setZoom(A.zoom * (b.dataset.z === '+' ? 1.25 : 0.8));
         if (b.dataset.add !== undefined) addItem(A.palette[+b.dataset.add]);
         if (b.id === 'admin-del') deleteSel();
@@ -220,7 +229,7 @@ function buildPanel() {
 
 function setZoom(z) {
     A.zoom = Math.max(0.15, Math.min(1.5, z));
-    if (is3d()) { Game.adminZoom = 1; Game.r3d.viewZoom = Math.max(0.6, Math.min(4, 1 / A.zoom)); }   // 3D : la caméra recule
+    if (is3d()) { Game.adminZoom = 1; Game.r3d.viewZoom = Math.max(0.6, Math.min(2.4, 1 / A.zoom)); updateMarks(); }   // 3D : la caméra recule (pas trop : ça rame)
     else Game.adminZoom = A.zoom;                                                                       // 2D : la carte rétrécit
 }
 function status(t, bad) {
@@ -254,9 +263,22 @@ function refresh() {
 // Marques de l'éditeur : des attributs data-*, JAMAIS des classes (le tracteur et le foin sont reconnus par
 // la 3D justement parce qu'ils n'ont pas de classe : une classe en plus les transformait en emoji ou les cachait)
 function flag(el, name, on) { if (on) el.dataset[name] = '1'; else delete el.dataset[name]; }
-// 3D : zone au sol sous chaque objet (sa vraie place) : verte, rouge s'il gêne, bleue s'il est choisi
+// 3D : zone au sol sous chaque objet (sa vraie place) : verte, rouge s'il gêne, bleue s'il est choisi.
+// Seulement autour de l'endroit regardé (des centaines de zones partout faisaient ramer l'ordinateur).
+var MARK_RADIUS = 1500;
+function nearView(el) {
+    var c = Game.state.charlie, fp = Game.placement.footprint(el);
+    if (!fp) return false;
+    var x = fp.rect ? (fp.x1 + fp.x2) / 2 : fp.x, y = fp.rect ? (fp.y1 + fp.y2) / 2 : fp.y;
+    return Math.abs(x - c.x) < MARK_RADIUS && Math.abs(y - c.y) < MARK_RADIUS;
+}
+function updateMarks() {
+    if (!is3d()) return;
+    Game.decorLayout.editable().concat(placeEls()).forEach(function(el) { if (nearView(el)) mark(el); else Game.r3d.adminMark(el, null, null); });
+}
 function mark(el, ok) {
     if (!is3d()) return;
+    if (!nearView(el)) { Game.r3d.adminMark(el, null, null); return; }
     if (ok === undefined) ok = !el.dataset.adminBad;
     Game.r3d.adminMark(el, Game.placement.footprint(el), el === A.sel ? 'sel' : (ok ? 'ok' : 'bad'));
 }
@@ -344,6 +366,7 @@ window.addEventListener('pointerup', function(e) {
     e.stopPropagation();
     var moved = !A.drag.pan, d = A.drag;
     A.drag = null;
+    if (d.pan) updateMarks();
     if (d.group && (d.dx || d.dy)) {   // nouvelle position de référence du grand élément
         var cur = Game.decorLayout.placeXY(d.group);
         if (cur) { Game.decorLayout.setPlace(d.group, cur.x + d.dx, cur.y + d.dy); A.places[d.group] = Game.decorLayout.placeXY(d.group); }

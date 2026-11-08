@@ -514,7 +514,8 @@ function makeCritter(e) {
 }
 
 // Taille des bâtiments (plus petits = plus d'espace entre eux dans le village)
-var HOUSE_S = 0.62, SHOP_S = 0.72, SITE_S = 0.62;
+var HOUSE_S = 0.85, SHOP_S = 0.95, SITE_S = 0.62;   // bâtiments assez grands pour que Charlie passe la porte
+var CHAR_S = 0.72;                                  // taille des personnages dehors (Charlie, habitants, fermier)
 // Maisons : murs arrondis, toit doux, porte en arche, fenêtres rondes (les fenêtres s'allument la nuit)
 var windowGlass = [];
 var HOUSE_STYLES = {
@@ -538,15 +539,15 @@ function makeHouse(style, scale) {
     });
     put(g, new T.Mesh(roofGeo, mat(style.roof, { roughness: 0.55 })), 0, 2.78, 0);
     rbox(g, 0.55, 1.2, 0.55, 0.12, '#b8735a', 1.15, 4.0, -0.5);
-    var doorGeo = geo('door', function() {
-        var s = new T.Shape(); s.moveTo(-0.45, 0); s.lineTo(-0.45, 1.05); s.absarc(0, 1.05, 0.45, Math.PI, 0, true); s.lineTo(0.45, 0); s.lineTo(-0.45, 0);
+    var doorGeo = geo('door2', function() {
+        var s = new T.Shape(); s.moveTo(-0.55, 0); s.lineTo(-0.55, 1.55); s.absarc(0, 1.55, 0.55, Math.PI, 0, true); s.lineTo(0.55, 0); s.lineTo(-0.55, 0);
         return new T.ExtrudeGeometry(s, { depth: 0.08, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 2, curveSegments: 16 });
     });
     // Porte sur charnière (côté gauche) : elle s'ouvre vers l'extérieur quand Charlie entre
-    var hinge = new T.Group(); hinge.position.set(-0.45, 0.35, 1.66); g.add(hinge);
-    put(hinge, new T.Mesh(doorGeo, mat('#8a5a3c')), 0.45, 0, 0);
-    ball(hinge, 0.06, mat('#f2c94c', { metalness: 0.6, roughness: 0.3 }), 0.73, 0.65, 0.16);
-    var dark = new T.Mesh(geo('doorhole', function() { var sh = new T.Shape(); sh.moveTo(-0.45, 0); sh.lineTo(-0.45, 1.05); sh.absarc(0, 1.05, 0.45, Math.PI, 0, true); sh.lineTo(0.45, 0); sh.lineTo(-0.45, 0); return new T.ShapeGeometry(sh, 16); }), mat('#2a1a12'));
+    var hinge = new T.Group(); hinge.position.set(-0.55, 0.35, 1.66); g.add(hinge);
+    put(hinge, new T.Mesh(doorGeo, mat('#8a5a3c')), 0.55, 0, 0);
+    ball(hinge, 0.07, mat('#f2c94c', { metalness: 0.6, roughness: 0.3 }), 0.92, 0.95, 0.16);
+    var dark = new T.Mesh(geo('doorhole2', function() { var sh = new T.Shape(); sh.moveTo(-0.55, 0); sh.lineTo(-0.55, 1.55); sh.absarc(0, 1.55, 0.55, Math.PI, 0, true); sh.lineTo(0.55, 0); sh.lineTo(-0.55, 0); return new T.ShapeGeometry(sh, 16); }), mat('#2a1a12'));
     dark.position.set(0, 0.35, 1.655); g.add(dark);
     g.userData.door = hinge;
     var glass = new T.MeshStandardMaterial({ color: lin('#a9dcf7'), emissive: lin('#ffb453'), emissiveIntensity: 0, roughness: 0.15 });
@@ -795,6 +796,18 @@ function makeHay(w) {
     bale.rotation.z = Math.PI / 2;
     var s = Math.max(0.8, w * 0.75);
     g.scale.set(s, s * 0.85, s * 0.85);
+    return g;
+}
+// Enclos : sol de terre battue et barrières tout autour (un objet qui suit l'enclos quand on le déplace)
+function makePen(el) {
+    var g = new T.Group(), w = el.offsetWidth * U, d = el.offsetHeight * U, FENCE = mat('#c99a63');
+    var dirt = new T.Mesh(new T.PlaneGeometry(w, d), mat('#b39b68', { roughness: 1 }));
+    dirt.rotation.x = -Math.PI / 2; dirt.position.y = 0.04; dirt.receiveShadow = true; g.add(dirt);
+    var step = 45 * U, x, z;
+    for (x = -w / 2; x <= w / 2 + 0.01; x += step) { rbox(g, 0.14, 0.7, 0.14, 0.05, FENCE, x, 0.35, -d / 2); rbox(g, 0.14, 0.7, 0.14, 0.05, FENCE, x, 0.35, d / 2); }
+    for (z = -d / 2; z <= d / 2 + 0.01; z += step) { rbox(g, 0.14, 0.7, 0.14, 0.05, FENCE, -w / 2, 0.35, z); rbox(g, 0.14, 0.7, 0.14, 0.05, FENCE, w / 2, 0.35, z); }
+    [-d / 2, d / 2].forEach(function(zz) { rbox(g, w, 0.08, 0.06, 0.02, FENCE, 0, 0.55, zz); });   // traverses
+    [-w / 2, w / 2].forEach(function(xx) { rbox(g, 0.06, 0.08, d, 0.02, FENCE, xx, 0.55, 0); });
     return g;
 }
 function makeField(el) {
@@ -1242,7 +1255,6 @@ function buildTerrain() {
         c.copy(GRASS).lerp(GRASS2, 0.5 + 0.5 * Math.sin(px * 0.004) * Math.cos(py * 0.005));
         c.offsetHSL(0, 0, (R() - 0.5) * 0.02);
         forest.forEach(function(r) { var e = inEllipse(px, py, r); if (e < 1) c.lerp(FOREST, Math.min(1, (1 - e) * 2)); });
-        pens.forEach(function(r) { if (px > r.x && px < r.x + r.w && py > r.y && py < r.y + r.h) c.lerp(DIRT, 0.55); });
         hills.forEach(function(r) { var e = inEllipse(px, py, r); if (e < 1) h += Math.cos(Math.sqrt(e) * Math.PI / 2) * Math.min(r.w, r.h) * U * 0.25; });
         var me = inEllipse(px, py, MZ);
         if (me < 1) {
@@ -1341,14 +1353,6 @@ function buildTerrain() {
         var grass = makeBeachGrass(); grass.position.set(gx * U, heightAt(gx, gz), gz * U); grass.scale.setScalar(0.9 + RG() * 0.6); scene.add(grass);
     }
 
-    // Enclos de la ferme : petites barrières
-    var FENCE = mat('#c99a63');
-    pens.forEach(function(r) {
-        var grp = new T.Group(); scene.add(grp);
-        var step = 45, x, y;
-        for (x = r.x; x <= r.x + r.w; x += step) { rbox(grp, 0.14, 0.7, 0.14, 0.05, FENCE, x * U, 0.35, r.y * U); rbox(grp, 0.14, 0.7, 0.14, 0.05, FENCE, x * U, 0.35, (r.y + r.h) * U); }
-        for (y = r.y; y <= r.y + r.h; y += step) { rbox(grp, 0.14, 0.7, 0.14, 0.05, FENCE, r.x * U, 0.35, y * U); rbox(grp, 0.14, 0.7, 0.14, 0.05, FENCE, (r.x + r.w) * U, 0.35, y * U); }
-    });
 }
 
 // ═══════════════════════ Pont carte 2D → 3D ═══════════════════════
@@ -1369,6 +1373,7 @@ function bubbleOf(el) { var b = el.querySelector('.speech-bubble'); return b && 
 
 function kindOf(el, e) {
     var cl = el.classList, id = el.id;
+    if (cl.contains('farm-pen')) return 'pen';   // enclos : sol de terre + barrières, il suit sa position
     if (id === 'player' || cl.contains('mountain-snow') || e === '❄️') return 'skip';
     if (id === 'garden-area') return 'garden';
     if (id === 'fountain-anchor') return 'fountain';
@@ -1424,9 +1429,9 @@ function buildFor(el, kind, e, label) {
         case 'palm': obj = makePalm(Math.max(0.8, size / 1.2)); break;
         case 'villager': {
             var em = el.querySelector('.villager-emoji');
-            obj = makeCritter(em ? em.textContent.trim() : e); break;
+            obj = makeCritter(em ? em.textContent.trim() : e); obj.scale.multiplyScalar(CHAR_S); break;
         }
-        case 'farmer': obj = makeFarmer(); break;
+        case 'farmer': obj = makeFarmer(); obj.scale.multiplyScalar(CHAR_S); break;
         case 'dock': obj = makeDock(el.offsetWidth * U, el.offsetHeight * U); break;
         case 'boat': obj = makeBoat(); break;
         case 'crate': obj = makeCrate(); break;
@@ -1437,6 +1442,7 @@ function buildFor(el, kind, e, label) {
         case 'barn': obj = makeBarn(); break;
         case 'hay': obj = makeHay(el.offsetWidth * U); break;
         case 'field': obj = makeField(el); break;
+        case 'pen': obj = makePen(el); break;
         default: {
             obj = new T.Group();
             if (e) { var sp = emojiSprite(e, Math.max(0.8, size * 1.25)); obj.add(sp); obj.userData.sprite = sp; }
@@ -1473,7 +1479,7 @@ function groundPoint(el, kind) {
     var wxy = worldXY(el), x = wxy.x, y = wxy.y;
     var first = el.firstElementChild && !el.firstElementChild.classList.contains('building-label') ? el.firstElementChild : null;
     var w = el.offsetWidth, h = first ? first.offsetHeight : el.offsetHeight;
-    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'dock' || kind === 'path') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
+    if (kind === 'garden' || kind === 'fountain' || kind === 'field' || kind === 'pen' || kind === 'dock' || kind === 'path') return { x: x + w / 2, y: y + el.offsetHeight / 2 };
     if (kind === 'barn') return { x: x + w / 2, y: y + 140 };
     if (el.classList.contains('house-exterior') || /-anchor$/.test(el.id)) return { x: x + w / 2, y: y + h * 0.75 };
     return { x: x + w / 2, y: y + h * 0.9 };
@@ -1537,7 +1543,7 @@ function doorPoint(el, kind) {
     return null;
 }
 // Profondeur (en px) entre la porte et le centre du modèle, selon sa taille
-var DOOR_BACK = { house: 48, shop: 56, construction: 43, plot: 0 };   // ≈ demi-profondeur du socle, selon la taille
+var DOOR_BACK = { house: Math.round(1.9 * HOUSE_S * 40), shop: Math.round(1.9 * SHOP_S * 40), construction: 43, plot: 0 };   // ≈ demi-profondeur du socle, selon la taille
 function placeRec(el, rec) {
     if (rec.kind === 'boat') {   // sur l'eau, il se balance doucement
         var bp = groundPoint(el, 'boat'), t = performance.now() / 1000;
@@ -1676,7 +1682,7 @@ function walkToTarget(dt) {
 }
 function scan() {
     tracked.forEach(function(rec) { rec.seen = false; });
-    var els = gameWorld.querySelectorAll(':scope > .entity, :scope > div:not([class]), .farm-pen > div:not(.building-label), .player-path');
+    var els = gameWorld.querySelectorAll(':scope > .entity, :scope > div:not([class]), :scope > .farm-pen, .farm-pen > div:not(.building-label), .player-path');
     for (var i = 0; i < els.length; i++) {
         if (els[i].parentElement.classList.contains('farm-pen')) els[i].classList.add('farm-animal');
         syncElement(els[i]);
@@ -1947,6 +1953,7 @@ Game.r3d.pick = function(cx, cy, els) {   // élément (parmi els) dont le modè
     return null;
 };
 Game.r3d.syncNow = function(el) { syncElement(el); };
+Game.r3d.lowQuality = function() { if (!LOW) setLowQuality(); };   // page admin : moins de calcul (pas d'ombres)
 var MARK_COL = { ok: '#43a047', bad: '#e53935', sel: '#2979ff' };
 // fp = emprise au sol (Game.placement.footprint) ; state = 'ok' | 'bad' | 'sel' ; null = enlever
 Game.r3d.adminMark = function(el, fp, state) {
@@ -3070,7 +3077,7 @@ function init() {
     _rc = new T.Raycaster(); _ndc = new T.Vector2();
 
     buildTerrain();
-    charlie = makeCharlie(); scene.add(charlie);
+    charlie = makeCharlie(); charlie.scale.setScalar(CHAR_S); scene.add(charlie);
     addGhost(charlie);
     scan();
     tracked.forEach(function(rec) { if (rec.kind === 'mountain') summitName(rec); });   // drapeaux des sommets déjà gravis
@@ -3082,7 +3089,7 @@ function init() {
     Game.player.applySkin = function() {
         if (origApply) origApply.apply(this, arguments);
         if (charlie && charlie.userData.skin !== Game.state.skin) {
-            var nc = makeCharlie(); nc.position.copy(charlie.position); nc.rotation.copy(charlie.rotation); nc.userData.facing = charlie.userData.facing;
+            var nc = makeCharlie(); nc.scale.setScalar(CHAR_S); nc.position.copy(charlie.position); nc.rotation.copy(charlie.rotation); nc.userData.facing = charlie.userData.facing;
             scene.remove(charlie); charlie = nc; scene.add(charlie); addGhost(charlie);
         }
         if (room3d && room3d.charlie.userData.skin !== Game.state.skin) {

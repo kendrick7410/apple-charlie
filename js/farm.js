@@ -13,11 +13,11 @@ Game.farm = {
 
 // Enclos : chacun a un type d'animal
 function penDefs() {
-    var L = Game.CONFIG.LOCATIONS.farm;
+    var L = Game.CONFIG.LOCATIONS;
     return [
-        { name: '🐔 Poules',  emoji: '🐔', cx: L.x - 300, cy: L.y + 60, animals: ['🐔','🐓','🐤','🐣'] },
-        { name: '🐄 Vaches',  emoji: '🐄', cx: L.x,       cy: L.y + 60, animals: ['🐄','🐮','🐄'] },
-        { name: '🐷 Cochons', emoji: '🐷', cx: L.x + 300, cy: L.y + 60, animals: ['🐷','🐖','🐷'] }
+        { key: 'farmPenChickens', name: '🐔 Poules',  emoji: '🐔', cx: L.farmPenChickens.x, cy: L.farmPenChickens.y, animals: ['🐔','🐓','🐤','🐣'] },
+        { key: 'farmPenCows',     name: '🐄 Vaches',  emoji: '🐄', cx: L.farmPenCows.x,     cy: L.farmPenCows.y,     animals: ['🐄','🐮','🐄'] },
+        { key: 'farmPenPigs',     name: '🐷 Cochons', emoji: '🐷', cx: L.farmPenPigs.x,     cy: L.farmPenPigs.y,     animals: ['🐷','🐖','🐷'] }
     ];
 }
 
@@ -62,7 +62,8 @@ Game.farm.init = function() {
     // Grange rouge (décor) + panneau du nom.
     // Placée plus au nord : un vrai passage entre la grange et les enclos.
     var barn = document.createElement('div');
-    barn.style.cssText = 'position:absolute;left:' + (L.x - 80) + 'px;top:' + (L.y - 340) + 'px;width:160px;z-index:8;';
+    var LB = Game.CONFIG.LOCATIONS.farmBarn;
+    barn.style.cssText = 'position:absolute;left:' + (LB.x - 80) + 'px;top:' + (LB.y) + 'px;width:160px;z-index:8;';
     barn.innerHTML =
         // Toit
         '<div style="width:0;height:0;margin:0 auto;border-left:80px solid transparent;border-right:80px solid transparent;border-bottom:52px solid #7b2d2d;"></div>' +
@@ -74,7 +75,7 @@ Game.farm.init = function() {
             '<div style="position:absolute;left:50%;bottom:30px;transform:translate(-50%,50%) rotate(-45deg);width:56px;height:4px;background:#f5f0e6;"></div>' +
         '</div>' +
         '<div class="building-label" style="position:absolute;left:50%;top:158px;transform:translateX(-50%);">🚜 La Ferme</div>';
-    world.appendChild(barn);
+    Game.placeTag('loc:farmBarn', function() { world.appendChild(barn); });
 
     // Tracteur et bottes de foin : objets de décor (déplaçables et ajoutables dans la page admin)
     Game.farm.tractor(L.x - 282, L.y - 250);
@@ -103,8 +104,9 @@ Game.farm.init = function() {
         }
         world.appendChild(f);
     }
-    cropField(L.x - 230, L.y - 570, 200, 150, '🌽');   // champ de maïs
-    cropField(L.x + 30,  L.y - 570, 200, 150, '🌾');   // champ de blé
+    var LC = Game.CONFIG.LOCATIONS.farmFieldCorn, LW = Game.CONFIG.LOCATIONS.farmFieldWheat;
+    Game.placeTag('loc:farmFieldCorn', function() { cropField(LC.x, LC.y, 200, 150, '🌽'); });    // champ de maïs
+    Game.placeTag('loc:farmFieldWheat', function() { cropField(LW.x, LW.y, 200, 150, '🌾'); });   // champ de blé
 
     // Enclos (clôtures) avec animaux
     F.pens.forEach(function(pen) {
@@ -137,7 +139,7 @@ Game.farm.init = function() {
         lb.textContent = pen.name;
         lb.style.cssText += 'position:absolute;left:50%;top:-22px;transform:translateX(-50%);';
         box.appendChild(lb);
-        world.appendChild(box);
+        Game.placeTag('loc:' + pen.key, function() { world.appendChild(box); });
     });
 
     // Le fermier qui s'occupe de la ferme (un seul, jamais deux)

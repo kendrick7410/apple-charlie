@@ -78,6 +78,13 @@ Game.CONFIG = {
         souvenirShop: { x: 1700, y: 5040 },
         port:         { x: 4100, y: 5070 },
         farm:         { x: 2500, y: 2600 },
+        // Chaque morceau de la ferme a sa propre place (déplaçable seul dans la page admin)
+        farmBarn:        { x: 2500, y: 2260 },   // haut-milieu de la grange
+        farmPenChickens: { x: 2200, y: 2660 },   // centre des enclos
+        farmPenCows:     { x: 2500, y: 2660 },
+        farmPenPigs:     { x: 2800, y: 2660 },
+        farmFieldCorn:   { x: 2270, y: 2030 },   // coin haut-gauche des champs
+        farmFieldWheat:  { x: 2530, y: 2030 },
         riverBaseX:   550
     },
 
